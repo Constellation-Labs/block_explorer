@@ -1,0 +1,67 @@
+service: block-explorer-backend
+
+provider:
+  name: aws
+  runtime: nodejs10.x
+
+# you can overwrite defaults here
+#  stage: dev
+#  region: us-east-1
+
+# you can add statements to the Lambda function's IAM Role here
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:ListBucket"
+#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:PutObject"
+#      Resource:
+#        Fn::Join:
+#          - ""
+#          - - "arn:aws:s3:::"
+#            - "Ref" : "ServerlessDeploymentBucket"
+#            - "/*"
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+
+package:
+  include:
+    - handlers/**
+
+functions:
+  block-hash:
+    handler: handlers/block.handler
+    events:
+      - http:
+          path: block/{hash}
+          method: get
+
+  recent-tx:
+    handler: handlers/account-transaction-latest.handler
+    events:
+      - http:
+          path: account/{account-string}/transaction/latest
+          method: get
+
+  snapshot-hash:
+    handler: handlers/snapshot.handler
+    events:
+      - http:
+          path: snapshot/{hash}
+          method: get
+
+# you can add CloudFormation resource templates here
+#resources:
+#  Resources:
+#    NewResource:
+#      Type: AWS::S3::Bucket
+#      Properties:
+#        BucketName: my-new-bucket
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"

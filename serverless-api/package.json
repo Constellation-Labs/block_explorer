@@ -1,0 +1,17 @@
+{
+  "name": "block-explorer-backend",
+  "version": "0.1.0",
+  "description": "Serverless for Block Explorer API",
+  "main": "serverless.yml",
+  "repository": "https://github.com/Constellation-Labs/block_explorer",
+  "author": "Constellation Labs",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "serverless": "node ./node_modules/.bin/serverless",
+    "deploy": "node ./node_modules/.bin/serverless deploy"
+  },
+  "devDependencies": {
+    "serverless": "^1.57.0"
+  }
+}
