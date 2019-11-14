@@ -1,0 +1,158 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "BlockExplorer API"
+schemes:
+  - "https"
+  - "http"
+tags:
+  - name: "Block"
+  - name: "Snapshot"
+  - name: "Transaction"
+paths:
+  /block/{block-hash}:
+    get:
+      tags:
+        - "Block"
+      summary: "Given a block hash, return the contents of the corresponding block."
+      operationId: "getBlock"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "path"
+          name: "block-hash"
+          type: "string"
+          description: "Hash of the block"
+          required: true
+      responses:
+        200:
+          description: "Found the block for given hash"
+          schema:
+            $ref: '#/definitions/CheckpointBlock'
+        400:
+          description: "Invalid hash supplied"
+        404:
+          description: "Couldn't find the block for given hash"
+  ​
+/snapshot/{snapshot-hash}:
+  get:
+    tags:
+      - "Snapshot"
+    summary: "Given a snapshot hash, return the contents of the corresponding snapshot (all blocks contained within the window)."
+    operationId: "getSnapshot"
+    consumes:
+      - "application/json"
+    produces:
+      - "application/json"
+    parameters:
+      - in: "path"
+        name: "snapshot-hash"
+        type: "string"
+        description: "Hash of the snapshot"
+        required: true
+    responses:
+      200:
+        description: "Found the snapshot for given hash"
+        schema:
+          $ref: "#/definitions/StoredSnapshot"
+      400:
+        description: "Invalid hash supplied"
+      404:
+        description: "Couldn't find the snapshot for given hash"
+  ​
+/account/{account-string}/transaction/latest:
+  get:
+    tags:
+      - "Transaction"
+    summary: "Given an account string, return most recent transaction that has been accepted by that account, the block that it was contained in, and the associated snapshot hash."
+    operationId: "getLatestTransaction"
+    consumes:
+      - "application/json"
+    produces:
+      - "application/json"
+    parameters:
+      - in: "path"
+        name: "account-string"
+        type: "string"
+        description: "Account string"
+        required: true
+    responses:
+      200:
+        description: "Found the latest transaction for given account string"
+        schema:
+          $ref: "#/definitions/Transaction"
+      400:
+        description: "Invalid account string supplied"
+      404:
+        description: "Couldn't find the latest transaction for given account string"
+  ​
+  ​
+definitions:
+  CheckpointBlock:
+    type: "string"
+    description: "Stringified version of CheckpointBlock case class"
+  ​
+StoredSnapshot:
+  type: "object"
+  properties:
+    checkpointCache:
+      type: "array"
+      items:
+        type: "object"
+        properties:
+          height:
+            type: "object"
+            properties:
+              min:
+                type: "number"
+                format: "int64"
+              max:
+                type: "number"
+                format: "int64"
+          children:
+            type: "number"
+          checkpointBlock:
+            $ref: '#/definitions/CheckpointBlock'
+  ​
+snapshot:
+  type: "object"
+  properties:
+    lastSnapshot:
+      type: "string"
+    checkpointBlocks:
+      type: "array"
+      items:
+        type: "string"
+  ​
+Transaction:
+  type: "object"
+  properties:
+    amount:
+      type: "number"
+      format: "int64"
+    block:
+      $ref: "#/definitions/CheckpointBlock"
+    hash:
+      type: "string"
+    isDummy:
+      type: "boolean"
+    receiver:
+      type: "string"
+    sender:
+      type: "string"
+    signers:
+      type: "array"
+      items:
+        type: "string"
+    snapshotHash:
+      type: "string"
+    time:
+      type: "number"
+      format: "int64"
+  ​
+  ​
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"
