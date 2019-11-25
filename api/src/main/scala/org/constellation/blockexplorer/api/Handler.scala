@@ -25,13 +25,13 @@ object Handler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayPro
     log(s"Proxy parameters : ${input.getPathParameters}")
     log(s"Query parameters : ${input.getQueryStringParameters}")
 
-    val id = input.getQueryStringParameters.get("id")
+    val id = input.getPathParameters.get("id")
     if (id.isEmpty) ResponseCreator.errorResponse("You should pass id", 400)
     if (!input.getHttpMethod.contentEquals("GET")) ResponseCreator.errorResponse("Method doesn't support", 400)
 
     input.getPath match {
-      case "/transactions" => transactionController.findTransaction(id)
-      case _               => ResponseCreator.errorResponse("Path doesn't exists", 400)
+      case s if s.matches("""/transactions/.*""") => transactionController.findTransaction(id)
+      case _                                      => ResponseCreator.errorResponse("Path doesn't exists", 400)
     }
   }
 }

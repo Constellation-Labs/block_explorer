@@ -28,6 +28,8 @@ class JsonExtractorTest extends FunSuite with Matchers {
       "_source": {
       "hash": "36545f85251a319e25d333072be52b9f05a7e5a6333c4a6e48040c167c5e5b99",
       "amount": 0,
+      "sender": "46545f85251a319e25d333072be52b9f05a7e5a6333c4a6e48040c167c5e5b99",
+      "receiver": "56545f85251a319e25d333072be52b9f05a7e5a6333c4a6e48040c167c5e5b99",
       "fee": 0,
       "isDummy": true,
       "lastTransactionRef": {

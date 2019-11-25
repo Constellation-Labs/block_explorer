@@ -14,6 +14,8 @@ class StoredSnapshotMapper {
               Transaction(
                 t.hash,
                 t.amount,
+                t.dst.hash,
+                t.src.hash,
                 t.fee.getOrElse(0),
                 t.isDummy,
                 LastTransactionRef(t.lastTxRef.hash, t.lastTxRef.ordinal),
