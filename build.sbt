@@ -134,7 +134,7 @@ lazy val root = (project in file("."))
   .enablePlugins(BuildInfoPlugin)
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "org.constellation.handler",
+    buildInfoPackage := "org.constellation.blockexplorer.handler",
     buildInfoOptions := Seq(BuildInfoOption.BuildTime, BuildInfoOption.ToMap),
     projectSettings,
     libraryDependencies ++= rootDependencies,

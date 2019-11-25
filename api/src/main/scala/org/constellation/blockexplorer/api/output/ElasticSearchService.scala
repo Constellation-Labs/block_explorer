@@ -1,4 +1,4 @@
-package org.constellation.blockexplorer.api
+package org.constellation.blockexplorer.api.output
 
 import com.sksamuel.elastic4s.ElasticDsl.{search, termQuery, _}
 import com.sksamuel.elastic4s.http.JavaClient
@@ -8,11 +8,12 @@ import org.constellation.blockexplorer.config.ConfigLoader
 
 class ElasticSearchService(configLoader: ConfigLoader) {
 
-  private val client = ElasticClient(JavaClient(ElasticProperties(configLoader.elasticsearchUrl)))
+  private val client = ElasticClient(
+    JavaClient(ElasticProperties(s"http://${configLoader.elasticsearchUrl}:${configLoader.elasticsearchPort}"))
+  )
 
   def findTransaction(id: String): Response[SearchResponse] =
     client.execute {
       search(configLoader.elasticsearchTransactionsIndex).query(termQuery("hash", id))
     }.await
-
 }

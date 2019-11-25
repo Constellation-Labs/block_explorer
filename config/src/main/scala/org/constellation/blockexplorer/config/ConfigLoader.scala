@@ -14,6 +14,9 @@ class ConfigLoader {
   val elasticsearchUrl: String =
     elasticsearch.getString("url")
 
+  val elasticsearchPort: Int =
+    elasticsearch.getInt("port")
+
   val elasticsearchTransactionsIndex: String =
     elasticsearch.getString("indexes.transactions")
 
