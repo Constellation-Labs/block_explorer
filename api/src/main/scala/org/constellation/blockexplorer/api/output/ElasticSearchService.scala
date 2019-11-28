@@ -16,4 +16,19 @@ class ElasticSearchService(configLoader: ConfigLoader) {
     client.execute {
       search(configLoader.elasticsearchTransactionsIndex).query(termQuery("hash", id))
     }.await
+
+  def findSnapshot(id: String): Response[SearchResponse] =
+    client.execute {
+      search(configLoader.elasticsearchSnapshotsIndex).query(termQuery("hash", id))
+    }.await
+
+  def findCheckpointBlock(id: String): Response[SearchResponse] =
+    client.execute {
+      search(configLoader.elasticsearchCheckpointBlocksIndex).query(termQuery("hash", id))
+    }.await
+
+  def findTransactionForAddress(addres: String): Response[SearchResponse] =
+    client.execute {
+      search(configLoader.elasticsearchTransactionsIndex).query(termQuery("sender", addres))
+    }.await
 }

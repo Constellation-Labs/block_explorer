@@ -1,8 +1,14 @@
 package org.constellation.blockexplorer.api
 
+import java.util
+
 import com.amazonaws.services.lambda.runtime.events.{APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent}
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
-import org.constellation.blockexplorer.api.controller.TransactionController
+import org.constellation.blockexplorer.api.controller.{
+  CheckpointBlockController,
+  SnapshotController,
+  TransactionController
+}
 import org.constellation.blockexplorer.api.mapper.{JsonEncoder, JsonExtractor}
 import org.constellation.blockexplorer.api.output.ElasticSearchService
 import org.constellation.blockexplorer.config.ConfigLoader
@@ -15,6 +21,10 @@ object Handler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayPro
   private val elasticSearchService: ElasticSearchService = new ElasticSearchService(configLoader)
   private val transactionController: TransactionController =
     new TransactionController(elasticSearchService, jsonEncoder, jsonExtractor)
+  private val checkpointBlockController: CheckpointBlockController =
+    new CheckpointBlockController(elasticSearchService, jsonEncoder, jsonExtractor)
+  private val snapshotController: SnapshotController =
+    new SnapshotController(elasticSearchService, jsonEncoder, jsonExtractor)
 
   override def handleRequest(input: APIGatewayProxyRequestEvent, context: Context): APIGatewayProxyResponseEvent = {
     def log(message: String): Unit = context.getLogger.log(message)
@@ -25,13 +35,21 @@ object Handler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayPro
     log(s"Proxy parameters : ${input.getPathParameters}")
     log(s"Query parameters : ${input.getQueryStringParameters}")
 
-    val id = input.getPathParameters.get("id")
-    if (id.isEmpty) ResponseCreator.errorResponse("You should pass id", 400)
-    if (!input.getHttpMethod.contentEquals("GET")) ResponseCreator.errorResponse("Method doesn't support", 400)
+    if (!input.getHttpMethod.contentEquals("GET"))
+      ResponseCreator.errorResponse("Method doesn't support", 400)
 
-    input.getPath match {
-      case s if s.matches("""/transactions/.*""") => transactionController.findTransaction(id)
+    dispatchRequest(input.getPath, input.getPathParameters, input.getQueryStringParameters)
+  }
+
+  private def dispatchRequest(
+    path: String,
+    params: util.Map[String, String],
+    queryParams: util.Map[String, String]
+  ): APIGatewayProxyResponseEvent =
+    path match {
+      case x if x.matches("""/transactions/.*""") => transactionController.findBy(params.get("id"))
+      case x if x.matches("""/checkpoints/.*""")  => checkpointBlockController.findBy(params.get("id"))
+      case x if x.matches("""/snapshots/.*""")    => snapshotController.findBy(params.get("id"))
       case _                                      => ResponseCreator.errorResponse("Path doesn't exists", 400)
     }
-  }
 }

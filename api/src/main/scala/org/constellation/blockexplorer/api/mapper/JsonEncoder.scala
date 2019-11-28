@@ -1,9 +1,9 @@
 package org.constellation.blockexplorer.api.mapper
 
+import io.circe.generic.semiauto.deriveEncoder
 import io.circe.syntax._
 import io.circe.{Encoder, Json}
-import io.circe.generic.semiauto.deriveEncoder
-import org.constellation.blockexplorer.schema.{CheckpointBlock, Height, LastTransactionRef, Snapshot, Transaction}
+import org.constellation.blockexplorer.schema._
 
 import scala.util.Try
 
@@ -17,4 +17,13 @@ class JsonEncoder {
 
   def transactionToJson(transaction: Transaction): Either[Throwable, Json] =
     Try(transaction.asJson).toEither
+
+  def transactionsToJson(transactions: Seq[Transaction]): Option[Json] =
+    Try(transactions.asJson).toOption
+
+  def checkpointToJson(checkpointBlock: CheckpointBlock): Either[Throwable, Json] =
+    Try(checkpointBlock.asJson).toEither
+
+  def snapshotToJson(snapshot: Snapshot): Either[Throwable, Json] =
+    Try(snapshot.asJson).toEither
 }
