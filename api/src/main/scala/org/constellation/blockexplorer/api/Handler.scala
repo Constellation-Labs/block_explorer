@@ -48,8 +48,13 @@ object Handler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayPro
   ): APIGatewayProxyResponseEvent =
     path match {
       case x if x.matches("""/transactions/.*""") => transactionController.findBy(params.get("id"))
-      case x if x.matches("""/checkpoints/.*""")  => checkpointBlockController.findBy(params.get("id"))
-      case x if x.matches("""/snapshots/.*""")    => snapshotController.findBy(params.get("id"))
-      case _                                      => ResponseCreator.errorResponse("Path doesn't exists", 400)
+      case x if x.matches("""/transactions""") && containsQueryParam(queryParams, "sender") =>
+        transactionController.findBySender(queryParams.get("sender"))
+      case x if x.matches("""/checkpoints/.*""") => checkpointBlockController.findBy(params.get("id"))
+      case x if x.matches("""/snapshots/.*""")   => snapshotController.findBy(params.get("id"))
+      case _                                     => ResponseCreator.errorResponse("Path doesn't exists", 400)
     }
+
+  private def containsQueryParam(queryParams: util.Map[String, String], param: String): Boolean =
+    if (queryParams == null) false else queryParams.containsKey(param)
 }
