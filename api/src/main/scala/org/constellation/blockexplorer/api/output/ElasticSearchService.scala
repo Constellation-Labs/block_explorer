@@ -28,6 +28,11 @@ class ElasticSearchService(configLoader: ConfigLoader) {
       search(configLoader.elasticsearchSnapshotsIndex).query(matchAllQuery()).sortByFieldDesc("height").size(1)
     }.await
 
+  def findSnapshotByHeight(height: Long): Response[SearchResponse] =
+    client.execute {
+      search(configLoader.elasticsearchSnapshotsIndex).query(termQuery("height", height))
+    }.await
+
   def findCheckpointBlock(id: String): Response[SearchResponse] =
     client.execute {
       search(configLoader.elasticsearchCheckpointBlocksIndex).query(termQuery("hash", id))

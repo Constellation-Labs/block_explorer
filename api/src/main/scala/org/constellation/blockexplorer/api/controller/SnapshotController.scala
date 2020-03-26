@@ -16,6 +16,8 @@ class SnapshotController(
   def findBy(hash: String): APIGatewayProxyResponseEvent = {
     val snapshot = if (hash == "latest") {
       elasticSearchService.findHighestSnapshot()
+    } else if (hash.forall(_.isDigit) && hash.length < 64) {
+      elasticSearchService.findSnapshotByHeight(hash.toLong)
     } else {
       elasticSearchService.findSnapshot(hash)
     }

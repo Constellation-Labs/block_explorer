@@ -25,10 +25,10 @@ class JsonEncoder {
   implicit val lastTransactionRefEncoder: Encoder[LastTransactionRef] = deriveEncoder
 
   def transactionToJson(transaction: Transaction): Either[Throwable, Json] =
-    Try(transaction.asJson).toEither
+    Try(transaction.asJson.deepDropNullValues).toEither
 
   def transactionsToJson(transactions: Seq[Transaction]): Option[Json] =
-    Try(transactions.asJson).toOption
+    Try(transactions.asJson.deepDropNullValues).toOption
 
   def checkpointToJson(checkpointBlock: CheckpointBlock): Either[Throwable, Json] =
     Try(checkpointBlock.asJson).toEither
