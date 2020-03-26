@@ -5,3 +5,5 @@
 target
 project/target
 constellation-assembly-*.jar
+lib/cl-node.jar
+.bloop

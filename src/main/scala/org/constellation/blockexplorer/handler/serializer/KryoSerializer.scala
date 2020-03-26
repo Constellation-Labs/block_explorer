@@ -5,19 +5,11 @@ import org.constellation.serializer.ConstellationKryoRegistrar
 
 class KryoSerializer extends Serializer {
 
-  private val guessThreads: Int = {
-    val cores = Runtime.getRuntime.availableProcessors
-    val GUESS_THREADS_PER_CORE = 4
-    GUESS_THREADS_PER_CORE * cores
-  }
-
-  val kryoPool: KryoPool = KryoPool.withBuffer(
-    guessThreads,
+  val kryoPool = KryoPool.withByteArrayOutputStream(
+    10,
     new ScalaKryoInstantiator()
       .setRegistrationRequired(true)
-      .withRegistrar(new ConstellationKryoRegistrar()),
-    32,
-    1024 * 1024 * 100
+      .withRegistrar(new ConstellationKryoRegistrar())
   )
 
   def serialize(anyRef: AnyRef): Array[Byte] =

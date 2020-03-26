@@ -1,11 +1,7 @@
 package org.constellation.blockexplorer.handler.mapper
 
 import better.files.File
-import io.circe.Encoder
-import io.circe.generic.semiauto.deriveEncoder
-import io.circe.syntax._
 import org.constellation.blockexplorer.handler.serializer.{KryoSerializer, Serializer}
-import org.constellation.blockexplorer.schema._
 import org.constellation.consensus.StoredSnapshot
 import org.mockito.ArgumentMatchersSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -15,21 +11,16 @@ class SnapshotJsonMapperTest extends FunSuite with ArgumentMatchersSugar with Ma
   private val snapshotFolder: String = "src/test/resources/snapshot"
   private val serializer: Serializer = new KryoSerializer
   private val storedSnapshotMapper = new StoredSnapshotMapper
+  private val snapshotMapper = new SnapshotJsonMapper
 
-  implicit val snapshotEncoder: Encoder[Snapshot] = deriveEncoder[Snapshot]
-  implicit val checkpointEncoder: Encoder[CheckpointBlock] = deriveEncoder[CheckpointBlock]
-  implicit val heightEncoder: Encoder[Height] = deriveEncoder[Height]
-  implicit val transactionEncoder: Encoder[Transaction] = deriveEncoder[Transaction]
-  implicit val lastTransactionRefEncoder: Encoder[LastTransactionRef] = deriveEncoder[LastTransactionRef]
-
-  test("mapTransaction") {
+  test("mapSnapshot") {
     val parsed = File(snapshotFolder).list.toSeq
       .map(s => serializer.deserialize[StoredSnapshot](s.byteArray))
       .toList
       .head
 
-    val s = storedSnapshotMapper.mapSnapshot(parsed).asJson
-    println(s)
+    val snapshot = storedSnapshotMapper.mapSnapshot(parsed)
+    snapshotMapper.mapSnapshotToJson(snapshot)
   }
 
   test("mapCheckpointBlock") {
@@ -38,15 +29,18 @@ class SnapshotJsonMapperTest extends FunSuite with ArgumentMatchersSugar with Ma
       .toList
       .head
 
-    storedSnapshotMapper.mapCheckpointBlock(parsed).asJson
+    val checkpoints = storedSnapshotMapper.mapCheckpointBlock(parsed)
+    checkpoints.map(snapshotMapper.mapCheckpointBlockToJson)
   }
 
-  test("mapSnapshot") {
+  test("mapTransaction") {
     val parsed = File(snapshotFolder).list.toSeq
       .map(s => serializer.deserialize[StoredSnapshot](s.byteArray))
       .toList
       .head
 
-    storedSnapshotMapper.mapTransaction(parsed).asJson
+    val txs = storedSnapshotMapper.mapTransaction(parsed)
+    txs.map(snapshotMapper.mapTransactionToJson)
+    println(txs.headOption.map(snapshotMapper.mapTransactionToJson))
   }
 }

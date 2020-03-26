@@ -13,8 +13,14 @@ class SnapshotController(
   jsonExtractor: JsonExtractor
 ) extends Controller {
 
-  def findBy(hash: String): APIGatewayProxyResponseEvent =
-    elasticSearchService.findSnapshot(hash) match {
+  def findBy(hash: String): APIGatewayProxyResponseEvent = {
+    val snapshot = if (hash == "latest") {
+      elasticSearchService.findHighestSnapshot()
+    } else {
+      elasticSearchService.findSnapshot(hash)
+    }
+
+    snapshot match {
       case RequestFailure(status, body, headers, error) =>
         ResponseCreator.errorResponse("ElasticSearch service error", 500)
       case RequestSuccess(status, body, headers, result) =>
@@ -23,6 +29,7 @@ class SnapshotController(
           case x   => ResponseCreator.successResponse(jsonEncoder.snapshotEncoder(x.head).toString())
         }
     }
+  }
 
   def extractSnapshotFrom(body: Option[String]): Seq[Snapshot] =
     body

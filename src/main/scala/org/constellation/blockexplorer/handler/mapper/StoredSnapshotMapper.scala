@@ -1,9 +1,36 @@
 package org.constellation.blockexplorer.handler.mapper
 
-import org.constellation.blockexplorer.schema.{CheckpointBlock, Height, LastTransactionRef, Snapshot, Transaction}
+import org.constellation.blockexplorer.schema._
 import org.constellation.consensus.StoredSnapshot
 
 class StoredSnapshotMapper {
+
+  def mapOriginalTransaction(transaction: org.constellation.primitives.Transaction): TransactionOriginal =
+    TransactionOriginal(
+      edge = TransactionEdge(
+        {
+          val oe = transaction.edge.observationEdge
+          ObservationEdge(
+            oe.parents.map(p => TypedEdgeHash(p.hash, EdgeHashType.AddressHash, p.baseHash)),
+            TypedEdgeHash(oe.data.hash, EdgeHashType.TransactionDataHash, oe.data.baseHash)
+          )
+        }, {
+          val soe = transaction.edge.signedObservationEdge
+          SignedObservationEdge(
+            SignatureBatch(
+              soe.signatureBatch.hash,
+              soe.signatureBatch.signatures.map(hs => HashSignature(hs.signature, Id(hs.id.hex)))
+            )
+          )
+        }, {
+          val d = transaction.edge.data
+          TransactionEdgeData(d.amount, LastTransactionRef(d.lastTxRef.hash, d.lastTxRef.ordinal), d.fee, d.salt)
+        }
+      ),
+      lastTxRef = LastTransactionRef(transaction.lastTxRef.hash, transaction.lastTxRef.ordinal),
+      isDummy = transaction.isDummy,
+      isTest = transaction.isTest
+    )
 
   def mapTransaction(storedSnapshot: StoredSnapshot): Seq[Transaction] =
     storedSnapshot.checkpointCache.flatMap(
@@ -18,7 +45,8 @@ class StoredSnapshotMapper {
             t.isDummy,
             LastTransactionRef(t.lastTxRef.hash, t.lastTxRef.ordinal),
             storedSnapshot.snapshot.hash,
-            b.checkpointBlock.baseHash
+            b.checkpointBlock.baseHash,
+            mapOriginalTransaction(t)
           )
         })
     )
@@ -39,6 +67,7 @@ class StoredSnapshotMapper {
   def mapSnapshot(storedSnapshot: StoredSnapshot): Snapshot =
     Snapshot(
       storedSnapshot.snapshot.hash,
+      storedSnapshot.height,
       storedSnapshot.snapshot.checkpointBlocks
     )
 }

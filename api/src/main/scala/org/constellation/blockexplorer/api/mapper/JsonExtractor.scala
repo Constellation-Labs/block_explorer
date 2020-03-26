@@ -1,19 +1,28 @@
 package org.constellation.blockexplorer.api.mapper
 
-import io.circe.generic.semiauto.deriveDecoder
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.parser.parse
-import io.circe.{Decoder, Json}
+import io.circe.{Decoder, Encoder, Json}
 import org.constellation.blockexplorer.schema._
 
 import scala.util.Try
 
 class JsonExtractor {
 
-  implicit val snapshotDecoder: Decoder[Snapshot] = deriveDecoder[Snapshot]
-  implicit val checkpointDecoder: Decoder[CheckpointBlock] = deriveDecoder[CheckpointBlock]
-  implicit val heightDecoder: Decoder[Height] = deriveDecoder[Height]
-  implicit val transactionDecoder: Decoder[Transaction] = deriveDecoder[Transaction]
-  implicit val lastTransactionRefDecoder: Decoder[LastTransactionRef] = deriveDecoder[LastTransactionRef]
+  implicit val snapshotDecoder: Decoder[Snapshot] = deriveDecoder
+  implicit val checkpointDecoder: Decoder[CheckpointBlock] = deriveDecoder
+  implicit val heightDecoder: Decoder[Height] = deriveDecoder
+  implicit val transactionDecoder: Decoder[Transaction] = deriveDecoder
+  implicit val transactionEdgeDataDecoder: Decoder[TransactionEdgeData] = deriveDecoder
+  implicit val typedEdgeHashDecoder: Decoder[TypedEdgeHash] = deriveDecoder
+  implicit val observationEdgeDecoder: Decoder[ObservationEdge] = deriveDecoder
+  implicit val idDecoder: Decoder[Id] = deriveDecoder
+  implicit val hashSignatureDecoder: Decoder[HashSignature] = deriveDecoder
+  implicit val signatureBatchDecoder: Decoder[SignatureBatch] = deriveDecoder
+  implicit val signedObservationEdgeDecoder: Decoder[SignedObservationEdge] = deriveDecoder
+  implicit val transactionEdgeDecoder: Decoder[TransactionEdge] = deriveDecoder
+  implicit val transactionOriginalDecoder: Decoder[TransactionOriginal] = deriveDecoder
+  implicit val lastTransactionRefDecoder: Decoder[LastTransactionRef] = deriveDecoder
 
   def extractTransactionsEsResult(doc: String): Option[Seq[Transaction]] =
     Try(extractTransactions(doc)).toOption

@@ -9,11 +9,20 @@ import scala.util.Try
 
 class JsonEncoder {
 
-  implicit val snapshotEncoder: Encoder[Snapshot] = deriveEncoder[Snapshot]
-  implicit val checkpointEncoder: Encoder[CheckpointBlock] = deriveEncoder[CheckpointBlock]
-  implicit val heightEncoder: Encoder[Height] = deriveEncoder[Height]
-  implicit val transactionEncoder: Encoder[Transaction] = deriveEncoder[Transaction]
-  implicit val lastTransactionRefEncoder: Encoder[LastTransactionRef] = deriveEncoder[LastTransactionRef]
+  implicit val snapshotEncoder: Encoder[Snapshot] = deriveEncoder
+  implicit val checkpointEncoder: Encoder[CheckpointBlock] = deriveEncoder
+  implicit val heightEncoder: Encoder[Height] = deriveEncoder
+  implicit val transactionEncoder: Encoder[Transaction] = deriveEncoder
+  implicit val transactionEdgeDataEncoder: Encoder[TransactionEdgeData] = deriveEncoder
+  implicit val typedEdgeHashEncoder: Encoder[TypedEdgeHash] = deriveEncoder
+  implicit val observationEdgeEncoder: Encoder[ObservationEdge] = deriveEncoder
+  implicit val idEncoder: Encoder[Id] = deriveEncoder
+  implicit val hashSignatureEncoder: Encoder[HashSignature] = deriveEncoder
+  implicit val signatureBatchEncoder: Encoder[SignatureBatch] = deriveEncoder
+  implicit val signedObservationEdgeEncoder: Encoder[SignedObservationEdge] = deriveEncoder
+  implicit val transactionEdgeEncoder: Encoder[TransactionEdge] = deriveEncoder
+  implicit val transactionOriginalEncoder: Encoder[TransactionOriginal] = deriveEncoder
+  implicit val lastTransactionRefEncoder: Encoder[LastTransactionRef] = deriveEncoder
 
   def transactionToJson(transaction: Transaction): Either[Throwable, Json] =
     Try(transaction.asJson).toEither

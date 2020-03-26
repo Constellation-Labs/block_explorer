@@ -1,5 +1,8 @@
 package org.constellation.blockexplorer.api.mapper
 
+import org.constellation.blockexplorer.api.Handler.configLoader
+import org.constellation.blockexplorer.api.output.ElasticSearchService
+import org.constellation.blockexplorer.config.ConfigLoader
 import org.scalatest.{FunSuite, Matchers}
 
 class JsonExtractorTest extends FunSuite with Matchers {
@@ -44,7 +47,7 @@ class JsonExtractorTest extends FunSuite with Matchers {
     }
   }"""
 
-  test("should extract source from message") {
+  ignore("should extract source from message") {
     val sourceExtractor: JsonExtractor = new JsonExtractor
     val transactions = sourceExtractor.extractTransactionsEsResult(message)
 

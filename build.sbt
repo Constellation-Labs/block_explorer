@@ -88,6 +88,7 @@ lazy val versions = new {
   val SttpCoreVersion               =       "2.0.0-RC1"
   val TwitterChillVersion           =       "0.9.3"
   val TypesafeVersion               =       "1.4.0"
+  val EnumeratumVersion             =       "1.5.23"
 }
 
 lazy val sharedDependencies = Seq(
@@ -111,6 +112,10 @@ lazy val apiDependencies = Seq(
   // Test dependencies
   "com.sksamuel.elastic4s"          %% "elastic4s-testkit"          % versions.Elastic4sVersion          % Test
 ) ++ sharedDependencies
+
+lazy val schemaDependencies = Seq(
+  "com.beachape" %% "enumeratum-circe" % versions.EnumeratumVersion
+)
 
 lazy val configDependencies = Seq(
   "com.typesafe"                    % "config"                      % versions.TypesafeVersion
@@ -138,7 +143,7 @@ lazy val root = (project in file("."))
     buildInfoOptions := Seq(BuildInfoOption.BuildTime, BuildInfoOption.ToMap),
     projectSettings,
     libraryDependencies ++= rootDependencies,
-    unmanagedJars in Compile += file("constellation-assembly-1.0.12.jar"),
+    unmanagedJars in Compile += file("cl-node.jar"),
     mainClass := Some("org.constellation.blockexplorer.handler.RequestHandler")
   )
 
@@ -147,7 +152,9 @@ lazy val schema = (project in file("schema"))
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](version),
     buildInfoPackage := "org.constellation.blockexplorer.schema",
-    buildInfoOptions ++= Seq(BuildInfoOption.BuildTime, BuildInfoOption.ToMap)
+    buildInfoOptions ++= Seq(BuildInfoOption.BuildTime, BuildInfoOption.ToMap),
+    unmanagedJars in Compile += file("cl-node.jar"),
+    libraryDependencies ++= schemaDependencies
   )
 
 lazy val api = (project in file("api"))
