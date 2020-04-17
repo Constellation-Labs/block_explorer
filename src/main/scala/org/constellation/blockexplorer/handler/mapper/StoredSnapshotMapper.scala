@@ -11,8 +11,8 @@ class StoredSnapshotMapper {
         {
           val oe = transaction.edge.observationEdge
           ObservationEdge(
-            oe.parents.map(p => TypedEdgeHash(p.hash, EdgeHashType.AddressHash, p.baseHash)),
-            TypedEdgeHash(oe.data.hash, EdgeHashType.TransactionDataHash, oe.data.baseHash)
+            oe.parents.map(p => TypedEdgeHash(p.hashReference, EdgeHashType.AddressHash, p.baseHash)),
+            TypedEdgeHash(oe.data.hashReference, EdgeHashType.TransactionDataHash, oe.data.baseHash)
           )
         }, {
           val soe = transaction.edge.signedObservationEdge
