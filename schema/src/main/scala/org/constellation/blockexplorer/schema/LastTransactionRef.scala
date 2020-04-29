@@ -1,6 +1,6 @@
 package org.constellation.blockexplorer.schema
 
 case class LastTransactionRef(
-  hash: String,
+  prevHash: String,
   ordinal: Long
 )
