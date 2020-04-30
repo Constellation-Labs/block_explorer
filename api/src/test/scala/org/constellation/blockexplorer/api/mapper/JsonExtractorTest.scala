@@ -1,6 +1,7 @@
 package org.constellation.blockexplorer.api.mapper
 
 import org.constellation.blockexplorer.api.Handler.configLoader
+import org.constellation.blockexplorer.api.controller.TransactionController
 import org.constellation.blockexplorer.api.output.ElasticSearchService
 import org.constellation.blockexplorer.config.ConfigLoader
 import org.scalatest.{FunSuite, Matchers}

@@ -19,7 +19,7 @@ object EdgeHashType extends CirceEnum[EdgeHashType] with Enum[EdgeHashType] {
 }
 
 case class TypedEdgeHash(
-  hash: String,
+  hashReference: String,
   hashType: EdgeHashType,
   baseHash: Option[String]
 )
