@@ -54,4 +54,17 @@ class JsonExtractorTest extends FunSuite with Matchers {
 
     transactions.get.size shouldBe 1
   }
+
+  ignore("foo") {
+    val configLoader: ConfigLoader = new ConfigLoader
+    val jsonEncoder: JsonEncoder = new JsonEncoder
+    val jsonExtractor: JsonExtractor = new JsonExtractor
+    val elasticSearchService: ElasticSearchService = new ElasticSearchService(configLoader)
+    val tc = new TransactionController(elasticSearchService, jsonEncoder, jsonExtractor)
+
+    println("foo")
+    val a = tc.findByAddress("DAG6jyUgEAf4oQDnNNSnm2vtjfUTgXdUxVLUeYmn")
+    println(a.getBody)
+    println("bar")
+  }
 }

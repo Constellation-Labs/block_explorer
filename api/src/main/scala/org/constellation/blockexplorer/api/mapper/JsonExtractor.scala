@@ -27,6 +27,14 @@ class JsonExtractor {
 
   def mapTransactionJson(json: Json): Json = {
     val mapped = json.hcursor
+      .downField("lastTransactionRef")
+      .withFocus({ a =>
+        a.mapObject(obj => {
+          val m = obj.toMap
+          obj.add("prevHash", m.getOrElse("hash", Json.fromString(""))).remove("hash")
+        })
+      })
+      .up
       .downField("transactionOriginal")
       .downField("edge")
       .downField("observationEdge")
@@ -52,6 +60,26 @@ class JsonExtractor {
         a.mapObject(obj => {
           val m = obj.toMap
           obj.add("hashReference", m.getOrElse("hash", Json.fromString(""))).remove("hash")
+        })
+      })
+      .up
+      .up
+      .downField("data")
+      .downField("lastTxRef")
+      .withFocus({ a =>
+        a.mapObject(obj => {
+          val m = obj.toMap
+          obj.add("prevHash", m.getOrElse("hash", Json.fromString(""))).remove("hash")
+        })
+      })
+      .up
+      .up
+      .up
+      .downField("lastTxRef")
+      .withFocus({ a =>
+        a.mapObject(obj => {
+          val m = obj.toMap
+          obj.add("prevHash", m.getOrElse("hash", Json.fromString(""))).remove("hash")
         })
       })
 

@@ -3,7 +3,6 @@ package org.constellation.blockexplorer.api.output
 import com.sksamuel.elastic4s.ElasticDsl.{search, termQuery, _}
 import com.sksamuel.elastic4s.http.JavaClient
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import com.sksamuel.elastic4s.requests.searches.sort.SortOrder
 import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties, Response}
 import org.constellation.blockexplorer.config.ConfigLoader
 
@@ -15,12 +14,12 @@ class ElasticSearchService(configLoader: ConfigLoader) {
 
   def findTransaction(id: String): Response[SearchResponse] =
     client.execute {
-      search(configLoader.elasticsearchTransactionsIndex).query(termQuery("hash", id))
+      search(configLoader.elasticsearchTransactionsIndex).query(termQuery("hash", id)).size(-1)
     }.await
 
   def findSnapshot(id: String): Response[SearchResponse] =
     client.execute {
-      search(configLoader.elasticsearchSnapshotsIndex).query(termQuery("hash", id))
+      search(configLoader.elasticsearchSnapshotsIndex).query(termQuery("hash", id)).size(-1)
     }.await
 
   def findHighestSnapshot(): Response[SearchResponse] =
@@ -30,16 +29,35 @@ class ElasticSearchService(configLoader: ConfigLoader) {
 
   def findSnapshotByHeight(height: Long): Response[SearchResponse] =
     client.execute {
-      search(configLoader.elasticsearchSnapshotsIndex).query(termQuery("height", height))
+      search(configLoader.elasticsearchSnapshotsIndex).query(termQuery("height", height)).size(-1)
     }.await
 
   def findCheckpointBlock(id: String): Response[SearchResponse] =
     client.execute {
-      search(configLoader.elasticsearchCheckpointBlocksIndex).query(termQuery("hash", id))
+      search(configLoader.elasticsearchCheckpointBlocksIndex).query(termQuery("hash", id)).size(-1)
     }.await
 
-  def findTransactionForAddress(addres: String): Response[SearchResponse] =
+  def findTransactionForSender(address: String): Response[SearchResponse] =
     client.execute {
-      search(configLoader.elasticsearchTransactionsIndex).query(termQuery("sender", addres))
+      search(configLoader.elasticsearchTransactionsIndex)
+        .query(termQuery("sender", address))
+        .size(10000)
+        .sortByFieldDesc("lastTransactionRef.ordinal")
+    }.await
+
+  def findTransactionForReceiver(address: String): Response[SearchResponse] =
+    client.execute {
+      search(configLoader.elasticsearchTransactionsIndex)
+        .query(termQuery("receiver", address))
+        .size(10000)
+        .sortByFieldDesc("lastTransactionRef.ordinal")
+    }.await
+
+  def findTransactionForAddress(address: String): Response[SearchResponse] =
+    client.execute {
+      search(configLoader.elasticsearchTransactionsIndex)
+        .query(multiMatchQuery(address))
+        .size(10000)
+        .sortByFieldDesc("lastTransactionRef.ordinal")
     }.await
 }

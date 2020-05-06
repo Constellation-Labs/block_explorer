@@ -50,6 +50,10 @@ object Handler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayPro
       case x if x.matches("""/transactions/.*""") => transactionController.findBy(params.get("id"))
       case x if x.matches("""/transactions""") && containsQueryParam(queryParams, "sender") =>
         transactionController.findBySender(queryParams.get("sender"))
+      case x if x.matches("""/transactions""") && containsQueryParam(queryParams, "receiver") =>
+        transactionController.findByReceiver(queryParams.get("receiver"))
+      case x if x.matches("""/transactions""") && containsQueryParam(queryParams, "address") =>
+        transactionController.findByAddress(queryParams.get("address"))
       case x if x.matches("""/checkpoints/.*""") => checkpointBlockController.findBy(params.get("id"))
       case x if x.matches("""/snapshots/.*""")   => snapshotController.findBy(params.get("id"))
       case _                                     => ResponseCreator.errorResponse("Path doesn't exists", 400)

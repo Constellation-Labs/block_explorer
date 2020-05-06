@@ -31,12 +31,34 @@ class TransactionController(
     }
 
   def findBySender(address: String): APIGatewayProxyResponseEvent =
-    elasticSearchService.findTransactionForAddress(address) match {
+    elasticSearchService.findTransactionForSender(address) match {
       case RequestFailure(status, body, headers, error) =>
         ResponseCreator.errorResponse("ElasticSearch service error", 500)
       case RequestSuccess(status, body, headers, result) =>
         extractTransactionsFrom(body) match {
           case Nil => ResponseCreator.errorResponse("Cannot find transactions for sender", 404)
+          case x   => ResponseCreator.successResponse(jsonEncoder.transactionsToJson(x).getOrElse("""[]""").toString)
+        }
+    }
+
+  def findByReceiver(address: String): APIGatewayProxyResponseEvent =
+    elasticSearchService.findTransactionForReceiver(address) match {
+      case RequestFailure(status, body, headers, error) =>
+        ResponseCreator.errorResponse("ElasticSearch service error", 500)
+      case RequestSuccess(status, body, headers, result) =>
+        extractTransactionsFrom(body) match {
+          case Nil => ResponseCreator.errorResponse("Cannot find transactions for receiver", 404)
+          case x   => ResponseCreator.successResponse(jsonEncoder.transactionsToJson(x).getOrElse("""[]""").toString)
+        }
+    }
+
+  def findByAddress(address: String): APIGatewayProxyResponseEvent =
+    elasticSearchService.findTransactionForAddress(address) match {
+      case RequestFailure(status, body, headers, error) =>
+        ResponseCreator.errorResponse("ElasticSearch service error", 500)
+      case RequestSuccess(status, body, headers, result) =>
+        extractTransactionsFrom(body) match {
+          case Nil => ResponseCreator.errorResponse("Cannot find transactions for address", 404)
           case x   => ResponseCreator.successResponse(jsonEncoder.transactionsToJson(x).getOrElse("""[]""").toString)
         }
     }
