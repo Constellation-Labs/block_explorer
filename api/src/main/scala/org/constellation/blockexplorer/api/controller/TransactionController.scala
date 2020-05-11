@@ -2,9 +2,7 @@ package org.constellation.blockexplorer.api.controller
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.sksamuel.elastic4s.{RequestFailure, RequestSuccess}
-import io.circe.{ACursor, HCursor, Json}
 import org.constellation.blockexplorer.api.ResponseCreator
-import org.constellation.blockexplorer.api.controller.TransactionController.mapTransactionJson
 import org.constellation.blockexplorer.api.mapper.{JsonEncoder, JsonExtractor}
 import org.constellation.blockexplorer.api.output.ElasticSearchService
 import org.constellation.blockexplorer.schema.Transaction
@@ -14,9 +12,6 @@ class TransactionController(
   jsonEncoder: JsonEncoder,
   jsonExtractor: JsonExtractor
 ) {
-
-  private def mapTransactionToJson(tx: Transaction): String =
-    mapTransactionJson(jsonEncoder.transactionEncoder(tx)).toString
 
   def findBy(hash: String): APIGatewayProxyResponseEvent =
     elasticSearchService.findTransaction(hash) match {
@@ -67,40 +62,4 @@ class TransactionController(
     body
       .flatMap(response => jsonExtractor.extractTransactionsEsResult(response))
       .getOrElse(Seq.empty)
-}
-
-object TransactionController {
-
-  def mapTransactionJson(json: Json): Json =
-    json.hcursor
-      .downField("transactionOriginal")
-      .downField("edge")
-      .downField("observationEdge")
-      .downField("parents")
-      .downArray
-      .withFocus({ a =>
-        a.mapObject(obj => {
-          val m = obj.toMap
-          obj.add("hashReference", m.getOrElse("hash", Json.fromString(""))).remove("hash")
-        })
-      })
-      .right
-      .withFocus({ a =>
-        a.mapObject(obj => {
-          val m = obj.toMap
-          obj.add("hashReference", m.getOrElse("hash", Json.fromString(""))).remove("hash")
-        })
-      })
-      .up
-      .up
-      .downField("data")
-      .withFocus({ a =>
-        a.mapObject(obj => {
-          val m = obj.toMap
-          obj.add("hashReference", m.getOrElse("hash", Json.fromString(""))).remove("hash")
-        })
-      })
-      .top
-      .get
-
 }
