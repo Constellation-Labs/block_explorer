@@ -37,6 +37,11 @@ class ElasticSearchService(configLoader: ConfigLoader) {
       search(configLoader.elasticsearchCheckpointBlocksIndex).query(termQuery("hash", id)).size(-1)
     }.await
 
+  def findCheckpointBlockBySoe(id: String): Response[SearchResponse] =
+    client.execute {
+      search(configLoader.elasticsearchCheckpointBlocksIndex).query(termQuery("soeHash", id)).size(-1)
+    }.await
+
   def findTransactionForSender(address: String): Response[SearchResponse] =
     client.execute {
       search(configLoader.elasticsearchTransactionsIndex)

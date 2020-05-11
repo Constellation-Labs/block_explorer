@@ -19,7 +19,18 @@ class CheckpointBlockController(
         ResponseCreator.errorResponse("ElasticSearch service error", 500)
       case RequestSuccess(status, body, headers, result) =>
         extractCheckpointBlockFrom(body) match {
-          case Nil => ResponseCreator.errorResponse("Cannot find checkpoint block", 404)
+          case Nil => ResponseCreator.errorResponse("Cannot find checkpoint block by base hash", 404)
+          case x   => ResponseCreator.successResponse(jsonEncoder.checkpointEncoder(x.head).toString())
+        }
+    }
+
+  def findBySoe(hash: String): APIGatewayProxyResponseEvent =
+    elasticSearchService.findCheckpointBlockBySoe(hash) match {
+      case RequestFailure(status, body, headers, error) =>
+        ResponseCreator.errorResponse("ElasticSearch service error", 500)
+      case RequestSuccess(status, body, headers, result) =>
+        extractCheckpointBlockFrom(body) match {
+          case Nil => ResponseCreator.errorResponse("Cannot find checkpoint block by soe hash", 404)
           case x   => ResponseCreator.successResponse(jsonEncoder.checkpointEncoder(x.head).toString())
         }
     }

@@ -7,5 +7,7 @@ case class CheckpointBlock(
   notifications: Seq[String],
   observations: Seq[String],
   children: Long,
-  snapshotHash: String
+  snapshotHash: String,
+  soeHash: String,
+  parentSOEHashes: Seq[String]
 )

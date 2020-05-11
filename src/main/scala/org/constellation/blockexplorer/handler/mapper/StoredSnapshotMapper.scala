@@ -60,7 +60,9 @@ class StoredSnapshotMapper {
         Seq.empty[String],
         Seq.empty[String],
         checkpointCache.children.toLong,
-        storedSnapshot.snapshot.hash
+        storedSnapshot.snapshot.hash,
+        checkpointCache.checkpointBlock.soeHash,
+        checkpointCache.checkpointBlock.parentSOEHashes
       )
     })
 
