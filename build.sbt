@@ -89,6 +89,7 @@ lazy val versions = new {
   val TwitterChillVersion           =       "0.9.3"
   val TypesafeVersion               =       "1.4.0"
   val EnumeratumVersion             =       "1.5.23"
+  val ConstellationNodeJarVersion   =       "2.8.1"
 }
 
 lazy val sharedDependencies = Seq(
@@ -114,6 +115,7 @@ lazy val apiDependencies = Seq(
 ) ++ sharedDependencies
 
 lazy val schemaDependencies = Seq(
+  "org.constellation"               % "cl-node"                     % versions.ConstellationNodeJarVersion from s"https://github.com/Constellation-Labs/constellation/releases/download/v${versions.ConstellationNodeJarVersion}/cl-node.jar",
   "com.beachape" %% "enumeratum-circe" % versions.EnumeratumVersion
 )
 
@@ -122,6 +124,7 @@ lazy val configDependencies = Seq(
 )
 
 lazy val rootDependencies = Seq(
+  "org.constellation"               % "cl-node"                     % versions.ConstellationNodeJarVersion from s"https://github.com/Constellation-Labs/constellation/releases/download/v${versions.ConstellationNodeJarVersion}/cl-node.jar",
   "com.amazonaws"                   % "aws-java-sdk-s3"             % versions.AwsJavaSdkS3Version,
   "com.amazonaws"                   % "aws-java-sdk-sqs"            % versions.AwsJavaSdkSQSVersion,
   "com.amazonaws"                   % "aws-lambda-java-core"        % versions.AwsLambdaJavaCoreVersion,
@@ -143,7 +146,6 @@ lazy val root = (project in file("."))
     buildInfoOptions := Seq(BuildInfoOption.BuildTime, BuildInfoOption.ToMap),
     projectSettings,
     libraryDependencies ++= rootDependencies,
-    unmanagedJars in Compile += file("cl-node.jar"),
     mainClass := Some("org.constellation.blockexplorer.handler.RequestHandler")
   )
 
@@ -153,7 +155,6 @@ lazy val schema = (project in file("schema"))
     buildInfoKeys := Seq[BuildInfoKey](version),
     buildInfoPackage := "org.constellation.blockexplorer.schema",
     buildInfoOptions ++= Seq(BuildInfoOption.BuildTime, BuildInfoOption.ToMap),
-    unmanagedJars in Compile += file("cl-node.jar"),
     libraryDependencies ++= schemaDependencies
   )
 
