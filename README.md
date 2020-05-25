@@ -2,8 +2,6 @@
 
 ### How to build
 
-1. Create `lib` directory in root directory.
+1. Set proper version of `ConstellationNodeJarVersion` in `build.sbt`
 
-2. Copy the build constellation jar `constellation-assembly-1.0.12.jar` to the `lib` directory.
-
-3. Build with a command `sbt assembly`
+2. Build with a command `sbt assembly`
