@@ -24,10 +24,10 @@ class StoredSnapshotMapper {
           )
         }, {
           val d = transaction.edge.data
-          TransactionEdgeData(d.amount, LastTransactionRef(d.lastTxRef.hash, d.lastTxRef.ordinal), d.fee, d.salt)
+          TransactionEdgeData(d.amount, LastTransactionRef(d.lastTxRef.prevHash, d.lastTxRef.ordinal), d.fee, d.salt)
         }
       ),
-      lastTxRef = LastTransactionRef(transaction.lastTxRef.hash, transaction.lastTxRef.ordinal),
+      lastTxRef = LastTransactionRef(transaction.lastTxRef.prevHash, transaction.lastTxRef.ordinal),
       isDummy = transaction.isDummy,
       isTest = transaction.isTest
     )
@@ -43,7 +43,7 @@ class StoredSnapshotMapper {
             t.src.hash,
             t.fee.getOrElse(0),
             t.isDummy,
-            LastTransactionRef(t.lastTxRef.hash, t.lastTxRef.ordinal),
+            LastTransactionRef(t.lastTxRef.prevHash, t.lastTxRef.ordinal),
             storedSnapshot.snapshot.hash,
             b.checkpointBlock.baseHash,
             mapOriginalTransaction(t)
