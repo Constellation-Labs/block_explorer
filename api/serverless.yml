@@ -1,0 +1,23 @@
+service: api
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: us-west-1
+
+functions:
+  snapshots:
+    handler: handler.snapshots
+    events:
+      - http: GET snapshots
+  checkpoints:
+    handler: handler.checkpoints
+    events:
+      - http: GET checkpoints
+  transactions:
+    handler: handler.transactions
+    events:
+      - http: GET transactions
+
+plugins:
+  - serverless-plugin-typescript
