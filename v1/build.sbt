@@ -115,7 +115,6 @@ lazy val apiDependencies = Seq(
 ) ++ sharedDependencies
 
 lazy val schemaDependencies = Seq(
-  "org.constellation"               % "cl-node"                     % versions.ConstellationNodeJarVersion from s"https://github.com/Constellation-Labs/constellation/releases/download/v${versions.ConstellationNodeJarVersion}/cl-node.jar",
   "com.beachape" %% "enumeratum-circe" % versions.EnumeratumVersion
 )
 
