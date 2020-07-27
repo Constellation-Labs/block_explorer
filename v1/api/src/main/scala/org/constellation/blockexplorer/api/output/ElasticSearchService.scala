@@ -45,7 +45,7 @@ class ElasticSearchService(configLoader: ConfigLoader) {
   def findTransactionForSender(address: String): Response[SearchResponse] =
     client.execute {
       search(configLoader.elasticsearchTransactionsIndex)
-        .query(termQuery("sender", address))
+        .query(matchQuery("sender", address))
         .size(10000)
         .sortByFieldDesc("lastTransactionRef.ordinal")
     }.await
@@ -53,7 +53,7 @@ class ElasticSearchService(configLoader: ConfigLoader) {
   def findTransactionForReceiver(address: String): Response[SearchResponse] =
     client.execute {
       search(configLoader.elasticsearchTransactionsIndex)
-        .query(termQuery("receiver", address))
+        .query(matchQuery("receiver", address))
         .size(10000)
         .sortByFieldDesc("lastTransactionRef.ordinal")
     }.await
