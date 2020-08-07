@@ -70,10 +70,10 @@ class ElasticSearchService(configLoader: ConfigLoader) {
         .sortByFieldDesc("lastTransactionRef.ordinal")
     }
 
-  def findTransactionForSnapshot(snapshot: String): Response[SearchResponse] =
+  def findTransactionForSnapshotHash(hash: String): Response[SearchResponse] =
     executeWithFallback {
       search(configLoader.elasticsearchTransactionsIndex)
-        .query(matchQuery("snapshotHash", snapshot))
+        .query(matchQuery("snapshotHash", hash))
         .size(10000)
         .sortByFieldDesc("lastTransactionRef.ordinal")
     }
