@@ -54,6 +54,8 @@ object Handler extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayPro
         transactionController.findByReceiver(queryParams.get("receiver"))
       case x if x.matches("""/transactions""") && containsQueryParam(queryParams, "address") =>
         transactionController.findByAddress(queryParams.get("address"))
+      case x if x.matches("""/transactions""") && containsQueryParam(queryParams, "snapshot") =>
+        transactionController.findBySnapshot(queryParams.get("snapshot"))
       case x if x.matches("""/checkpoints""") && containsQueryParam(queryParams, "soe") =>
         checkpointBlockController.findBySoe(queryParams.get("soe"))
       case x if x.matches("""/checkpoints/.*""") => checkpointBlockController.findBy(params.get("id"))

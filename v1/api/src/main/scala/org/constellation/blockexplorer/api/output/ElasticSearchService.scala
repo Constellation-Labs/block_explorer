@@ -71,6 +71,14 @@ class ElasticSearchService(configLoader: ConfigLoader) {
         .sortByFieldDesc("lastTransactionRef.ordinal")
     }.await
 
+  def findTransactionForSnapshot(snapshot: String): Response[SearchResponse] =
+    executeWithFallback {
+      search(configLoader.elasticsearchTransactionsIndex)
+        .query(matchQuery("snapshotHash", snapshot))
+        .size(10000)
+        .sortByFieldDesc("lastTransactionRef.ordinal")
+    }.await
+
   private def executeWithFallback(searchRequest: SearchRequest): Future[Response[SearchResponse]] =
     client.execute(searchRequest).fallbackTo(clientV2.execute(searchRequest))
 }
