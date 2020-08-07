@@ -65,4 +65,12 @@ class ElasticSearchService(configLoader: ConfigLoader) {
         .size(10000)
         .sortByFieldDesc("lastTransactionRef.ordinal")
     }.await
+
+  def findTransactionForSnapshot(snapshot: String): Response[SearchResponse] =
+    client.execute {
+      search(configLoader.elasticsearchTransactionsIndex)
+        .query(matchQuery("snapshotHash", snapshot))
+        .size(10000)
+        .sortByFieldDesc("lastTransactionRef.ordinal")
+    }.await
 }
