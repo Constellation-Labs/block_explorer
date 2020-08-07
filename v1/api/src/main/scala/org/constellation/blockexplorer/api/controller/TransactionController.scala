@@ -58,6 +58,17 @@ class TransactionController(
         }
     }
 
+  def findBySnapshot(snapshot: String): APIGatewayProxyResponseEvent =
+    elasticSearchService.findTransactionForSnapshot(snapshot) match {
+      case RequestFailure(status, body, headers, error) =>
+        ResponseCreator.errorResponse("ElasticSearch service error", 500)
+      case RequestSuccess(status, body, headers, result) =>
+        extractTransactionsFrom(body) match {
+          case Nil => ResponseCreator.errorResponse("Cannot find transactions for snapshot", 404)
+          case x   => ResponseCreator.successResponse(jsonEncoder.transactionsToJson(x).getOrElse("""[]""").toString)
+        }
+    }
+
   def extractTransactionsFrom(body: Option[String]): Seq[Transaction] =
     body
       .flatMap(response => jsonExtractor.extractTransactionsEsResult(response))
