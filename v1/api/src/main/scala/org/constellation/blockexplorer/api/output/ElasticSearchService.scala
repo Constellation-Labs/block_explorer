@@ -7,6 +7,9 @@ import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties, RequestSuccess,
 import io.circe.parser.parse
 import org.constellation.blockexplorer.config.ConfigLoader
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 class ElasticSearchService(configLoader: ConfigLoader) {
 
   private val client = ElasticClient(
@@ -46,28 +49,25 @@ class ElasticSearchService(configLoader: ConfigLoader) {
       search(configLoader.elasticsearchCheckpointBlocksIndex).query(termQuery("soeHash", id)).size(-1)
     }
 
-  def findTransactionForSender(address: String): Response[SearchResponse] =
-    executeWithFallback {
+  def findTransactionForSender(address: String): Seq[Response[SearchResponse]] =
+    executeWithMerging {
       search(configLoader.elasticsearchTransactionsIndex)
         .query(matchQuery("sender", address))
         .size(10000)
-        .sortByFieldDesc("lastTransactionRef.ordinal")
     }
 
-  def findTransactionForReceiver(address: String): Response[SearchResponse] =
-    executeWithFallback {
+  def findTransactionForReceiver(address: String): Seq[Response[SearchResponse]] =
+    executeWithMerging {
       search(configLoader.elasticsearchTransactionsIndex)
         .query(matchQuery("receiver", address))
         .size(10000)
-        .sortByFieldDesc("lastTransactionRef.ordinal")
     }
 
-  def findTransactionForAddress(address: String): Response[SearchResponse] =
-    executeWithFallback {
+  def findTransactionForAddress(address: String): Seq[Response[SearchResponse]] =
+    executeWithMerging {
       search(configLoader.elasticsearchTransactionsIndex)
         .query(multiMatchQuery(address))
         .size(10000)
-        .sortByFieldDesc("lastTransactionRef.ordinal")
     }
 
   def findTransactionForSnapshotHash(hash: String): Response[SearchResponse] =
@@ -77,6 +77,20 @@ class ElasticSearchService(configLoader: ConfigLoader) {
         .size(10000)
         .sortByFieldDesc("lastTransactionRef.ordinal")
     }
+
+  private def executeWithMerging(searchRequest: SearchRequest): Seq[Response[SearchResponse]] = {
+    val responses = Future.sequence(
+      Seq(
+        client.execute(searchRequest),
+        clientV2.execute(searchRequest)
+      )
+        .map(_.map(Some(_)))
+        .map(_.fallbackTo(Future.successful(None)))
+    )
+      .map(_.flatten)
+
+    responses.await
+  }
 
   private def executeWithFallback(searchRequest: SearchRequest): Response[SearchResponse] = {
     val response = client.execute(searchRequest).await
