@@ -1,7 +1,8 @@
 package org.constellation.blockexplorer.api.controller
 
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
-import com.sksamuel.elastic4s.{RequestFailure, RequestSuccess}
+import com.sksamuel.elastic4s.requests.searches.SearchResponse
+import com.sksamuel.elastic4s.{RequestFailure, RequestSuccess, Response}
 import org.constellation.blockexplorer.api.ResponseCreator
 import org.constellation.blockexplorer.api.mapper.{JsonEncoder, JsonExtractor}
 import org.constellation.blockexplorer.api.output.ElasticSearchService
@@ -27,10 +28,10 @@ class TransactionController(
 
   def findBySender(address: String): APIGatewayProxyResponseEvent =
     elasticSearchService.findTransactionForSender(address) match {
-      case RequestFailure(status, body, headers, error) =>
+      case xs if xs.forall(_.isError) =>
         ResponseCreator.errorResponse("ElasticSearch service error", 500)
-      case RequestSuccess(status, body, headers, result) =>
-        extractTransactionsFrom(body) match {
+      case xs =>
+        extractMergeAndSortTransactions(xs) match {
           case Nil => ResponseCreator.errorResponse("Cannot find transactions for sender", 404)
           case x   => ResponseCreator.successResponse(jsonEncoder.transactionsToJson(x).getOrElse("""[]""").toString)
         }
@@ -38,10 +39,10 @@ class TransactionController(
 
   def findByReceiver(address: String): APIGatewayProxyResponseEvent =
     elasticSearchService.findTransactionForReceiver(address) match {
-      case RequestFailure(status, body, headers, error) =>
+      case xs if xs.forall(_.isError) =>
         ResponseCreator.errorResponse("ElasticSearch service error", 500)
-      case RequestSuccess(status, body, headers, result) =>
-        extractTransactionsFrom(body) match {
+      case xs =>
+        extractMergeAndSortTransactions(xs) match {
           case Nil => ResponseCreator.errorResponse("Cannot find transactions for receiver", 404)
           case x   => ResponseCreator.successResponse(jsonEncoder.transactionsToJson(x).getOrElse("""[]""").toString)
         }
@@ -49,10 +50,10 @@ class TransactionController(
 
   def findByAddress(address: String): APIGatewayProxyResponseEvent =
     elasticSearchService.findTransactionForAddress(address) match {
-      case RequestFailure(status, body, headers, error) =>
+      case xs if xs.forall(_.isError) =>
         ResponseCreator.errorResponse("ElasticSearch service error", 500)
-      case RequestSuccess(status, body, headers, result) =>
-        extractTransactionsFrom(body) match {
+      case xs =>
+        extractMergeAndSortTransactions(xs) match {
           case Nil => ResponseCreator.errorResponse("Cannot find transactions for address", 404)
           case x   => ResponseCreator.successResponse(jsonEncoder.transactionsToJson(x).getOrElse("""[]""").toString)
         }
@@ -97,4 +98,12 @@ class TransactionController(
     body
       .flatMap(response => jsonExtractor.extractTransactionsEsResult(response))
       .getOrElse(Seq.empty)
+
+  def extractMergeAndSortTransactions(xs: Seq[Response[SearchResponse]]): Seq[Transaction] =
+    xs
+      .collect { case RequestSuccess(_, body, _, _) => body }
+      .flatMap(extractTransactionsFrom)
+      .distinct
+      .sortBy(_.lastTransactionRef.ordinal)
+      .reverse
 }
