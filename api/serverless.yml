@@ -4,12 +4,20 @@ provider:
   name: aws
   runtime: nodejs12.x
   region: us-west-1
+  environment:
+    ELASTIC_SEARCH: 'http://localhost:9200'
+    SLS_DEBUG: '*'
 
 functions:
   snapshots:
     handler: handler.snapshots
     events:
-      - http: GET snapshots
+      - http:
+        path: snapshots/{term}
+        method: GET
+        parameters:
+          paths:
+            term: true
   checkpoints:
     handler: handler.checkpoints
     events:

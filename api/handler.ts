@@ -1,10 +1,20 @@
-const toResponse = <A>(body: A) => ({
-    statusCode: 200,
-    body: JSON.stringify(body)
-})
+import {getClient} from './elastic'
+import {getSnapshotHandler} from './service'
 
-export const snapshots = async event => toResponse(["snapshot1", "snapshot2"] )
 
-export const checkpoints = async event => toResponse(["checkpoint1", "checkpoint2"] )
+const toResponse = <A>(body: A) => {
+    const client = getClient()
 
-export const transactions = async event => toResponse(["transaction1", "transaction2"] )
+    return {
+        statusCode: 200,
+        body: JSON.stringify(body)
+    }
+}
+
+const client = getClient()
+
+export const snapshots = async event => getSnapshotHandler(event, client)()
+
+export const checkpoints = async event => toResponse(["checkpoint1", "checkpoint2"])
+
+export const transactions = async event => toResponse(["transaction1", "transaction2"])
