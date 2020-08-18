@@ -36,6 +36,15 @@ functions:
         parameters:
           paths:
             term: true
+  transactionsBySnapshot:
+    handler: handler.transactionsBySnapshot
+    events:
+      - http:
+        path: snapshot/{term}/transaction
+        method: GET
+        parameters:
+          paths:
+            term: true
 
 plugins:
   - serverless-plugin-typescript

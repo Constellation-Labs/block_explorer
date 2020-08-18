@@ -1,7 +1,7 @@
 import {ApiResponse, Client} from '@elastic/elasticsearch'
-import {chain, left, right, TaskEither, tryCatch} from 'fp-ts/lib/TaskEither'
+import {chain, left, map, right, TaskEither, tryCatch} from 'fp-ts/lib/TaskEither'
 import {ApplicationError, StatusCodes} from './http'
-import {CheckpointBlock, Snapshot, Transaction} from './model'
+import {CheckpointBlock, Snapshot, Sort, SortOrder, Transaction, WithTimestamp} from './model'
 import {pipe} from 'fp-ts/lib/pipeable'
 import {TransportRequestPromise} from '@elastic/elasticsearch/lib/Transport'
 
@@ -16,30 +16,24 @@ export const getClient = (): Client => {
     return new Client({node: process.env.ELASTIC_SEARCH})
 }
 
-const getByHashQuery = (index: string, hash: string) => (es: Client) =>
+const getByFieldQuery = <T extends WithTimestamp>(
+    index: string,
+    field: keyof T,
+    value: string,
+    size: number = 1,
+    sort: Sort<T> = {field: 'timestamp', order: SortOrder.Desc}
+) => (es: Client) =>
     es.search({
         index,
         body: {
-            size: 1,
+            size,
+            sort: [
+                {[sort.field]: sort.order}
+            ],
             query: {
                 match: {
-                    hash: {
-                        query: hash,
-                    },
-                }
-            }
-        }
-    })
-
-const getByHeightQuery = (index: string, height: string) => (es: Client) =>
-    es.search({
-        index,
-        body: {
-            size: 1,
-            query: {
-                match: {
-                    height: {
-                        query: height,
+                    [field]: {
+                        query: value,
                     },
                 }
             }
@@ -66,18 +60,35 @@ const isHeight = (term: string): boolean => /^\d+$/.test(term)
 export const getSnapshot = (es: Client) => (term: string): TaskEither<ApplicationError, Snapshot> => {
     const esSearch = (isLatest(term)
         ? getLatestQuery(ESIndex.Snapshots)
-        : (isHeight(term) ? getByHeightQuery : getByHashQuery)(ESIndex.Snapshots, term))(es)
+        : getByFieldQuery<Snapshot>(ESIndex.Snapshots, isHeight(term) ? 'height' : 'hash', term))(es)
 
-    return execute(esSearch)
+    return findOne(esSearch)
 }
 
 export const getCheckpointBlock = (es: Client) => (term: string): TaskEither<ApplicationError, CheckpointBlock> =>
-    execute(getByHashQuery(ESIndex.CheckpointBlocks, term)(es))
+    findOne(getByFieldQuery<CheckpointBlock>(ESIndex.CheckpointBlocks, 'hash', term)(es))
 
 export const getTransaction = (es: Client) => (term: string): TaskEither<ApplicationError, Transaction> =>
-    execute(getByHashQuery(ESIndex.Transactions, term)(es))
+    findOne(getByFieldQuery<Transaction>(ESIndex.Transactions, 'hash', term)(es))
 
-const execute = (search: TransportRequestPromise<ApiResponse>) => pipe(
+export const getTransactionBySnapshot = (es: Client) => (term: string): TaskEither<ApplicationError, Transaction[]> => {
+    if (isHeight(term)) {
+        return pipe(
+            getSnapshot(es)(term),
+            chain(snapshot => getTransactionBySnapshot(es)(snapshot.hash))
+        )
+    }
+
+    return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, 'snapshotHash', term, -1)(es))
+}
+
+const findOne = (search: TransportRequestPromise<ApiResponse>) =>
+    pipe(
+        findAll(search),
+        map(s => s[0])
+    )
+
+const findAll = (search: TransportRequestPromise<ApiResponse>) => pipe(
     tryCatch<ApplicationError, any>(
         () => search.then(r => {
             return r.body.hits.hits
@@ -90,7 +101,7 @@ const execute = (search: TransportRequestPromise<ApiResponse>) => pipe(
     ),
     chain(hits => {
         if (hits.length > 0) {
-            return right(hits[0]._source)
+            return right(hits.map(h => h._source))
         }
 
         return left(
