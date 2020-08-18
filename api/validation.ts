@@ -54,19 +54,25 @@ const termIsNotNull = (event: APIGatewayEvent) => pipe(
         : right<ApplicationError, APIGatewayEvent>(event))
 )
 
-export const validateListSnapshotsEvent = (event: APIGatewayEvent) =>
+export const validateSnapshotsEvent = (event: APIGatewayEvent) =>
     pipe(
         of<ApplicationError, APIGatewayEvent>(event),
         chain(termIsNotNull)
     )
 
-export const validateListCheckpointBlocksEvent = (event: APIGatewayEvent) =>
+export const validateCheckpointBlocksEvent = (event: APIGatewayEvent) =>
     pipe(
         of<ApplicationError, APIGatewayEvent>(event),
         chain(termIsNotNull)
     )
 
-export const validateListTransactionsEvent = (event: APIGatewayEvent) =>
+export const validateTransactionsEvent = (event: APIGatewayEvent) =>
+    pipe(
+        of<ApplicationError, APIGatewayEvent>(event),
+        chain(termIsNotNull)
+    )
+
+export const validateAddressesEvent = (event: APIGatewayEvent) =>
     pipe(
         of<ApplicationError, APIGatewayEvent>(event),
         chain(termIsNotNull)

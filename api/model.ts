@@ -8,7 +8,7 @@ export enum SortOrder {
 }
 
 export type Sort<T> = {
-    field: keyof T
+    field: keyof T | string
     order: SortOrder
 }
 
