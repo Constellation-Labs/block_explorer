@@ -65,3 +65,9 @@ export const validateListCheckpointBlocksEvent = (event: APIGatewayEvent) =>
         of<ApplicationError, APIGatewayEvent>(event),
         chain(termIsNotNull)
     )
+
+export const validateListTransactionsEvent = (event: APIGatewayEvent) =>
+    pipe(
+        of<ApplicationError, APIGatewayEvent>(event),
+        chain(termIsNotNull)
+    )

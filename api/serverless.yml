@@ -30,7 +30,12 @@ functions:
   transactions:
     handler: handler.transactions
     events:
-      - http: GET transactions
+      - http:
+        path: transaction/{term}
+        method: GET
+        parameters:
+          paths:
+            term: true
 
 plugins:
   - serverless-plugin-typescript
