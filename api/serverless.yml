@@ -45,6 +45,33 @@ functions:
         parameters:
           paths:
             term: true
+  transactionsByAddress:
+    handler: handler.transactionsByAddress
+    events:
+      - http:
+        path: address/{term}/transaction
+        method: GET
+        parameters:
+          paths:
+            term: true
+  transactionsBySender:
+    handler: handler.transactionsBySender
+    events:
+      - http:
+        path: address/{term}/transaction/sent
+        method: GET
+        parameters:
+          paths:
+            term: true
+  transactionsByReceiver:
+    handler: handler.transactionsByReceiver
+    events:
+      - http:
+        path: address/{term}/transaction/received
+        method: GET
+        parameters:
+          paths:
+            term: true
 
 plugins:
   - serverless-plugin-typescript
