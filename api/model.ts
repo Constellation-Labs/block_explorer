@@ -1,9 +1,22 @@
+export type WithTimestamp = {
+    timestamp: string
+}
+
+export enum SortOrder {
+    Desc = 'desc',
+    Asc = 'asc'
+}
+
+export type Sort<T> = {
+    field: keyof T
+    order: SortOrder
+}
+
 export type Snapshot = {
     checkpointBlocks: string[]
     hash: string
     height: number
-    timestamp: string
-}
+} & WithTimestamp
 
 export type CheckpointBlock = {
     hash: string
@@ -15,8 +28,7 @@ export type CheckpointBlock = {
     snapshotHash: string
     soeHash: string
     parentSOEHashes: string[]
-    timestamp: string
-}
+} & WithTimestamp
 
 export type Transaction = {
     hash: string
@@ -31,8 +43,8 @@ export type Transaction = {
     }
     snapshotHash: string
     checkpointBlock: string
-    transactionOriginal: unknown
-}
+    transactionOriginal: any
+} & WithTimestamp
 
 type Height = {
     min: number,
