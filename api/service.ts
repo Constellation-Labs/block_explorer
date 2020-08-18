@@ -3,8 +3,8 @@ import {ApplicationError, errorResponse, StatusCodes, successResponse} from './h
 import {APIGatewayEvent} from 'aws-lambda'
 import {chain, fold, taskEither, map} from 'fp-ts/lib/TaskEither'
 import {pipe} from 'fp-ts/lib/pipeable'
-import {getSnapshot} from './elastic'
-import {validateListSnapshotsEvent} from './validation'
+import {getSnapshot, getCheckpointBlock} from './elastic'
+import {validateListCheckpointBlocksEvent, validateListSnapshotsEvent} from './validation'
 
 export const getSnapshotHandler = (event: APIGatewayEvent, es: Client) =>
     pipe(
@@ -12,6 +12,18 @@ export const getSnapshotHandler = (event: APIGatewayEvent, es: Client) =>
         chain(validateListSnapshotsEvent),
         map(event => event.pathParameters!.term),
         chain(getSnapshot(es)),
+        fold(
+            reason => taskEither.of(errorResponse(reason)),
+            value => taskEither.of(successResponse(StatusCodes.OK)(value))
+        )
+    )
+
+export const getCheckpointBlocksHandler = (event: APIGatewayEvent, es: Client) =>
+    pipe(
+        taskEither.of<ApplicationError, APIGatewayEvent>(event),
+        chain(validateListCheckpointBlocksEvent),
+        map(event => event.pathParameters!.term),
+        chain(getCheckpointBlock(es)),
         fold(
             reason => taskEither.of(errorResponse(reason)),
             value => taskEither.of(successResponse(StatusCodes.OK)(value))
