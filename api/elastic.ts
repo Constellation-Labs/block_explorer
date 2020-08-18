@@ -1,7 +1,7 @@
 import {ApiResponse, Client} from '@elastic/elasticsearch'
 import {chain, left, right, TaskEither, tryCatch} from 'fp-ts/lib/TaskEither'
 import {ApplicationError, StatusCodes} from './http'
-import {CheckpointBlock, Snapshot} from './model'
+import {CheckpointBlock, Snapshot, Transaction} from './model'
 import {pipe} from 'fp-ts/lib/pipeable'
 import {TransportRequestPromise} from '@elastic/elasticsearch/lib/Transport'
 
@@ -73,6 +73,9 @@ export const getSnapshot = (es: Client) => (term: string): TaskEither<Applicatio
 
 export const getCheckpointBlock = (es: Client) => (term: string): TaskEither<ApplicationError, CheckpointBlock> =>
     execute(getByHashQuery(ESIndex.CheckpointBlocks, term)(es))
+
+export const getTransaction = (es: Client) => (term: string): TaskEither<ApplicationError, Transaction> =>
+    execute(getByHashQuery(ESIndex.Transactions, term)(es))
 
 const execute = (search: TransportRequestPromise<ApiResponse>) => pipe(
     tryCatch<ApplicationError, any>(

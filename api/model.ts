@@ -18,6 +18,22 @@ export type CheckpointBlock = {
     timestamp: string
 }
 
+export type Transaction = {
+    hash: string
+    amount: number
+    receiver: string
+    sender: string
+    fee: number
+    isDummy: boolean
+    lastTransactionRef: {
+        prevHash: string
+        ordinal: number
+    }
+    snapshotHash: string
+    checkpointBlock: string
+    transactionOriginal: unknown
+}
+
 type Height = {
     min: number,
     max: number
