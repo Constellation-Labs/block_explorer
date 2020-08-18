@@ -13,15 +13,20 @@ functions:
     handler: handler.snapshots
     events:
       - http:
-        path: snapshots/{term}
+        path: snapshot/{term}
         method: GET
         parameters:
           paths:
             term: true
-  checkpoints:
-    handler: handler.checkpoints
+  checkpoint-blocks:
+    handler: handler.checkpointBlocks
     events:
-      - http: GET checkpoints
+      - http:
+        path: checkpoint-block/{term}
+        method: GET
+        parameters:
+          paths:
+            term: true
   transactions:
     handler: handler.transactions
     events:
