@@ -3,5 +3,6 @@ package org.constellation.blockexplorer.schema
 case class Snapshot(
   hash: String,
   height: Long,
-  checkpointBlocks: Seq[String]
+  checkpointBlocks: Seq[String],
+  timestamp: String,
 )

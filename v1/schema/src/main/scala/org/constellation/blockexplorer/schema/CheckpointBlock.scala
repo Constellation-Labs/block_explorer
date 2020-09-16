@@ -9,5 +9,6 @@ case class CheckpointBlock(
   children: Long,
   snapshotHash: String,
   soeHash: String,
-  parentSOEHashes: Seq[String]
+  parentSOEHashes: Seq[String],
+  timestamp: String
 )
