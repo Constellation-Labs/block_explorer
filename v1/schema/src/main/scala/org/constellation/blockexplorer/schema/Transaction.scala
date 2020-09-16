@@ -68,5 +68,6 @@ case class Transaction(
   lastTransactionRef: LastTransactionRef,
   snapshotHash: String,
   checkpointBlock: String,
-  transactionOriginal: TransactionOriginal
+  transactionOriginal: TransactionOriginal,
+  timestamp: String
 )
