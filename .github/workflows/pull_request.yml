@@ -1,0 +1,31 @@
+on: pull_request
+
+name: API - pull request tests
+
+jobs:
+  test:
+    name: Pull request tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        working-directory: ./api
+        run: npm ci
+
+      - name: Compile
+        working-directory: ./api
+        run: npm run typecheck
+
+#      - name: Test
+#        working-directory: ./api
+#        run: npm test
