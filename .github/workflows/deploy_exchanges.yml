@@ -1,8 +1,10 @@
 on:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag'
+        required: true
+
 
 name: Deploy exchanges serverless
 
@@ -16,6 +18,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.version }}
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
