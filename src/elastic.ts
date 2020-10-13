@@ -1,7 +1,7 @@
 import {ApiResponse, Client} from '@elastic/elasticsearch'
 import {chain, left, right, TaskEither, tryCatch} from 'fp-ts/lib/TaskEither'
 import {ApplicationError, StatusCodes} from './http'
-import {CheckpointBlock, Snapshot, Sort, SortOrder, Transaction, WithTimestamp} from './model'
+import {CheckpointBlock, Snapshot, SortOrder, Transaction, WithTimestamp} from './model'
 import {pipe} from 'fp-ts/lib/pipeable'
 import {TransportRequestPromise} from '@elastic/elasticsearch/lib/Transport'
 
@@ -13,6 +13,7 @@ enum ESIndex {
 }
 
 const maxSizeLimit = 10000
+const sortField = 'timestamp'
 
 export const getClient = (): Client => {
     return new Client({node: process.env.ELASTIC_SEARCH})
@@ -31,8 +32,9 @@ const getByFieldQuery = <T extends WithTimestamp>(
     index: string,
     field: keyof T,
     value: string,
-    size: number = 1,
-    sort: Sort<T>[] = [{field: 'timestamp', order: SortOrder.Desc}]
+    size: number | null = 1,
+    searchAfter: number | null = 0,
+    order: SortOrder = SortOrder.Desc
 ) => (es: Client) =>
     field == 'hash'
         ? getDocumentQuery(index, value)(es)
@@ -40,7 +42,8 @@ const getByFieldQuery = <T extends WithTimestamp>(
             index,
             body: {
                 size,
-                sort: sort.map(s => ({ [s.field]: s.order })),
+                sort: {[sortField]: order},
+                search_after: [searchAfter],
                 query: {
                     match: {
                         [field]: {
@@ -55,14 +58,16 @@ const getMultiQuery = <T extends WithTimestamp>(
     index: string,
     fields: (keyof T)[],
     value: string,
-    size: number = 1,
-    sort: Sort<T>[] = [{field: 'timestamp', order: SortOrder.Desc}]
+    size: number | null = 1,
+    searchAfter: number | null = 0,
+    order: SortOrder = SortOrder.Desc
 ) => (es: Client) =>
     es.search({
         index,
         body: {
             size,
-            sort: sort.map(s => ({ [s.field]: s.order })),
+            sort: {[sortField]: order},
+            search_after: [searchAfter],
             query: {
                 multi_match: {
                     query: value,
@@ -103,33 +108,30 @@ export const getCheckpointBlock = (es: Client) => (term: string): TaskEither<App
 export const getTransaction = (es: Client) => (term: string): TaskEither<ApplicationError, Transaction> =>
     findOne(getByFieldQuery<Transaction>(ESIndex.Transactions, 'hash', term)(es))
 
-export const getTransactionBySnapshot = (es: Client) => (term: string): TaskEither<ApplicationError, Transaction[]> => {
+export const getTransactionBySnapshot = (es: Client) => (term: string, limit: number = maxSizeLimit, searchAfter: number = 0): TaskEither<ApplicationError, Transaction[]> => {
     if (isHeight(term)) {
         return pipe(
             getSnapshot(es)(term),
-            chain(snapshot => getTransactionBySnapshot(es)(snapshot.hash))
+            chain(snapshot => getTransactionBySnapshot(es)(snapshot.hash, limit, searchAfter))
         )
     }
 
-    return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, 'snapshotHash', term, maxSizeLimit)(es))
+    return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, 'snapshotHash', term, limit, searchAfter)(es))
 }
 
-export const getTransactionByAddress = (es: Client) => (term: string, field: 'receiver' | 'sender' | null = null): TaskEither<ApplicationError, Transaction[]> => {
-    const sortByTimestamp: Sort<Transaction> = { field: 'timestamp', order: SortOrder.Desc }
-    const sortByOrdinal: Sort<Transaction> = { field: 'lastTransactionRef.ordinal', order: SortOrder.Desc }
-
+export const getTransactionByAddress = (es: Client) => (term: string, field: 'receiver' | 'sender' | null = null, limit: number = maxSizeLimit, searchAfter: number = 0): TaskEither<ApplicationError, Transaction[]> => {
     if (!field) {
-        return findAll(getMultiQuery<Transaction>(ESIndex.Transactions, ['receiver', 'sender'], term, maxSizeLimit, [sortByTimestamp, sortByOrdinal])(es))
+        return findAll(getMultiQuery<Transaction>(ESIndex.Transactions, ['receiver', 'sender'], term, limit, searchAfter)(es))
     }
 
-    return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, field, term, maxSizeLimit, [sortByOrdinal])(es))
+    return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, field, term, limit, searchAfter)(es))
 }
 
-export const getTransactionBySender = (es: Client) => (term: string): TaskEither<ApplicationError, Transaction[]> =>
-    getTransactionByAddress(es)(term, 'sender')
+export const getTransactionBySender = (es: Client) => (term: string, limit: number = maxSizeLimit, searchAfter: number = 0): TaskEither<ApplicationError, Transaction[]> =>
+    getTransactionByAddress(es)(term, 'sender', limit, searchAfter)
 
-export const getTransactionByReceiver = (es: Client) => (term: string): TaskEither<ApplicationError, Transaction[]> =>
-    getTransactionByAddress(es)(term, 'receiver')
+export const getTransactionByReceiver = (es: Client) => (term: string, limit: number = maxSizeLimit, searchAfter: number = 0): TaskEither<ApplicationError, Transaction[]> =>
+    getTransactionByAddress(es)(term, 'receiver', limit, searchAfter)
 
 const findOne = (search: TransportRequestPromise<ApiResponse>) => pipe(
     tryCatch<ApplicationError, any>(

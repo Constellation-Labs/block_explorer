@@ -7,11 +7,6 @@ export enum SortOrder {
     Asc = 'asc'
 }
 
-export type Sort<T> = {
-    field: keyof T | string
-    order: SortOrder
-}
-
 export type Snapshot = {
     checkpointBlocks: string[]
     hash: string

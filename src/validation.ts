@@ -16,12 +16,12 @@ const bodyNotNull = (event: APIGatewayEvent) => {
     return right<ApplicationError, APIGatewayEvent>(event)
 }
 
-const queryParamsIsNull = (event: APIGatewayEvent) => {
-    if (event.queryStringParameters !== null) {
+const queryParamsIsNotNull = (event: APIGatewayEvent) => {
+    if (event.queryStringParameters === null) {
         return left<ApplicationError, APIGatewayEvent>(
             new ApplicationError(
                 'Error parsing request query params',
-                ['Query params should be empty'],
+                ['Query params should not be empty'],
                 StatusCodes.BAD_REQUEST
             )
         )
@@ -41,6 +41,18 @@ const pathParamsIsNotNull = (event: APIGatewayEvent) => {
     }
     return right<ApplicationError, APIGatewayEvent>(event)
 }
+
+const searchAfterAndLimitNeitherOrBothNull = (event: APIGatewayEvent) => pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(() => !event.queryStringParameters || !(!event.queryStringParameters!.search_after && !event.queryStringParameters!.limit)
+        ? right<ApplicationError, APIGatewayEvent>(event)
+        : left<ApplicationError, APIGatewayEvent>(
+            new ApplicationError(
+                'Error parsing request query params',
+                ['Both search_after and limit should not be empty'],
+                StatusCodes.BAD_REQUEST))
+    )
+)
 
 const termIsNotNull = (event: APIGatewayEvent) => pipe(
     of<ApplicationError, APIGatewayEvent>(event),
@@ -69,11 +81,13 @@ export const validateCheckpointBlocksEvent = (event: APIGatewayEvent) =>
 export const validateTransactionsEvent = (event: APIGatewayEvent) =>
     pipe(
         of<ApplicationError, APIGatewayEvent>(event),
-        chain(termIsNotNull)
+        chain(termIsNotNull),
+        chain(searchAfterAndLimitNeitherOrBothNull)
     )
 
 export const validateAddressesEvent = (event: APIGatewayEvent) =>
     pipe(
         of<ApplicationError, APIGatewayEvent>(event),
-        chain(termIsNotNull)
+        chain(termIsNotNull),
+        chain(searchAfterAndLimitNeitherOrBothNull)
     )
