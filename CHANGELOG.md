@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Pagination support
 ### Changed
 - Get by hash triggers document API
 - Max size limit when no pagination used
