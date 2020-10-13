@@ -12,6 +12,8 @@ enum ESIndex {
     Balances = 'balances'
 }
 
+const maxSizeLimit = 10000
+
 export const getClient = (): Client => {
     return new Client({node: process.env.ELASTIC_SEARCH})
 }
@@ -109,7 +111,7 @@ export const getTransactionBySnapshot = (es: Client) => (term: string): TaskEith
         )
     }
 
-    return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, 'snapshotHash', term, -1)(es))
+    return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, 'snapshotHash', term, maxSizeLimit)(es))
 }
 
 export const getTransactionByAddress = (es: Client) => (term: string, field: 'receiver' | 'sender' | null = null): TaskEither<ApplicationError, Transaction[]> => {
@@ -117,10 +119,10 @@ export const getTransactionByAddress = (es: Client) => (term: string, field: 're
     const sortByOrdinal: Sort<Transaction> = { field: 'lastTransactionRef.ordinal', order: SortOrder.Desc }
 
     if (!field) {
-        return findAll(getMultiQuery<Transaction>(ESIndex.Transactions, ['receiver', 'sender'], term, -1, [sortByTimestamp, sortByOrdinal])(es))
+        return findAll(getMultiQuery<Transaction>(ESIndex.Transactions, ['receiver', 'sender'], term, maxSizeLimit, [sortByTimestamp, sortByOrdinal])(es))
     }
 
-    return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, field, term, -1, [sortByOrdinal])(es))
+    return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, field, term, maxSizeLimit, [sortByOrdinal])(es))
 }
 
 export const getTransactionBySender = (es: Client) => (term: string): TaskEither<ApplicationError, Transaction[]> =>
