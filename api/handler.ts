@@ -11,10 +11,10 @@ import {
 
 const client = getClient()
 
-export const snapshots = async event => getSnapshotHandler(event, client)()
-export const checkpointBlocks = async event => getCheckpointBlocksHandler(event, client)()
-export const transactions = async event => getTransactionsHandler(event, client)()
-export const transactionsBySnapshot = async event => getTransactionsBySnapshotHandler(event, client)()
-export const transactionsByAddress = async event => getTransactionsByAddressHandler(event, client)()
-export const transactionsBySender = async event => getTransactionsBySenderHandler(event, client)()
-export const transactionsByReceiver = async event => getTransactionsByReceiverHandler(event, client)()
+export const snapshots = event => getSnapshotHandler(event, client)()
+export const checkpointBlocks = event => getCheckpointBlocksHandler(event, client)()
+export const transactions = event => getTransactionsHandler(event, client)()
+export const transactionsBySnapshot = event => getTransactionsBySnapshotHandler(event, client)()
+export const transactionsByAddress = event => getTransactionsByAddressHandler(event, client)()
+export const transactionsBySender = event => getTransactionsBySenderHandler(event, client)()
+export const transactionsByReceiver = event => getTransactionsByReceiverHandler(event, client)()

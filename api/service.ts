@@ -13,6 +13,7 @@ import {
     getTransactionBySnapshot
 } from './elastic'
 import {validateAddressesEvent, validateCheckpointBlocksEvent, validateSnapshotsEvent, validateTransactionsEvent} from './validation'
+import {task} from "fp-ts/lib/Task";
 
 export const getSnapshotHandler = (event: APIGatewayEvent, es: Client) =>
     pipe(
@@ -21,8 +22,8 @@ export const getSnapshotHandler = (event: APIGatewayEvent, es: Client) =>
         map(event => event.pathParameters!.term),
         chain(getSnapshot(es)),
         fold(
-            reason => taskEither.of(errorResponse(reason)),
-            value => taskEither.of(successResponse(StatusCodes.OK)(value))
+            reason => task.of(errorResponse(reason)),
+            value => task.of(successResponse(StatusCodes.OK)(value))
         )
     )
 
@@ -33,8 +34,8 @@ export const getCheckpointBlocksHandler = (event: APIGatewayEvent, es: Client) =
         map(event => event.pathParameters!.term),
         chain(getCheckpointBlock(es)),
         fold(
-            reason => taskEither.of(errorResponse(reason)),
-            value => taskEither.of(successResponse(StatusCodes.OK)(value))
+            reason => task.of(errorResponse(reason)),
+            value => task.of(successResponse(StatusCodes.OK)(value))
         )
     )
 
@@ -45,8 +46,8 @@ export const getTransactionsHandler = (event: APIGatewayEvent, es: Client) =>
         map(event => event.pathParameters!.term),
         chain(getTransaction(es)),
         fold(
-            reason => taskEither.of(errorResponse(reason)),
-            value => taskEither.of(successResponse(StatusCodes.OK)(value))
+            reason => task.of(errorResponse(reason)),
+            value => task.of(successResponse(StatusCodes.OK)(value))
         )
     )
 
@@ -57,8 +58,8 @@ export const getTransactionsBySnapshotHandler = (event: APIGatewayEvent, es: Cli
         map(event => event.pathParameters!.term),
         chain(getTransactionBySnapshot(es)),
         fold(
-            reason => taskEither.of(errorResponse(reason)),
-            value => taskEither.of(successResponse(StatusCodes.OK)(value))
+            reason => task.of(errorResponse(reason)),
+            value => task.of(successResponse(StatusCodes.OK)(value))
         )
     )
 
@@ -69,8 +70,8 @@ export const getTransactionsByAddressHandler = (event: APIGatewayEvent, es: Clie
         map(event => event.pathParameters!.term),
         chain(getTransactionByAddress(es)),
         fold(
-            reason => taskEither.of(errorResponse(reason)),
-            value => taskEither.of(successResponse(StatusCodes.OK)(value))
+            reason => task.of(errorResponse(reason)),
+            value => task.of(successResponse(StatusCodes.OK)(value))
         )
     )
 
@@ -81,8 +82,8 @@ export const getTransactionsBySenderHandler = (event: APIGatewayEvent, es: Clien
         map(event => event.pathParameters!.term),
         chain(getTransactionBySender(es)),
         fold(
-            reason => taskEither.of(errorResponse(reason)),
-            value => taskEither.of(successResponse(StatusCodes.OK)(value))
+            reason => task.of(errorResponse(reason)),
+            value => task.of(successResponse(StatusCodes.OK)(value))
         )
     )
 
@@ -93,7 +94,7 @@ export const getTransactionsByReceiverHandler = (event: APIGatewayEvent, es: Cli
         map(event => event.pathParameters!.term),
         chain(getTransactionByReceiver(es)),
         fold(
-            reason => taskEither.of(errorResponse(reason)),
-            value => taskEither.of(successResponse(StatusCodes.OK)(value))
+            reason => task.of(errorResponse(reason)),
+            value => task.of(successResponse(StatusCodes.OK)(value))
         )
     )
