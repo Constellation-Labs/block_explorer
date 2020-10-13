@@ -16,6 +16,15 @@ export const getClient = (): Client => {
     return new Client({node: process.env.ELASTIC_SEARCH})
 }
 
+const getDocumentQuery = <T extends WithTimestamp>(
+    index: string,
+    value: string,
+) => (es: Client) =>
+    es.get({
+        index,
+        id: value
+    })
+
 const getByFieldQuery = <T extends WithTimestamp>(
     index: string,
     field: keyof T,
@@ -23,20 +32,22 @@ const getByFieldQuery = <T extends WithTimestamp>(
     size: number = 1,
     sort: Sort<T>[] = [{field: 'timestamp', order: SortOrder.Desc}]
 ) => (es: Client) =>
-    es.search({
-        index,
-        body: {
-            size,
-            sort: sort.map(s => ({ [s.field]: s.order })),
-            query: {
-                match: {
-                    [field]: {
-                        query: value,
-                    },
+    field == 'hash'
+        ? getDocumentQuery(index, value)(es)
+        : es.search({
+            index,
+            body: {
+                size,
+                sort: sort.map(s => ({ [s.field]: s.order })),
+                query: {
+                    match: {
+                        [field]: {
+                            query: value,
+                        },
+                    }
                 }
             }
-        }
-    })
+        })
 
 const getMultiQuery = <T extends WithTimestamp>(
     index: string,
@@ -120,9 +131,11 @@ export const getTransactionByReceiver = (es: Client) => (term: string): TaskEith
 
 const findOne = (search: TransportRequestPromise<ApiResponse>) => pipe(
     tryCatch<ApplicationError, any>(
-        () => search.then(r => {
-            return r.body.hits.hits
-        }),
+        () => search.then(r =>
+            r.body.found
+                ? [r.body]
+                : r.body.hits.hits
+        ),
         err => new ApplicationError(
             'ElasticSearch error',
             [err as string],
