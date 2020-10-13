@@ -1,77 +1,64 @@
 service: api
 
+custom:
+  stage: ${opt:stage, 'local'}
+  env: ${file(env.yml):${self:custom.stage}, file(env.yml):default}
+
 provider:
   name: aws
   runtime: nodejs12.x
   region: us-west-1
+  stage: ${self:custom.stage}
   environment:
-    ELASTIC_SEARCH: 'http://localhost:9200'
+    ELASTIC_SEARCH: ${self:custom.env.elasticsearch}
     SLS_DEBUG: '*'
+  httpApi:
+    cors: true
+  vpc: ${self:custom.env.vpc}
 
 functions:
   snapshots:
     handler: handler.snapshots
     events:
-      - http:
-        path: snapshot/{term}
-        method: GET
-        parameters:
-          paths:
-            term: true
+      - httpApi:
+          path: /snapshot/{term}
+          method: GET
   checkpoint-blocks:
     handler: handler.checkpointBlocks
     events:
-      - http:
-        path: checkpoint-block/{term}
-        method: GET
-        parameters:
-          paths:
-            term: true
+      - httpApi:
+          path: /checkpoint-block/{term}
+          method: GET
   transactions:
     handler: handler.transactions
     events:
-      - http:
-        path: transaction/{term}
-        method: GET
-        parameters:
-          paths:
-            term: true
+      - httpApi:
+          path: /transaction/{term}
+          method: GET
   transactionsBySnapshot:
     handler: handler.transactionsBySnapshot
     events:
-      - http:
-        path: snapshot/{term}/transaction
-        method: GET
-        parameters:
-          paths:
-            term: true
+      - httpApi:
+          path: /snapshot/{term}/transaction
+          method: GET
   transactionsByAddress:
     handler: handler.transactionsByAddress
     events:
-      - http:
-        path: address/{term}/transaction
-        method: GET
-        parameters:
-          paths:
-            term: true
+      - httpApi:
+          path: /address/{term}/transaction
+          method: GET
   transactionsBySender:
     handler: handler.transactionsBySender
     events:
-      - http:
-        path: address/{term}/transaction/sent
-        method: GET
-        parameters:
-          paths:
-            term: true
+      - httpApi:
+          path: /address/{term}/transaction/sent
+          method: GET
   transactionsByReceiver:
     handler: handler.transactionsByReceiver
     events:
-      - http:
-        path: address/{term}/transaction/received
-        method: GET
-        parameters:
-          paths:
-            term: true
+      - httpApi:
+          path: /address/{term}/transaction/received
+          method: GET
 
 plugins:
   - serverless-plugin-typescript
