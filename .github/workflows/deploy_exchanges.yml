@@ -1,0 +1,43 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Deploy exchanges serverless
+
+jobs:
+  deploy:
+    name: Deploy serverless
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile
+        run: npm run typecheck
+
+      - name: Create env file
+        run: |
+          cat > env.yml << EOF
+          ${{ secrets.API_ENV }}
+          EOF
+
+      - name: Deploy
+        uses: serverless/github-action@master
+        with:
+          args: deploy --stage exchanges --region us-west-1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
