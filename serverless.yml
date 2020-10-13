@@ -19,43 +19,43 @@ provider:
 
 functions:
   snapshots:
-    handler: handler.snapshots
+    handler: src/handler.snapshots
     events:
       - httpApi:
           path: /snapshot/{term}
           method: GET
   checkpoint-blocks:
-    handler: handler.checkpointBlocks
+    handler: src/handler.checkpointBlocks
     events:
       - httpApi:
           path: /checkpoint-block/{term}
           method: GET
   transactions:
-    handler: handler.transactions
+    handler: src/handler.transactions
     events:
       - httpApi:
           path: /transaction/{term}
           method: GET
   transactionsBySnapshot:
-    handler: handler.transactionsBySnapshot
+    handler: src/handler.transactionsBySnapshot
     events:
       - httpApi:
           path: /snapshot/{term}/transaction
           method: GET
   transactionsByAddress:
-    handler: handler.transactionsByAddress
+    handler: src/handler.transactionsByAddress
     events:
       - httpApi:
           path: /address/{term}/transaction
           method: GET
   transactionsBySender:
-    handler: handler.transactionsBySender
+    handler: src/handler.transactionsBySender
     events:
       - httpApi:
           path: /address/{term}/transaction/sent
           method: GET
   transactionsByReceiver:
-    handler: handler.transactionsByReceiver
+    handler: src/handler.transactionsByReceiver
     events:
       - httpApi:
           path: /address/{term}/transaction/received

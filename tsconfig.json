@@ -16,6 +16,6 @@
     "types": [
       "node"
     ],
-    "rootDir": "./"
+    "rootDir": "./src"
   }
 }
