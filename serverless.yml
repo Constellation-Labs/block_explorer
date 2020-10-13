@@ -15,6 +15,7 @@ provider:
   httpApi:
     cors: true
   vpc: ${self:custom.env.vpc}
+  versionFunctions: false
 
 functions:
   snapshots:

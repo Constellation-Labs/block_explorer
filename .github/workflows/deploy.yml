@@ -29,11 +29,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        working-directory: ./api
         run: npm ci
 
       - name: Compile
-        working-directory: ./api
         run: npm run typecheck
 
       - name: Upload release assets
@@ -47,14 +45,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create env file
-        working-directory: ./api
         run: |
           cat > env.yml << EOF
           ${{ secrets.API_ENV }}
           EOF
 
       - name: Deploy
-        working-direcotry: ./api
         uses: serverless/github-action@master
         with:
           args: deploy --stage mainnet --region us-west-1
