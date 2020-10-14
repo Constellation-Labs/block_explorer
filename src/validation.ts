@@ -2,6 +2,13 @@ import {APIGatewayEvent} from 'aws-lambda'
 import {ApplicationError, StatusCodes} from './http'
 import {chain, left, of, right, TaskEither} from 'fp-ts/lib/TaskEither'
 import {pipe} from 'fp-ts/lib/pipeable'
+import {Lens} from "monocle-ts";
+
+const pathParams = Lens.fromNullableProp<APIGatewayEvent>()('pathParameters', {})
+type PathParams = NonNullable<APIGatewayEvent['pathParameters']>
+
+const queryParams = Lens.fromNullableProp<APIGatewayEvent>()('queryStringParameters', {})
+type QueryParams = NonNullable<APIGatewayEvent['queryStringParameters']>
 
 const bodyNotNull = (event: APIGatewayEvent) => {
     if (event.body === null) {
@@ -17,7 +24,7 @@ const bodyNotNull = (event: APIGatewayEvent) => {
 }
 
 const queryParamsIsNotNull = (event: APIGatewayEvent) => {
-    if (event.queryStringParameters === null) {
+    if (Object.keys(queryParams.get(event)).length == 0) {
         return left<ApplicationError, APIGatewayEvent>(
             new ApplicationError(
                 'Error parsing request query params',
@@ -30,7 +37,7 @@ const queryParamsIsNotNull = (event: APIGatewayEvent) => {
 }
 
 const pathParamsIsNotNull = (event: APIGatewayEvent) => {
-    if (event.pathParameters === null) {
+    if (Object.keys(pathParams.get(event)).length == 0) {
         return left<ApplicationError, APIGatewayEvent>(
             new ApplicationError(
                 'Error parsing request path params',
@@ -44,20 +51,28 @@ const pathParamsIsNotNull = (event: APIGatewayEvent) => {
 
 const searchAfterAndLimitNeitherOrBothNull = (event: APIGatewayEvent) => pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(() => !event.queryStringParameters || !(!event.queryStringParameters!.search_after && !event.queryStringParameters!.limit)
-        ? right<ApplicationError, APIGatewayEvent>(event)
-        : left<ApplicationError, APIGatewayEvent>(
-            new ApplicationError(
-                'Error parsing request query params',
-                ['Both search_after and limit should not be empty'],
-                StatusCodes.BAD_REQUEST))
+    chain(() => {
+        const searchAfter = queryParams.compose(Lens.fromProp<QueryParams>()('search_after')).get(event)
+        const limit = queryParams.compose(Lens.fromProp<QueryParams>()('limit')).get(event)
+
+        const areBoth = searchAfter && limit
+        const areNone = !searchAfter && !limit
+
+        return areBoth || areNone
+            ? right<ApplicationError, APIGatewayEvent>(event)
+            : left<ApplicationError, APIGatewayEvent>(
+                new ApplicationError(
+                    'Error parsing request query params',
+                    ['Both search_after and limit should not be empty'],
+                    StatusCodes.BAD_REQUEST))
+        }
     )
 )
 
 const termIsNotNull = (event: APIGatewayEvent) => pipe(
     of<ApplicationError, APIGatewayEvent>(event),
     chain(pathParamsIsNotNull),
-    chain(() => event.pathParameters!.hash === null
+    chain(() => !pathParams.compose(Lens.fromProp<PathParams>()('term'))
         ? left<ApplicationError, APIGatewayEvent>(
             new ApplicationError(
                 'Error parsing request path params',
