@@ -2,7 +2,7 @@ import {APIGatewayEvent} from 'aws-lambda'
 import {ApplicationError, StatusCodes} from './http'
 import {chain, left, of, right, TaskEither} from 'fp-ts/lib/TaskEither'
 import {pipe} from 'fp-ts/lib/pipeable'
-import {Lens} from "monocle-ts";
+import {Lens} from 'monocle-ts'
 
 const pathParams = Lens.fromNullableProp<APIGatewayEvent>()('pathParameters', {})
 type PathParams = NonNullable<APIGatewayEvent['pathParameters']>
