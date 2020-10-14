@@ -23,7 +23,6 @@
     "monocle-ts": "^2.3.3"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
     "test": "jest"
   },
   "license": "MIT"

@@ -3,11 +3,11 @@ import {
     validateCheckpointBlocksEvent,
     validateSnapshotsEvent,
     validateTransactionsEvent
-} from '../src/validation';
-import {APIGatewayEvent} from 'aws-lambda';
-import {Lens} from 'monocle-ts';
-import {isLeft, right} from 'fp-ts/lib/Either';
-import {pipe} from 'fp-ts/lib/pipeable';
+} from '../src/validation'
+import {APIGatewayEvent} from 'aws-lambda'
+import {Lens} from 'monocle-ts'
+import {isLeft, right} from 'fp-ts/lib/Either'
+import {pipe} from 'fp-ts/lib/pipeable'
 
 const baseEvent: APIGatewayEvent = {
     httpMethod: 'get',
