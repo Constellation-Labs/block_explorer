@@ -33,10 +33,10 @@ const getByFieldQuery = <T extends WithTimestamp>(
     field: keyof T,
     value: string,
     size: number | null = 1,
-    searchAfter: number | null = 0,
-    order: SortOrder = SortOrder.Desc
+    searchAfter: number | null = +(new Date()),
+    order: SortOrder = SortOrder.Desc // TODO: searchAfter and order must be bounded (Desc -> current timestamp, Asc -> 0)
 ) => (es: Client) =>
-    field == 'hash'
+    field === 'hash'
         ? getDocumentQuery(index, value)(es)
         : es.search({
             index,
@@ -59,7 +59,7 @@ const getMultiQuery = <T extends WithTimestamp>(
     fields: (keyof T)[],
     value: string,
     size: number | null = 1,
-    searchAfter: number | null = 0,
+    searchAfter: number | null = +(new Date()),
     order: SortOrder = SortOrder.Desc
 ) => (es: Client) =>
     es.search({
@@ -109,7 +109,7 @@ export const getTransaction = (es: Client) => (term: string): TaskEither<Applica
     findOne(getByFieldQuery<Transaction>(ESIndex.Transactions, 'hash', term)(es))
 
 export const getTransactionBySnapshot = (es: Client) => (term: string, limit: number = maxSizeLimit, searchAfter: number = 0): TaskEither<ApplicationError, Transaction[]> => {
-    if (isHeight(term)) {
+    if (isHeight(term) || isLatest(term)) {
         return pipe(
             getSnapshot(es)(term),
             chain(snapshot => getTransactionBySnapshot(es)(snapshot.hash, limit, searchAfter))
