@@ -9,7 +9,8 @@
     "date-fns": "^2.16.1",
     "fp-ts": "^2.7.0",
     "serverless-plugin-typescript": "^1.1.9",
-    "typescript": "^3.9.5"
+    "typescript": "^3.9.5",
+    "monocle-ts": "^2.3.3"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
@@ -19,8 +20,7 @@
     "@types/jest": "^26.0.14",
     "@types/node": "^14.0.13",
     "babel-jest": "^26.5.2",
-    "jest": "^26.5.3",
-    "monocle-ts": "^2.3.3"
+    "jest": "^26.5.3"
   },
   "scripts": {
     "test": "jest"
