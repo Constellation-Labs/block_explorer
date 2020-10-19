@@ -96,13 +96,11 @@ export const validateCheckpointBlocksEvent = (event: APIGatewayEvent) =>
 export const validateTransactionsEvent = (event: APIGatewayEvent) =>
     pipe(
         of<ApplicationError, APIGatewayEvent>(event),
-        chain(termIsNotNull),
-        chain(searchAfterAndLimitNeitherOrBothNull)
+        chain(termIsNotNull)
     )
 
 export const validateAddressesEvent = (event: APIGatewayEvent) =>
     pipe(
         of<ApplicationError, APIGatewayEvent>(event),
-        chain(termIsNotNull),
-        chain(searchAfterAndLimitNeitherOrBothNull)
+        chain(termIsNotNull)
     )
