@@ -78,20 +78,22 @@ describe('validateTransactionsEvent', () => {
         expect(isLeft(result)).toBe(true)
     })
 
-    it('should not pass when searchAfter is provided but limit not', async () => {
+    it('should pass when searchAfter is provided but limit not', async () => {
         const event = pipe(baseEvent, setTerm('aa'), setSearchAfter('aa'))
 
         const result = await validateTransactionsEvent(event)()
+        const expected = right(event)
 
-        expect(isLeft(result)).toBe(true)
+        expect(result).toStrictEqual(expected)
     })
 
-    it('should not pass when limit is provided but searchAfter not', async () => {
+    it('should pass when limit is provided but searchAfter not', async () => {
         const event = pipe(baseEvent, setTerm('aa'), setLimit('12'))
 
         const result = await validateTransactionsEvent(event)()
+        const expected = right(event)
 
-        expect(isLeft(result)).toBe(true)
+        expect(result).toStrictEqual(expected)
     })
 
     it('should pass returning event when term in path parameter is present', async () => {
@@ -123,20 +125,22 @@ describe('validateAddressesEvent', () => {
         expect(isLeft(result)).toBe(true)
     })
 
-    it('should not pass when searchAfter is provided but limit not', async () => {
+    it('should pass when searchAfter is provided but limit not', async () => {
         const event = pipe(baseEvent, setTerm('aa'), setSearchAfter('aa'))
 
         const result = await validateAddressesEvent(event)()
+        const expected = right(event)
 
-        expect(isLeft(result)).toBe(true)
+        expect(result).toStrictEqual(expected)
     })
 
-    it('should not pass when limit is provided but searchAfter not', async () => {
+    it('should pass when limit is provided but searchAfter not', async () => {
         const event = pipe(baseEvent, setTerm('aa'), setLimit('12'))
 
         const result = await validateAddressesEvent(event)()
+        const expected = right(event)
 
-        expect(isLeft(result)).toBe(true)
+        expect(result).toStrictEqual(expected)
     })
 
     it('should pass returning event when term in path parameter is present', async () => {
