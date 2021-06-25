@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v2.0.3] 2021-06-25
+### Changed
+- Fetch checkpoint block by soe hash by default and fallback to search by base hash
+
 ## [v2.0.2] 2020-10-19
 ### Changed
 - Query parameters search_after and limit can be provided independently
