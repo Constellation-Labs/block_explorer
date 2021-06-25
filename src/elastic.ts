@@ -1,9 +1,10 @@
 import {ApiResponse, Client} from '@elastic/elasticsearch'
-import {chain, left, right, TaskEither, tryCatch} from 'fp-ts/lib/TaskEither'
+import {chain, fold, left, right, TaskEither, tryCatch} from 'fp-ts/lib/TaskEither'
 import {ApplicationError, StatusCodes} from './http'
 import {CheckpointBlock, Snapshot, SortOrder, Transaction, WithTimestamp} from './model'
 import {pipe} from 'fp-ts/lib/pipeable'
 import {TransportRequestPromise} from '@elastic/elasticsearch/lib/Transport'
+import {task, taskEither} from "fp-ts";
 
 enum ESIndex {
     Snapshots = 'snapshots',
@@ -102,8 +103,15 @@ export const getSnapshot = (es: Client) => (term: string): TaskEither<Applicatio
     return findOne(esSearch)
 }
 
-export const getCheckpointBlock = (es: Client) => (term: string): TaskEither<ApplicationError, CheckpointBlock> =>
-    findOne(getByFieldQuery<CheckpointBlock>(ESIndex.CheckpointBlocks, 'hash', term)(es))
+export const getCheckpointBlock = (es: Client) => (term: string): TaskEither<ApplicationError, CheckpointBlock> => {
+    return pipe(
+        findOne(getByFieldQuery<CheckpointBlock>(ESIndex.CheckpointBlocks, 'soeHash', term)(es)),
+        fold(
+            reason => findOne(getByFieldQuery<CheckpointBlock>(ESIndex.CheckpointBlocks, 'hash', term)(es)),
+            value => taskEither.of(value)
+        )
+    )
+}
 
 export const getTransaction = (es: Client) => (term: string): TaskEither<ApplicationError, Transaction> =>
     findOne(getByFieldQuery<Transaction>(ESIndex.Transactions, 'hash', term)(es))
