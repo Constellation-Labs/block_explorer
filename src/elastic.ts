@@ -127,19 +127,19 @@ export const getTransactionBySnapshot = (es: Client) => (term: string, limit: nu
     return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, 'snapshotHash', term, limit, searchAfter)(es))
 }
 
-export const getTransactionByAddress = (es: Client) => (term: string, field: 'receiver' | 'sender' | null = null, limit: number = maxSizeLimit, searchAfter: number = 0): TaskEither<ApplicationError, Transaction[]> => {
+export const getTransactionByAddress = (es: Client) => (term: string, field: 'receiver.keyword' | 'sender.keyword' | null = null, limit: number = maxSizeLimit, searchAfter: number = 0): TaskEither<ApplicationError, Transaction[]> => {
     if (!field) {
-        return findAll(getMultiQuery<Transaction>(ESIndex.Transactions, ['receiver', 'sender'], term, limit, searchAfter)(es))
+        return findAll(getMultiQuery<Transaction>(ESIndex.Transactions, ['receiver.keyword', 'sender.keyword'], term, limit, searchAfter)(es))
     }
 
     return findAll(getByFieldQuery<Transaction>(ESIndex.Transactions, field, term, limit, searchAfter)(es))
 }
 
 export const getTransactionBySender = (es: Client) => (term: string, limit: number = maxSizeLimit, searchAfter: number = 0): TaskEither<ApplicationError, Transaction[]> =>
-    getTransactionByAddress(es)(term, 'sender', limit, searchAfter)
+    getTransactionByAddress(es)(term, 'sender.keyword', limit, searchAfter)
 
 export const getTransactionByReceiver = (es: Client) => (term: string, limit: number = maxSizeLimit, searchAfter: number = 0): TaskEither<ApplicationError, Transaction[]> =>
-    getTransactionByAddress(es)(term, 'receiver', limit, searchAfter)
+    getTransactionByAddress(es)(term, 'receiver.keyword', limit, searchAfter)
 
 const findOne = (search: TransportRequestPromise<ApiResponse>) => pipe(
     tryCatch<ApplicationError, any>(
