@@ -2,6 +2,8 @@ export type WithTimestamp = {
     timestamp: string
 }
 
+export type WithKeyword<T> = { [P in keyof T & string as `${P}.keyword`]: T[P] };
+
 export enum SortOrder {
     Desc = 'desc',
     Asc = 'asc'
@@ -25,7 +27,7 @@ export type CheckpointBlock = {
     parentSOEHashes: string[]
 } & WithTimestamp
 
-export type Transaction = {
+type TransactionBase = {
     hash: string
     amount: number
     receiver: string
@@ -39,7 +41,9 @@ export type Transaction = {
     snapshotHash: string
     checkpointBlock: string
     transactionOriginal: any
-} & WithTimestamp
+}
+
+export type Transaction = TransactionBase & WithKeyword<TransactionBase> & WithTimestamp
 
 type Height = {
     min: number,
