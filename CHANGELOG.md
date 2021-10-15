@@ -2,7 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
-### Changed
+
+## [v2.0.4] 2021-10-15
+### Fixed
 - Fetch by address using keyword field
 
 ## [v2.0.3] 2021-06-25
