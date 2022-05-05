@@ -83,81 +83,53 @@ const getSnapshotQuery = <T>(
     includes: string[] = [],
     nestedBody?: QueryDslNestedQuery,
     size: number | null = 1
-) => (os: Client) => {
-    return (isLatest(predicateName, predicateValue)
+) => (os: Client) => (isLatest(predicateName, predicateValue)
         ? getLatestOrdinalQuery<T>(OSIndex.Snapshots, includes, nestedBody)(os)
         : getByFieldQuery<T>(OSIndex.Snapshots, predicateName, predicateValue, includes, nestedBody, size)(os))
-}
 
 function extractSnapshot(res: OpenSearchSnapshot[]): TaskEither<ApplicationError, Snapshot> {
     return pipe(
-        pipe(
-            O.fromNullable(res[0]),
-            O.map(baseSnapshot => { return { ...baseSnapshot, blocks: baseSnapshot.blocks.map(block => block.hash) } })),
+        O.fromNullable(res[0]),
+        O.map(baseSnapshot => ({ ...baseSnapshot, blocks: baseSnapshot.blocks.map(block => block.hash) })),
         fromOption(serverError))
 }
 
 function extractRewards(res: WithRewards[]): TaskEither<ApplicationError, RewardTransaction[]> {
     return pipe(
-        pipe(
-            O.fromNullable(res[0]),
-            O.map(withRewards => withRewards.rewards)),
+        O.fromNullable(res[0]),
+        O.map(withRewards => withRewards.rewards),
         fromOption(serverError))
 }
 
 function extractBlock(res: ExtractedResult<WithTimestamp & Hash, OpenSearchBlock>[]): TaskEither<ApplicationError, Block> {
     return pipe(
-        pipe(
-            O.fromNullable(res[0]),
-            O.chain(res => pipe(
-                O.fromNullable(res.inner[0]),
-                O.map(osBlock => {
-                    const snapshot = res.outer
+        O.fromNullable(res[0]),
+        O.chain(res => pipe(
+            O.fromNullable(res.inner[0]),
+            O.map(osBlock => {
+                const snapshot = res.outer
+                const transactions = osBlock.transactions.map(t => t.hash)
 
-                    return {
-                        hash: osBlock.hash,
-                        height: osBlock.height,
-                        transactions: osBlock.transactions.map(t => t.hash),
-                        parent: osBlock.parent,
-                        snapshot: snapshot.hash,
-                        timestamp: snapshot.timestamp
-                    }
-                }))),
-            fromOption(serverError)))
-}
-
-function extractBlock(res: ExtractedResult<WithTimestamp & Hash, OpenSearchBlock>[]): TaskEither<ApplicationError, Block> {
-    if (res.length == 1) {
-        if (res[0].inner.length == 1) {
-            const snapshot = res[0].outer
-            const osBlock = res[0].inner[0]
-            const block = {
-                hash: osBlock.hash,
-                height: osBlock.height,
-                transactions: osBlock.transactions.map(t => t.hash),
-                parent: osBlock.parent,
-                snapshot: snapshot.hash,
-                timestamp: snapshot.timestamp
-            }
-            return right(block)
-        }
-    }
-
-    return left(new ApplicationError(
-        "Not found",
-        ["Malformed data."],
-        StatusCodes.NOT_FOUND
-    ))
+                return {
+                    hash: osBlock.hash,
+                    height: osBlock.height,
+                    transactions: transactions,
+                    parent: osBlock.parent,
+                    snapshot: snapshot.hash,
+                    timestamp: snapshot.timestamp
+                }
+            }))),
+        fromOption(serverError))
 }
 
 function extractBalance(res: ExtractedResult<Ordinal, BalanceValue>[]): TaskEither<ApplicationError, Balance> {
     return pipe(
-        pipe(O.fromNullable(res[0]),
-            O.chain(res => pipe(
-                O.fromNullable(res.inner[0]),
-                O.map(balance => { return { ...res.outer, ...balance } })
-            )),
-            fromOption(serverError)))
+        O.fromNullable(res[0]),
+        O.chain(res => pipe(
+            O.fromNullable(res.inner[0]),
+            O.map(balance => ({ ...res.outer, ...balance }))
+        )),
+        fromOption(serverError))
 }
 
 const serverError = () => new ApplicationError(
