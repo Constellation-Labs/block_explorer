@@ -1,8 +1,9 @@
 import { ApiResponse, Client } from '@opensearch-project/opensearch'
 import { QueryDslNestedQuery, SearchResponse } from '@opensearch-project/opensearch/api/types'
 import { TransportRequestPromise } from '@opensearch-project/opensearch/lib/Transport'
+import * as O from 'fp-ts/lib/Option'
 import { pipe } from 'fp-ts/lib/pipeable'
-import { chain, left, right, TaskEither, tryCatch } from 'fp-ts/lib/TaskEither'
+import { chain, fromOption, TaskEither, tryCatch } from 'fp-ts/lib/TaskEither'
 import { ExtractedResult, extractInnerHits, extractOuterHits } from './extract'
 import { ApplicationError, StatusCodes } from './http'
 import { Balance, BalanceValue, Block, Hash, OpenSearchBlock, OpenSearchSnapshot, Ordinal, RewardTransaction, Snapshot, WithRewards, WithTimestamp } from './model'
@@ -89,31 +90,40 @@ const getSnapshotQuery = <T>(
 }
 
 function extractSnapshot(res: OpenSearchSnapshot[]): TaskEither<ApplicationError, Snapshot> {
-    if (res.length == 1) {
-        const baseSnapshot = res[0]
-        const snapshot = { ...baseSnapshot, blocks: baseSnapshot.blocks.map(block => block.hash) }
-        return right(snapshot)
-    }
-
-    return left(new ApplicationError(
-        "Not found",
-        ["Malformed data."],
-        StatusCodes.NOT_FOUND
-    ))
+    return pipe(
+        pipe(
+            O.fromNullable(res[0]),
+            O.map(baseSnapshot => { return { ...baseSnapshot, blocks: baseSnapshot.blocks.map(block => block.hash) } })),
+        fromOption(serverError))
 }
 
 function extractRewards(res: WithRewards[]): TaskEither<ApplicationError, RewardTransaction[]> {
-    if (res.length == 1) {
-        const withRewards = res[0]
-        const rewards = withRewards.rewards
-        return right(rewards)
-    }
+    return pipe(
+        pipe(
+            O.fromNullable(res[0]),
+            O.map(withRewards => withRewards.rewards)),
+        fromOption(serverError))
+}
 
-    return left(new ApplicationError(
-        "Not found",
-        ["Malformed data."],
-        StatusCodes.NOT_FOUND
-    ))
+function extractBlock(res: ExtractedResult<WithTimestamp & Hash, OpenSearchBlock>[]): TaskEither<ApplicationError, Block> {
+    return pipe(
+        pipe(
+            O.fromNullable(res[0]),
+            O.chain(res => pipe(
+                O.fromNullable(res.inner[0]),
+                O.map(osBlock => {
+                    const snapshot = res.outer
+
+                    return {
+                        hash: osBlock.hash,
+                        height: osBlock.height,
+                        transactions: osBlock.transactions.map(t => t.hash),
+                        parent: osBlock.parent,
+                        snapshot: snapshot.hash,
+                        timestamp: snapshot.timestamp
+                    }
+                }))),
+            fromOption(serverError)))
 }
 
 function extractBlock(res: ExtractedResult<WithTimestamp & Hash, OpenSearchBlock>[]): TaskEither<ApplicationError, Block> {
@@ -141,18 +151,20 @@ function extractBlock(res: ExtractedResult<WithTimestamp & Hash, OpenSearchBlock
 }
 
 function extractBalance(res: ExtractedResult<Ordinal, BalanceValue>[]): TaskEither<ApplicationError, Balance> {
-    if (res.length == 1) {
-        if (res[0].inner.length == 1) {
-            return right(Object.assign(res[0].outer, res[0].inner[0]))
-        }
-    }
-
-    return left(new ApplicationError(
-        "Not found",
-        ["Malformed data."],
-        StatusCodes.NOT_FOUND
-    ))
+    return pipe(
+        pipe(O.fromNullable(res[0]),
+            O.chain(res => pipe(
+                O.fromNullable(res.inner[0]),
+                O.map(balance => { return { ...res.outer, ...balance } })
+            )),
+            fromOption(serverError)))
 }
+
+const serverError = () => new ApplicationError(
+    "Server Error",
+    ["Malformed data."],
+    StatusCodes.SERVER_ERROR
+)
 
 const findOuter = <T>(search: TransportRequestPromise<ApiResponse<SearchResponse<T>>>) => pipe(
     find(search),
