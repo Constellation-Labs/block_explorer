@@ -5,15 +5,15 @@ import { pipe } from 'fp-ts/lib/pipeable'
 import { chain, left, right, TaskEither, tryCatch } from 'fp-ts/lib/TaskEither'
 import { ExtractedResult, extractInnerHits, extractOuterHits } from './extract'
 import { ApplicationError, StatusCodes } from './http'
-import { Balance, BalanceValue, OpenSearchSnapshot, Ordinal, RewardTransaction, Snapshot, WithRewards } from './model'
+import { Balance, BalanceValue, Block, Hash, OpenSearchBlock, OpenSearchSnapshot, Ordinal, RewardTransaction, Snapshot, WithRewards, WithTimestamp } from './model'
 import { fieldTerm, getByFieldNestedQuery, getLatestQuery, getQuery } from './queries'
 
-enum OSIndex {
-    Snapshots = 'snapshots_kris_1'
+const OSIndex = {
+    Snapshots: process.env.OPENSEARCH_INDEX!
 }
 
 export const getClient = (): Client => {
-    return new Client({ node: 'http://localhost:9501' })
+    return new Client({ node: process.env.OPENSEARCH_NODE })
 }
 
 export const getSnapshot = (os: Client) => (predicateName: string, predicateValue: string = 'latest'): TaskEither<ApplicationError, Snapshot> => {
@@ -30,6 +30,16 @@ export const getSnapshotRewards = (os: Client) => (predicateName: string, predic
     const osSearch = getSnapshotQuery<WithRewards>(predicateName, predicateValue, outerIncludes)(os)
 
     return pipe(findOuter(osSearch), chain(extractRewards))
+}
+
+export const getBlockByHash = (os: Client) => (hash: string): TaskEither<ApplicationError, Block> => {
+
+    const innerPath = 'blocks'
+    const nested = getByFieldNestedQuery(innerPath, 'hash', hash, ['hash', 'height', 'transactions', 'parent'])
+    const outerIncludes = ['hash', 'timestamp']
+    const osSearch = getAllQuery<WithRewards>(outerIncludes, nested)(os)
+
+    return pipe(findInner(innerPath)(osSearch), chain(extractBlock))
 }
 
 export const getBalanceByAddress = (os: Client) => (address: string, ordinal: string = 'latest'): TaskEither<ApplicationError, Balance> => {
@@ -53,6 +63,14 @@ const getByFieldQuery = <T>(
     return os.search<SearchResponse<T>>(getQuery(index, includes, fieldQuery, nestedBody, size))
 }
 
+const getAllQuery = <T>(
+    includes: string[] = [],
+    nestedBody?: QueryDslNestedQuery,
+    size: number | null = 1
+) => (os: Client) => {
+    return os.search<SearchResponse<T>>(getQuery(OSIndex.Snapshots, includes, undefined, nestedBody, size))
+}
+
 const getLatestOrdinalQuery = <T>(index: string, includes: string[] = [], nestedBody?: QueryDslNestedQuery) => (os: Client) =>
     os.search<SearchResponse<T>>(getLatestQuery(index, nestedBody, includes))
 
@@ -65,11 +83,9 @@ const getSnapshotQuery = <T>(
     nestedBody?: QueryDslNestedQuery,
     size: number | null = 1
 ) => (os: Client) => {
-    const osSearch = (isLatest(predicateName, predicateValue)
+    return (isLatest(predicateName, predicateValue)
         ? getLatestOrdinalQuery<T>(OSIndex.Snapshots, includes, nestedBody)(os)
         : getByFieldQuery<T>(OSIndex.Snapshots, predicateName, predicateValue, includes, nestedBody, size)(os))
-
-    return osSearch
 }
 
 function extractSnapshot(res: OpenSearchSnapshot[]): TaskEither<ApplicationError, Snapshot> {
@@ -91,6 +107,30 @@ function extractRewards(res: WithRewards[]): TaskEither<ApplicationError, Reward
         const withRewards = res[0]
         const rewards = withRewards.rewards
         return right(rewards)
+    }
+
+    return left(new ApplicationError(
+        "Not found",
+        ["Malformed data."],
+        StatusCodes.NOT_FOUND
+    ))
+}
+
+function extractBlock(res: ExtractedResult<WithTimestamp & Hash, OpenSearchBlock>[]): TaskEither<ApplicationError, Block> {
+    if (res.length == 1) {
+        if (res[0].inner.length == 1) {
+            const snapshot = res[0].outer
+            const osBlock = res[0].inner[0]
+            const block = {
+                hash: osBlock.hash,
+                height: osBlock.height,
+                transactions: osBlock.transactions.map(t => t.hash),
+                parent: osBlock.parent,
+                snapshot: snapshot.hash,
+                timestamp: snapshot.timestamp
+            }
+            return right(block)
+        }
     }
 
     return left(new ApplicationError(
@@ -126,7 +166,7 @@ const findInner = <T, U>(innerPath: string) => (search: TransportRequestPromise<
 
 const find = <T>(search: TransportRequestPromise<ApiResponse<SearchResponse<T>>>) =>
     tryCatch<ApplicationError, SearchResponse<T>>(
-        () => search.then(r => { return r.body }),
+        () => search.then(r => r.body),
         err => new ApplicationError(
             'ElasticSearch error',
             [err as string],
