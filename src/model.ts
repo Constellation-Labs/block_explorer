@@ -9,43 +9,46 @@ export enum SortOrder {
     Asc = 'asc'
 }
 
-export type Snapshot = {
-    checkpointBlocks: string[]
+export type Hash = {
     hash: string
-    height: number
-} & WithTimestamp
-
-export type CheckpointBlock = {
-    hash: string
-    height: Height
-    transactions: string[]
-    notifications: string[]
-    observations: string[]
-    children: number
-    snapshotHash: string
-    soeHash: string
-    parentSOEHashes: string[]
-} & WithTimestamp
-
-type TransactionBase = {
-    hash: string
-    amount: number
-    receiver: string
-    sender: string
-    fee: number
-    isDummy: boolean
-    lastTransactionRef: {
-        prevHash: string
-        ordinal: number
-    }
-    snapshotHash: string
-    checkpointBlock: string
-    transactionOriginal: any
 }
 
-export type Transaction = TransactionBase & WithKeyword<TransactionBase> & WithTimestamp
+export type Ordinal = {
+    ordinal: number
+}
+
+export type BalanceValue = {
+    balance: number
+}
+
+export type Balance = Ordinal & BalanceValue
 
 type Height = {
     min: number,
     max: number
+}
+
+export type BaseSnapshot = {
+    height: number,
+    subHeight: number,
+    lastSnapshotHash: string
+} & WithTimestamp & Ordinal & Hash
+
+export type BaseBlock = Hash
+
+export type OpenSearchSnapshot = {
+    blocks: BaseBlock[]
+} & BaseSnapshot
+
+export type Snapshot = {
+    blocks: string[]
+} & BaseSnapshot
+
+export type RewardTransaction = {
+    destination: string,
+    amount: number
+}
+
+export type WithRewards = {
+    rewards: RewardTransaction[]
 }

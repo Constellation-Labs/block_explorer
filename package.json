@@ -4,12 +4,12 @@
   "description": "",
   "main": "src/handler.ts",
   "dependencies": {
-    "@elastic/elasticsearch": "^7.7.1",
+    "@opensearch-project/opensearch": "^1.1.0",
     "aws-lambda": "^1.0.6",
     "date-fns": "^2.16.1",
     "fp-ts": "^2.7.0",
     "serverless-plugin-typescript": "^2.1.0",
-    "typescript": "^4.4.4",
+    "typescript": "^4.6.4",
     "monocle-ts": "^2.3.3"
   },
   "devDependencies": {
