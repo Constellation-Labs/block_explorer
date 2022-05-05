@@ -30,6 +30,12 @@ functions:
       - httpApi:
           path: /global-snapshot/latest/rewards
           method: GET
+  block:
+    handler: src/handler.block
+    events:
+      - httpApi:
+          path: /block/{hash}
+          method: GET
   balanceByAddress:
     handler: src/handler.balanceByAddress
     events:

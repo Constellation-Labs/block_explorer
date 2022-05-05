@@ -6,7 +6,8 @@ export const getQuery = (
     query?: QueryDslQueryContainer,
     nestedQuery?: QueryDslNestedQuery,
     size: number | null = 1) => {
-    const filters = nestedQuery ? [query, { nested: nestedQuery }] : [query]
+    const nested = nestedQuery ? { nested: nestedQuery } : undefined
+    const filters = [nested, query].filter((q) => q)
     return {
         index,
         body: {

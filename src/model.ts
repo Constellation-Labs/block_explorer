@@ -52,3 +52,27 @@ export type RewardTransaction = {
 export type WithRewards = {
     rewards: RewardTransaction[]
 }
+
+export type OpenSearchTransaction = {
+    hash: string
+}
+
+export type OpenSearchBlock = {
+    hash: string,
+    height: number,
+    transactions: OpenSearchTransaction[],
+    parent: BlockReference[]
+}
+
+export type BlockReference = {
+    hash: string,
+    height: number
+} 
+
+export type Block = {
+    hash: string,
+    height: number,
+    transactions: string[],
+    parent: BlockReference[],
+    snapshot: string,
+} & WithTimestamp

@@ -28,10 +28,7 @@ export function extractInnerHits<T, O>(innerPath: string, response: SearchRespon
 }
 
 function createResult<T, O>(outer: T, inner: O[]): ExtractedResult<T, O> {
-    return {
-        outer: outer,
-        inner: inner
-    }
+    return { outer, inner }
 }
 
 function getInnerHits(innerPath: string, innerHits?: Record<string, SearchInnerHitsResult>): TaskEither<ApplicationError, SearchInnerHitsResult> {

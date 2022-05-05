@@ -4,7 +4,7 @@ import { pipe } from 'fp-ts/lib/pipeable'
 import { task } from "fp-ts/lib/Task"
 import { chain, fold, map, taskEither } from 'fp-ts/lib/TaskEither'
 import { ApplicationError, errorResponse, StatusCodes, successResponse } from './http'
-import { getBalanceByAddress, getSnapshot, getSnapshotRewards } from './opensearch'
+import { getBalanceByAddress, getBlockByHash, getSnapshot, getSnapshotRewards } from './opensearch'
 import { validateAddressesEvent } from './validation'
 
 export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
@@ -31,23 +31,32 @@ export const getGlobalSnapshotRewards = (event: APIGatewayEvent, os: Client) =>
         )
     )
 
-export const getBalanceByAddressHandler = (event: APIGatewayEvent, os: Client) =>
+export const getBlock = (event: APIGatewayEvent, os: Client) =>
     pipe(
         taskEither.of<ApplicationError, APIGatewayEvent>(event),
         chain(validateAddressesEvent),
-        map(extractOrdinal),
-        chain(({ term, ordinal }) => getBalanceByAddress(os)(term, ordinal)),
+        map(extractHash),
+        chain(({ hash }) => getBlockByHash(os)(hash)),
         fold(
             reason => task.of(errorResponse(reason)),
             value => task.of(successResponse(StatusCodes.OK)(value))
         )
     )
 
-const extractOrdinal = (event: APIGatewayEvent) => {
-    return {
-        term: event.pathParameters!.term,
-        ordinal: (event.queryStringParameters && event.queryStringParameters!.ordinal) || undefined
-    }
+export const getBalanceByAddressHandler = (event: APIGatewayEvent, os: Client) =>
+    pipe(
+        taskEither.of<ApplicationError, APIGatewayEvent>(event),
+        chain(validateAddressesEvent),
+        map(extractAddressAndOrdinal),
+        chain(({ address, ordinal }) => getBalanceByAddress(os)(address, ordinal)),
+        fold(
+            reason => task.of(errorResponse(reason)),
+            value => task.of(successResponse(StatusCodes.OK)(value))
+        )
+    )
+
+const extractHash = (event: APIGatewayEvent) => {
+    return { hash: event.pathParameters!.term }
 }
 
 const extractTerm = (event: APIGatewayEvent) => {
@@ -57,9 +66,14 @@ const extractTerm = (event: APIGatewayEvent) => {
             termValue: 'latest'
         }
     return {
-        termName: isNumber(event.pathParameters!.term) ? 'ordinal' : 'hash',
+        termName: isNaN(Number(event.pathParameters!.term)) ? 'hash' : 'ordinal',
         termValue: event.pathParameters!.term
     }
 }
 
-const isNumber = (term: string): boolean => { return /^\d+$/.test(term) }
+const extractAddressAndOrdinal = (event: APIGatewayEvent) => {
+    return {
+        address: event.pathParameters!.term,
+        ordinal: event.queryStringParameters?.ordinal
+    }
+}
