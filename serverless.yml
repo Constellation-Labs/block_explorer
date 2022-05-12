@@ -10,7 +10,7 @@ provider:
   region: us-west-1
   stage: ${self:custom.stage}
   environment:
-    ELASTIC_SEARCH: ${self:custom.env.elasticsearch}
+    OPENSEARCH_NODE: ${self:custom.env.opensearch}
     SLS_DEBUG: '*'
   httpApi:
     cors: true
