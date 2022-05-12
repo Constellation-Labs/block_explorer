@@ -5,12 +5,12 @@ import { task } from "fp-ts/lib/Task"
 import { chain, fold, map, taskEither } from 'fp-ts/lib/TaskEither'
 import { ApplicationError, errorResponse, StatusCodes, successResponse } from './http'
 import { getBalanceByAddress, getBlockByHash, getSnapshot, getSnapshotRewards } from './opensearch'
-import { validateAddressesEvent } from './validation'
+import { validateAddressesEvent, validateSnapshotsEvent } from './validation'
 
 export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
     pipe(
         taskEither.of<ApplicationError, APIGatewayEvent>(event),
-        chain(validateAddressesEvent),
+        chain(validateSnapshotsEvent),
         map(extractTerm),
         chain(({ termName, termValue }) => getSnapshot(os)(termName, termValue)),
         fold(
@@ -22,7 +22,7 @@ export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
 export const getGlobalSnapshotRewards = (event: APIGatewayEvent, os: Client) =>
     pipe(
         taskEither.of<ApplicationError, APIGatewayEvent>(event),
-        chain(validateAddressesEvent),
+        chain(validateSnapshotsEvent),
         map(extractTerm),
         chain(({ termName, termValue }) => getSnapshotRewards(os)(termName, termValue)),
         fold(

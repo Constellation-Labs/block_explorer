@@ -7,18 +7,18 @@ export const getQuery = (
     nestedQuery?: QueryDslNestedQuery,
     size: number | null = 1) => {
     const nested = nestedQuery ? { nested: nestedQuery } : undefined
-    const filters = [nested, query].filter((q) => q)
+    const filter = [nested, query].filter(Boolean)
     return {
         index,
         body: {
             size,
             query: {
                 bool: {
-                    filter: filters
+                    filter,
                 }
             },
             _source: {
-                includes: includes
+                includes,
             }
         }
     }
@@ -26,7 +26,7 @@ export const getQuery = (
 
 export const getLatestQuery = (index: string, nestedQuery?: QueryDslNestedQuery, includes: string[] = []) => {
     const matchAll = { match_all: {} }
-    const filters = nestedQuery ? [matchAll, { nested: nestedQuery }] : [matchAll]
+    const filter = nestedQuery ? [matchAll, { nested: nestedQuery }] : [matchAll]
     return {
         index,
         body: {
@@ -36,11 +36,11 @@ export const getLatestQuery = (index: string, nestedQuery?: QueryDslNestedQuery,
             },
             query: {
                 bool: {
-                    filter: filters
+                    filter,
                 }
             },
             _source: {
-                includes: includes
+                includes,
             }
         }
     }
@@ -54,7 +54,7 @@ export const getByFieldNestedQuery = (
 ): QueryDslNestedQuery => {
     const query = {
         bool: {
-            filter: fieldTerm(path + '.' + term, value)
+            filter: fieldTerm(`${path}.${term}`, value)
         }
     }
     return getNestedQuery(path, includes, query)
@@ -68,7 +68,7 @@ export const getMatchAllNestedQuery = (
     return getNestedQuery(path, includes, query)
 }
 
-export const fieldTerm = (fieldName: string, fieldValue: string): QueryDslQueryContainer => {
+export const fieldTerm = (fieldName: string, fieldValue: string | number): QueryDslQueryContainer => {
     return { term: { [fieldName]: { value: fieldValue } } }
 }
 
@@ -85,7 +85,7 @@ const getNestedQuery = (path: string, includes: string[], query: QueryDslQueryCo
             seq_no_primary_term: false,
             explain: false,
             _source: {
-                includes: includes.map(name => path + '.' + name)
+                includes: includes.map(name => `${path}.${name}`)
             }
         }
     }
