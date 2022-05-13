@@ -13,14 +13,14 @@ import {
   Balance,
   BalanceValue,
   Block,
-  Hash,
   OpenSearchBlock,
   OpenSearchSnapshot,
+  OpenSearchTransaction,
   Ordinal,
   RewardTransaction,
   Snapshot,
+  Transaction,
   WithRewards,
-  WithTimestamp,
 } from "./model";
 import {
   fieldTerm,
@@ -44,9 +44,10 @@ export const getSnapshot =
   (os: Client) =>
   (
     predicateName: string,
-    predicateValue: string | number | "latest" = "latest"
+    predicateValue: string = "latest"
   ): TaskEither<ApplicationError, Snapshot> => {
-    const outerIncludes: (keyof Snapshot)[] = [
+    type OuterResult = OpenSearchSnapshot;
+    const outerIncludes: (keyof OuterResult)[] = [
       "ordinal",
       "hash",
       "height",
@@ -54,11 +55,17 @@ export const getSnapshot =
       "timestamp",
       "blocks",
     ];
-    const osSearch = getSnapshotQuery<OpenSearchSnapshot>(
+
+    const osSearch = getSnapshotQuery<OuterResult>(
       predicateName,
       predicateValue,
       outerIncludes
     )(os);
+
+    const extractSnapshot = (
+      res: OuterResult[]
+    ): TaskEither<ApplicationError, Snapshot> =>
+      pipe(O.fromNullable(res[0]), fromOption(serverError));
 
     return pipe(findOuter(osSearch), chain(extractSnapshot));
   };
@@ -67,7 +74,7 @@ export const getSnapshotRewards =
   (os: Client) =>
   (
     predicateName: string,
-    predicateValue: string | number | "latest" = "latest"
+    predicateValue: string = "latest"
   ): TaskEither<ApplicationError, RewardTransaction[]> => {
     const outerIncludes: (keyof (Snapshot & WithRewards))[] = ["rewards"];
     const osSearch = getSnapshotQuery<WithRewards>(
@@ -75,6 +82,17 @@ export const getSnapshotRewards =
       predicateValue,
       outerIncludes
     )(os);
+
+    const extractRewards = (
+      res: WithRewards[]
+    ): TaskEither<ApplicationError, RewardTransaction[]> =>
+      pipe(
+        pipe(
+          O.fromNullable(res[0]),
+          O.map((withRewards) => withRewards.rewards)
+        ),
+        fromOption(serverError)
+      );
 
     return pipe(findOuter(osSearch), chain(extractRewards));
   };
@@ -117,6 +135,49 @@ export const getBlockByHash =
     return pipe(findOuter(osSearch(os)), chain(extractBlock));
   };
 
+export const getTransactionByHash =
+  (os: Client) =>
+  (hash: string): TaskEither<ApplicationError, Transaction> => {
+    type OuterResult = Omit<OpenSearchTransaction, "snapshotOrdinal">;
+    const outerIncludes: (keyof OuterResult)[] = [
+      "hash",
+      "source",
+      "destination",
+      "amount",
+      "fee",
+      "parent",
+      "snapshotHash",
+      "blockHash",
+      "timestamp",
+    ];
+
+    const extractTransaction = (
+      res: OuterResult[]
+    ): TaskEither<ApplicationError, Transaction> =>
+      pipe(
+        O.fromNullable(res[0]),
+        O.map<OuterResult, Transaction>((osTx) => {
+          const { snapshotHash, blockHash, ...rest } = osTx;
+          return {
+            ...rest,
+            snapshot: snapshotHash,
+            block: blockHash,
+          } as Transaction;
+        }),
+        fromOption(serverError)
+      );
+
+    const osSearch = getByFieldQuery<OuterResult>(
+      OSIndex.Transactions,
+      "hash",
+      hash,
+      outerIncludes
+    );
+
+    return pipe(findOuter(osSearch(os)), chain(extractTransaction));
+  };
+
+// TODO
 export const getBalanceByAddress =
   (os: Client) =>
   (
@@ -141,7 +202,7 @@ const getByFieldQuery =
   <T>(
     index: string,
     field: string,
-    value: string | number | "latest",
+    value: string,
     includes: string[] = [],
     nestedBody?: QueryDslNestedQuery,
     size: number | null = 1
@@ -182,7 +243,7 @@ const isLatest = (
 const getSnapshotQuery =
   <T>(
     predicateName: string,
-    predicateValue: string | number | "latest",
+    predicateValue: string,
     includes: string[] = [],
     nestedBody?: QueryDslNestedQuery,
     size: number | null = 1
@@ -199,50 +260,6 @@ const getSnapshotQuery =
           size
         )(os);
   };
-
-function extractSnapshot(
-  res: OpenSearchSnapshot[]
-): TaskEither<ApplicationError, Snapshot> {
-  return pipe(O.fromNullable(res[0]), fromOption(serverError));
-}
-
-function extractRewards(
-  res: WithRewards[]
-): TaskEither<ApplicationError, RewardTransaction[]> {
-  return pipe(
-    pipe(
-      O.fromNullable(res[0]),
-      O.map((withRewards) => withRewards.rewards)
-    ),
-    fromOption(serverError)
-  );
-}
-
-function extractBlock(
-  res: ExtractedResult<WithTimestamp & Hash, OpenSearchBlock>[]
-): TaskEither<ApplicationError, Block> {
-  return pipe(
-    O.fromNullable(res[0]),
-    O.chain((res) =>
-      pipe(
-        O.fromNullable(res.inner[0]),
-        O.map((osBlock) => {
-          const snapshot = res.outer;
-
-          return {
-            hash: osBlock.hash,
-            height: osBlock.height,
-            transactions: osBlock.transactions.map((t) => t.hash),
-            parent: osBlock.parent,
-            snapshot: snapshot.hash,
-            timestamp: snapshot.timestamp,
-          };
-        })
-      )
-    ),
-    fromOption(serverError)
-  );
-}
 
 function extractBalance(
   res: ExtractedResult<Ordinal, BalanceValue>[]

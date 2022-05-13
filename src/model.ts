@@ -1,4 +1,4 @@
-export type WithTimestamp = {
+export type Timestamp = {
   timestamp: string;
 };
 
@@ -26,17 +26,16 @@ export type BalanceValue = {
 export type Balance = Ordinal & BalanceValue;
 
 type Height = {
-  min: number;
-  max: number;
+  height: number;
 };
 
 export type BaseSnapshot = {
-  height: number;
   subHeight: number;
   lastSnapshotHash: string;
-} & WithTimestamp &
+} & Timestamp &
   Ordinal &
-  Hash;
+  Hash &
+  Height;
 
 export type BaseBlock = Hash;
 
@@ -58,22 +57,42 @@ export type WithRewards = {
 };
 
 export type OpenSearchTransaction = {
-  hash: string;
-};
+  source: string;
+  destination: string;
+  amount: number;
+  fee: number;
+  parent: Hash & Ordinal;
+  blockHash: string;
+  snapshotHash: string;
+  snapshotOrdinal: string;
+  salt: number;
+} & Timestamp &
+  Hash;
+
+export type Transaction = {
+  source: string;
+  destination: string;
+  amount: number;
+  fee: number;
+  parent: Hash & Ordinal;
+  snapshot: string;
+  block: string;
+} & Timestamp &
+  Hash;
 
 export type OpenSearchBlock = {
-  hash: string;
   height: number;
   transactions: string[];
   parent: BlockReference[];
   snapshotHash: string;
   snapshotOrdinal: number;
-} & WithTimestamp;
+} & Timestamp &
+  Hash;
 
 export type BlockReference = {
   hash: string;
   height: number;
-};
+} & Hash;
 
 export type Block = {
   hash: string;
@@ -81,4 +100,4 @@ export type Block = {
   transactions: string[];
   parent: BlockReference[];
   snapshot: string;
-} & WithTimestamp;
+} & Timestamp;

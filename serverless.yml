@@ -36,6 +36,12 @@ functions:
       - httpApi:
           path: /block/{hash}
           method: GET
+  transaction:
+    handler: src/handler.transaction
+    events:
+      - httpApi:
+          path: /transaction/{hash}
+          method: GET
   balanceByAddress:
     handler: src/handler.balanceByAddress
     events:
