@@ -1,92 +1,107 @@
-import { QueryDslNestedQuery, QueryDslQueryContainer } from "@opensearch-project/opensearch/api/types"
+import {
+  QueryDslNestedQuery,
+  QueryDslQueryContainer,
+} from '@opensearch-project/opensearch/api/types';
 
 export const getQuery = (
-    index: string,
-    includes: string[] = [],
-    query?: QueryDslQueryContainer,
-    nestedQuery?: QueryDslNestedQuery,
-    size: number | null = 1) => {
-    const nested = nestedQuery ? { nested: nestedQuery } : undefined
-    const filter = [nested, query].filter(Boolean)
-    return {
-        index,
-        body: {
-            size,
-            query: {
-                bool: {
-                    filter,
-                }
-            },
-            _source: {
-                includes,
-            }
-        }
-    }
-}
+  index: string,
+  includes: string[] = [],
+  query?: QueryDslQueryContainer,
+  nestedQuery?: QueryDslNestedQuery,
+  size: number | null = 1
+) => {
+  const nested = nestedQuery ? { nested: nestedQuery } : undefined;
+  const filter = [nested, query].filter(Boolean);
+  return {
+    index,
+    body: {
+      size,
+      query: {
+        bool: {
+          filter,
+        },
+      },
+      _source: {
+        includes,
+      },
+    },
+  };
+};
 
-export const getLatestQuery = (index: string, nestedQuery?: QueryDslNestedQuery, includes: string[] = []) => {
-    const matchAll = { match_all: {} }
-    const filter = nestedQuery ? [matchAll, { nested: nestedQuery }] : [matchAll]
-    return {
-        index,
-        body: {
-            size: 1,
-            sort: {
-                ordinal: { order: "desc" }
-            },
-            query: {
-                bool: {
-                    filter,
-                }
-            },
-            _source: {
-                includes,
-            }
-        }
-    }
-}
+export const getLatestQuery = (
+  index: string,
+  nestedQuery?: QueryDslNestedQuery,
+  includes: string[] = []
+) => {
+  const matchAll = { match_all: {} };
+  const filter = nestedQuery ? [matchAll, { nested: nestedQuery }] : [matchAll];
+  return {
+    index,
+    body: {
+      size: 1,
+      sort: {
+        ordinal: { order: 'desc' },
+      },
+      query: {
+        bool: {
+          filter,
+        },
+      },
+      _source: {
+        includes,
+      },
+    },
+  };
+};
 
 export const getByFieldNestedQuery = (
-    path: string,
-    term: string,
-    value: string,
-    includes: string[]
+  path: string,
+  term: string,
+  value: string,
+  includes: string[]
 ): QueryDslNestedQuery => {
-    const query = {
-        bool: {
-            filter: fieldTerm(`${path}.${term}`, value)
-        }
-    }
-    return getNestedQuery(path, includes, query)
-}
+  const query = {
+    bool: {
+      filter: fieldTerm(`${path}.${term}`, value),
+    },
+  };
+  return getNestedQuery(path, includes, query);
+};
 
 export const getMatchAllNestedQuery = (
-    path: string,
-    includes: string[]
+  path: string,
+  includes: string[]
 ): QueryDslNestedQuery => {
-    const query = { match_all: {} }
-    return getNestedQuery(path, includes, query)
-}
+  const query = { match_all: {} };
+  return getNestedQuery(path, includes, query);
+};
 
-export const fieldTerm = (fieldName: string, fieldValue: string | number): QueryDslQueryContainer => {
-    return { term: { [fieldName]: { value: fieldValue } } }
-}
+export const fieldTerm = (
+  fieldName: string,
+  fieldValue: string
+): QueryDslQueryContainer => {
+  return { term: { [fieldName]: { value: fieldValue } } };
+};
 
-const getNestedQuery = (path: string, includes: string[], query: QueryDslQueryContainer): QueryDslNestedQuery => {
-    return {
-        path: path,
-        query: query,
-        ignore_unmapped: false,
-        inner_hits: {
-            ignore_unmapped: false,
-            from: 0,
-            size: 7,
-            version: false,
-            seq_no_primary_term: false,
-            explain: false,
-            _source: {
-                includes: includes.map(name => `${path}.${name}`)
-            }
-        }
-    }
-}
+const getNestedQuery = (
+  path: string,
+  includes: string[],
+  query: QueryDslQueryContainer
+): QueryDslNestedQuery => {
+  return {
+    path: path,
+    query: query,
+    ignore_unmapped: false,
+    inner_hits: {
+      ignore_unmapped: false,
+      from: 0,
+      size: 7,
+      version: false,
+      seq_no_primary_term: false,
+      explain: false,
+      _source: {
+        includes: includes.map((name) => `${path}.${name}`),
+      },
+    },
+  };
+};
