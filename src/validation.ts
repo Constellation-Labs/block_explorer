@@ -1,125 +1,149 @@
-import {APIGatewayEvent} from 'aws-lambda';
-import {ApplicationError, StatusCodes} from './http';
+import { APIGatewayEvent } from "aws-lambda";
+import { ApplicationError, StatusCodes } from "./http";
 import {
-    chain,
-    chainFirst,
-    left,
-    of,
-    right,
-    TaskEither,
-    fromOption,
-    fromPredicate,
-    map,
-} from 'fp-ts/lib/TaskEither';
-import * as O from 'fp-ts/lib/Option';
-import {pipe} from 'fp-ts/lib/pipeable';
-import {Lens, Optional} from 'monocle-ts';
-import {Either} from 'fp-ts/lib/Either';
+  chain,
+  chainFirst,
+  left,
+  of,
+  right,
+  TaskEither,
+  fromOption,
+  fromPredicate,
+  map,
+} from "fp-ts/lib/TaskEither";
+import * as O from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
+import { Lens, Optional } from "monocle-ts";
+import { Either } from "fp-ts/lib/Either";
 
 const pathParams = Lens.fromNullableProp<APIGatewayEvent>()(
-    'pathParameters',
-    {}
+  "pathParameters",
+  {}
 );
-type PathParams = NonNullable<APIGatewayEvent['pathParameters'] & {
-    term?: string
-}>;
+type PathParams = NonNullable<
+  APIGatewayEvent["pathParameters"] & {
+    term?: string;
+  }
+>;
 
 const queryParams = Lens.fromNullableProp<APIGatewayEvent>()(
-    'queryStringParameters',
-    {}
+  "queryStringParameters",
+  {}
 );
-type QueryParams = NonNullable<APIGatewayEvent['queryStringParameters']>;
+type QueryParams = NonNullable<APIGatewayEvent["queryStringParameters"]>;
 
 const bodyNotNull = (
-    event: APIGatewayEvent
+  event: APIGatewayEvent
 ): TaskEither<ApplicationError, APIGatewayEvent> =>
-    pipe(
-        O.of(event),
-        O.chainFirst(a => O.fromNullable(a.body)),
-        fromOption(
-            () =>
-                new ApplicationError(
-                    'Error parsing request body',
-                    ['Body cannot be empty'],
-                    StatusCodes.BAD_REQUEST
-                )
+  pipe(
+    O.of(event),
+    O.chainFirst((a) => O.fromNullable(a.body)),
+    fromOption(
+      () =>
+        new ApplicationError(
+          "Error parsing request body",
+          ["Body cannot be empty"],
+          StatusCodes.BAD_REQUEST
         )
-    );
+    )
+  );
 
 const queryParamsIsNotNull = (event: APIGatewayEvent) =>
-    fromPredicate(
-        () => Object.keys(queryParams.get(event)).length > 0,
-        () =>
-            new ApplicationError(
-                'Error parsing request query params',
-                ['Query params should not be empty'],
-                StatusCodes.BAD_REQUEST
-            )
-    )(event);
+  fromPredicate(
+    () => Object.keys(queryParams.get(event)).length > 0,
+    () =>
+      new ApplicationError(
+        "Error parsing request query params",
+        ["Query params should not be empty"],
+        StatusCodes.BAD_REQUEST
+      )
+  )(event);
 
 const pathParamsIsNotNull = (event: APIGatewayEvent) =>
-    fromPredicate(
-        () => Object.keys(pathParams.get(event)).length > 0,
-        () =>
-            new ApplicationError(
-                'Error parsing request path params',
-                ['Path params should not be empty'],
-                StatusCodes.BAD_REQUEST
-            )
-    )(event);
+  fromPredicate(
+    () => Object.keys(pathParams.get(event)).length > 0,
+    () =>
+      new ApplicationError(
+        "Error parsing request path params",
+        ["Path params should not be empty"],
+        StatusCodes.BAD_REQUEST
+      )
+  )(event);
 
 const searchAfterAndLimitNeitherOrBothNull = (event: APIGatewayEvent) =>
-    pipe(
-        of<ApplicationError, APIGatewayEvent>(event),
-        chain(() => {
-            const searchAfter = queryParams
-                .compose(Lens.fromProp<QueryParams>()('search_after'))
-                .get(event);
-            const limit = queryParams
-                .compose(Lens.fromProp<QueryParams>()('limit'))
-                .get(event);
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(() => {
+      const searchAfter = queryParams
+        .compose(Lens.fromProp<QueryParams>()("search_after"))
+        .get(event);
+      const limit = queryParams
+        .compose(Lens.fromProp<QueryParams>()("limit"))
+        .get(event);
 
-            const areBoth = searchAfter && limit;
-            const areNone = !searchAfter && !limit;
+      const areBoth = searchAfter && limit;
+      const areNone = !searchAfter && !limit;
 
-            return areBoth || areNone
-                ? right<ApplicationError, APIGatewayEvent>(event)
-                : left<ApplicationError, APIGatewayEvent>(
-                    new ApplicationError(
-                        'Error parsing request query params',
-                        ['Both search_after and limit should not be empty'],
-                        StatusCodes.BAD_REQUEST
-                    )
-                );
-        })
-    );
-
-const pathParamExists = (pathParam: keyof Partial<PathParams>) => (event: APIGatewayEvent) =>
-    pipe(
-        of<ApplicationError, APIGatewayEvent>(event),
-        chainFirst(pathParamsIsNotNull),
-        chainFirst(() => pipe(
-            pathParams
-                .composeOptional(Optional.fromPath<PathParams>()([pathParam]))
-                .getOption(event),
-            fromOption(() =>
-                new ApplicationError(
-                    'Error parsing request path params',
-                    [`${pathParam} param should not be empty`],
-                    StatusCodes.BAD_REQUEST
-                )
+      return areBoth || areNone
+        ? right<ApplicationError, APIGatewayEvent>(event)
+        : left<ApplicationError, APIGatewayEvent>(
+            new ApplicationError(
+              "Error parsing request query params",
+              ["Both search_after and limit should not be empty"],
+              StatusCodes.BAD_REQUEST
             )
-        ))
+          );
+    })
+  );
+
+const pathParamExists =
+  (pathParam: keyof Partial<PathParams>) => (event: APIGatewayEvent) =>
+    pipe(
+      of<ApplicationError, APIGatewayEvent>(event),
+      chainFirst(pathParamsIsNotNull),
+      chainFirst(() =>
+        pipe(
+          pathParams
+            .composeOptional(Optional.fromPath<PathParams>()([pathParam]))
+            .getOption(event),
+          fromOption(
+            () =>
+              new ApplicationError(
+                "Error parsing request path params",
+                [`${pathParam} param should not be empty`],
+                StatusCodes.BAD_REQUEST
+              )
+          )
+        )
+      )
     );
 
 export const validateSnapshotsEvent = (event: APIGatewayEvent) =>
-    pipe(of<ApplicationError, APIGatewayEvent>(event), chain(pathParamExists('term')));
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("term"))
+  );
 
 export const validateBlocksEvent = (event: APIGatewayEvent) =>
-    pipe(of<ApplicationError, APIGatewayEvent>(event), chain(pathParamExists('hash')));
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("hash"))
+  );
 
-export const validateTransactionsEvent = (event: APIGatewayEvent) =>
-    pipe(of<ApplicationError, APIGatewayEvent>(event), chain(pathParamExists('address')));
+export const validateTransactionByHashEvent = (event: APIGatewayEvent) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("hash"))
+  );
+
+export const validateTransactionByAddressEvent = (event: APIGatewayEvent) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("address"))
+  );
 
 export const validateAddressesEvent = (event: APIGatewayEvent) =>
-    pipe(of<ApplicationError, APIGatewayEvent>(event), chain(pathParamExists('term')));
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("term"))
+  );
