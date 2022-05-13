@@ -82,17 +82,39 @@ export const getSnapshotRewards =
 export const getBlockByHash =
   (os: Client) =>
   (hash: string): TaskEither<ApplicationError, Block> => {
-    const innerPath = "blocks";
-    const nested = getByFieldNestedQuery(innerPath, "hash", hash, [
+    type OuterResult = Omit<OpenSearchBlock, "snapshotOrdinal">;
+    const outerIncludes: (keyof OuterResult)[] = [
       "hash",
       "height",
       "transactions",
       "parent",
-    ]);
-    const outerIncludes: (keyof Block)[] = ["hash", "timestamp"];
-    const osSearch = getAllQuery<WithRewards>(outerIncludes, nested)(os);
+      "timestamp",
+      "snapshotHash",
+    ];
 
-    return pipe(findInner(innerPath)(osSearch), chain(extractBlock));
+    const extractBlock = (
+      res: OuterResult[]
+    ): TaskEither<ApplicationError, Block> =>
+      pipe(
+        O.fromNullable(res[0]),
+        O.map<OuterResult, Block>((osBlock) => {
+          const { snapshotHash, ...rest } = osBlock;
+          return {
+            ...rest,
+            snapshot: snapshotHash,
+          } as Block;
+        }),
+        fromOption(serverError)
+      );
+
+    const osSearch = getByFieldQuery<OuterResult>(
+      OSIndex.Blocks,
+      "hash",
+      hash,
+      outerIncludes
+    );
+
+    return pipe(findOuter(osSearch(os)), chain(extractBlock));
   };
 
 export const getBalanceByAddress =
