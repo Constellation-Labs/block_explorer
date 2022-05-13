@@ -7,8 +7,8 @@ export type WithKeyword<T> = {
 };
 
 export enum SortOrder {
-  Desc = 'desc',
-  Asc = 'asc',
+  Desc = "desc",
+  Asc = "asc",
 }
 
 export type Hash = {
@@ -64,9 +64,11 @@ export type OpenSearchTransaction = {
 export type OpenSearchBlock = {
   hash: string;
   height: number;
-  transactions: OpenSearchTransaction[];
+  transactions: string[];
   parent: BlockReference[];
-};
+  snapshotHash: string;
+  snapshotOrdinal: number;
+} & WithTimestamp;
 
 export type BlockReference = {
   hash: string;

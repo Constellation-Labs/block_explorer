@@ -10,7 +10,7 @@
     "fp-ts": "^2.7.0",
     "serverless-plugin-typescript": "^2.1.0",
     "typescript": "^4.6.4",
-    "monocle-ts": "^2.3.3"
+    "monocle-ts": "^2.3.13"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
