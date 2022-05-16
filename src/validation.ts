@@ -141,9 +141,3 @@ export const validateTransactionByAddressEvent = (event: APIGatewayEvent) =>
     of<ApplicationError, APIGatewayEvent>(event),
     chain(pathParamExists("address"))
   );
-
-export const validateAddressesEvent = (event: APIGatewayEvent) =>
-  pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists("term"))
-  );

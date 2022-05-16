@@ -1,84 +1,66 @@
-export type Timestamp = {
+export type WithTimestamp = {
   timestamp: string;
 };
 
-export type WithKeyword<T> = {
-  [P in keyof T & string as `${P}.keyword`]: T[P];
-};
-
-export enum SortOrder {
-  Desc = "desc",
-  Asc = "asc",
-}
-
-export type Hash = {
+export type WithHash = {
   hash: string;
 };
 
-export type Ordinal = {
+export type WithOrdinal = {
   ordinal: number;
+};
+
+export type WithSnapshotOrdinal = {
+  snapshotOrdinal: number;
+};
+
+export type WithSnapshotHash = {
+  snapshotHash: number;
 };
 
 export type BalanceValue = {
   balance: number;
 };
 
-export type Balance = Ordinal & BalanceValue;
+export type Balance = WithOrdinal & BalanceValue;
 
-type Height = {
+type WithHeight = {
   height: number;
 };
 
-export type BaseSnapshot = {
-  subHeight: number;
-  lastSnapshotHash: string;
-} & Timestamp &
-  Ordinal &
-  Hash &
-  Height;
-
-export type BaseBlock = Hash;
+export type BaseBlock = WithHash;
 
 export type OpenSearchSnapshot = {
+  subHeight: number;
+  lastSnapshotHash: string;
   blocks: string[];
-} & BaseSnapshot;
+  rewards: RewardTransaction[];
+} & WithTimestamp &
+  WithOrdinal &
+  WithHash &
+  WithHeight;
 
-export type Snapshot = {
-  blocks: string[];
-} & BaseSnapshot;
+export type Snapshot = OpenSearchSnapshot;
 
 export type RewardTransaction = {
   destination: string;
   amount: number;
 };
 
-export type WithRewards = {
-  rewards: RewardTransaction[];
-};
-
-export type OpenSearchTransaction = {
-  source: string;
-  destination: string;
-  amount: number;
-  fee: number;
-  parent: Hash & Ordinal;
-  blockHash: string;
-  snapshotHash: string;
-  snapshotOrdinal: string;
-  salt: number;
-} & Timestamp &
-  Hash;
-
 export type Transaction = {
   source: string;
   destination: string;
   amount: number;
   fee: number;
-  parent: Hash & Ordinal;
-  snapshot: string;
-  block: string;
-} & Timestamp &
-  Hash;
+  parent: WithHash & WithOrdinal;
+  blockHash: string;
+  snapshotHash: string;
+  snapshotOrdinal: string;
+  salt: number;
+} & WithTimestamp &
+  WithSnapshotHash &
+  WithSnapshotOrdinal &
+  WithHash;
 
 export type OpenSearchBlock = {
   height: number;
@@ -86,18 +68,11 @@ export type OpenSearchBlock = {
   parent: BlockReference[];
   snapshotHash: string;
   snapshotOrdinal: number;
-} & Timestamp &
-  Hash;
+} & WithTimestamp &
+  WithSnapshotOrdinal &
+  WithSnapshotHash &
+  WithHash;
 
-export type BlockReference = {
-  hash: string;
-  height: number;
-} & Hash;
+export type BlockReference = WithHash & WithHeight;
 
-export type Block = {
-  hash: string;
-  height: number;
-  transactions: string[];
-  parent: BlockReference[];
-  snapshot: string;
-} & Timestamp;
+export type Block = OpenSearchBlock;
