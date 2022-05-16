@@ -1,7 +1,7 @@
 import {
-  validateAddressesEvent,
   validateBlocksEvent,
   validateSnapshotsEvent,
+  validateTransactionByAddressEvent,
   validateTransactionByHashEvent,
 } from "../src/validation";
 import { APIGatewayEvent } from "aws-lambda";
@@ -128,37 +128,41 @@ describe("validateTransactionByHashEvent", () => {
   });
 });
 
-describe("validateAddressesEvent", () => {
+describe("validateTransactionByAddressEvent", () => {
   it("should not pass when no term in path parameter is provided", async () => {
     const event = pipe(baseEvent, setLimit("2"), setSearchAfter("aa"));
 
-    const result = await validateAddressesEvent(event)();
+    const result = await validateTransactionByAddressEvent(event)();
 
     expect(isLeft(result)).toBe(true);
   });
 
   it("should pass when searchAfter is provided but limit not", async () => {
-    const event = pipe(baseEvent, setTerm("aa"), setSearchAfter("aa"));
+    const event = pipe(
+      baseEvent,
+      setParam("address", "123"),
+      setSearchAfter("aa")
+    );
 
-    const result = await validateAddressesEvent(event)();
+    const result = await validateTransactionByAddressEvent(event)();
     const expected = right(event);
 
     expect(result).toStrictEqual(expected);
   });
 
   it("should pass when limit is provided but searchAfter not", async () => {
-    const event = pipe(baseEvent, setTerm("aa"), setLimit("12"));
+    const event = pipe(baseEvent, setParam("address", "123"), setLimit("12"));
 
-    const result = await validateAddressesEvent(event)();
+    const result = await validateTransactionByAddressEvent(event)();
     const expected = right(event);
 
     expect(result).toStrictEqual(expected);
   });
 
   it("should pass returning event when term in path parameter is present", async () => {
-    const event = setTerm("123")(baseEvent);
+    const event = setParam("address", "123")(baseEvent);
 
-    const result = await validateAddressesEvent(event)();
+    const result = await validateTransactionByAddressEvent(event)();
     const expected = right(event);
 
     expect(result).toStrictEqual(expected);
@@ -167,12 +171,12 @@ describe("validateAddressesEvent", () => {
   it("should pass returning event when both searchAfter and limit are provided", async () => {
     const event = pipe(
       baseEvent,
-      setTerm("term"),
+      setParam("address", "123"),
       setSearchAfter("aa"),
       setLimit("2")
     );
 
-    const result = await validateAddressesEvent(event)();
+    const result = await validateTransactionByAddressEvent(event)();
     const expected = right(event);
 
     expect(result).toStrictEqual(expected);

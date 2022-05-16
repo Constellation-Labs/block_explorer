@@ -42,11 +42,23 @@ functions:
       - httpApi:
           path: /transaction/{hash}
           method: GET
-  balanceByAddress:
-    handler: src/handler.balanceByAddress
+  transactionsByAddress:
+    handler: src/handler.transactionsByAddress
     events:
       - httpApi:
-          path: /address/{term}/balance
+          path: /address/{address}/transaction
+          method: GET
+  transactionsBySource:
+    handler: src/handler.transactionsBySource
+    events:
+      - httpApi:
+          path: /address/{address}/transaction/sent
+          method: GET
+  transactionsByDestination:
+    handler: src/handler.transactionsByDestination
+    events:
+      - httpApi:
+          path: /address/{address}/transaction/received
           method: GET
 
 plugins:

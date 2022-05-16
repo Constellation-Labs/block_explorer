@@ -9,26 +9,29 @@ import {
   StatusCodes,
   successResponse,
 } from "./http";
+
 import {
-  getBalanceByAddress,
-  getBlockByHash,
-  getSnapshot,
-  getSnapshotRewards,
-  getTransactionByHash,
-} from "./opensearch";
-import {
-  validateAddressesEvent,
   validateBlocksEvent,
   validateSnapshotsEvent,
+  validateTransactionByAddressEvent,
   validateTransactionByHashEvent,
 } from "./validation";
+import {
+  findBlockByHash,
+  findSnapshot,
+  findSnapshotRewards,
+  findTransactionByHash,
+  findTransactionsByAddress,
+  findTransactionsByDestination,
+  findTransactionsBySource,
+} from "./opensearch";
 
 export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
   pipe(
     taskEither.of<ApplicationError, APIGatewayEvent>(event),
     chain(validateSnapshotsEvent),
     map(extractTerm),
-    chain(({ termName, termValue }) => getSnapshot(os)(termName, termValue)),
+    chain(({ termName, termValue }) => findSnapshot(os)(termValue)),
     fold(
       (reason) => task.of(errorResponse(reason)),
       (value) => task.of(successResponse(StatusCodes.OK)(value))
@@ -38,11 +41,7 @@ export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
 export const getGlobalSnapshotRewards = (event: APIGatewayEvent, os: Client) =>
   pipe(
     taskEither.of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateSnapshotsEvent),
-    map(extractTerm),
-    chain(({ termName, termValue }) =>
-      getSnapshotRewards(os)(termName, termValue)
-    ),
+    chain(() => findSnapshotRewards(os)),
     fold(
       (reason) => task.of(errorResponse(reason)),
       (value) => task.of(successResponse(StatusCodes.OK)(value))
@@ -54,7 +53,45 @@ export const getBlock = (event: APIGatewayEvent, os: Client) =>
     taskEither.of<ApplicationError, APIGatewayEvent>(event),
     chain(validateBlocksEvent),
     map(extractHash),
-    chain(({ hash }) => getBlockByHash(os)(hash)),
+    chain(({ hash }) => findBlockByHash(os)(hash)),
+    fold(
+      (reason) => task.of(errorResponse(reason)),
+      (value) => task.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+export const getTransactionsByAddress = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    taskEither.of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateTransactionByAddressEvent),
+    map(extractAddress),
+    chain(({ address }) => findTransactionsByAddress(os)(address)),
+    fold(
+      (reason) => task.of(errorResponse(reason)),
+      (value) => task.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getTransactionsBySource = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    taskEither.of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateTransactionByAddressEvent),
+    map(extractAddress),
+    chain(({ address }) => findTransactionsBySource(os)(address)),
+    fold(
+      (reason) => task.of(errorResponse(reason)),
+      (value) => task.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getTransactionsByDestination = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    taskEither.of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateTransactionByAddressEvent),
+    map(extractAddress),
+    chain(({ address }) => findTransactionsByDestination(os)(address)),
     fold(
       (reason) => task.of(errorResponse(reason)),
       (value) => task.of(successResponse(StatusCodes.OK)(value))
@@ -66,22 +103,7 @@ export const getTransaction = (event: APIGatewayEvent, os: Client) =>
     taskEither.of<ApplicationError, APIGatewayEvent>(event),
     chain(validateTransactionByHashEvent),
     map(extractHash),
-    chain(({ hash }) => getTransactionByHash(os)(hash)),
-    fold(
-      (reason) => task.of(errorResponse(reason)),
-      (value) => task.of(successResponse(StatusCodes.OK)(value))
-    )
-  );
-
-export const getBalanceByAddressHandler = (
-  event: APIGatewayEvent,
-  os: Client
-) =>
-  pipe(
-    taskEither.of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateAddressesEvent),
-    map(extractAddressAndOrdinal),
-    chain(({ address, ordinal }) => getBalanceByAddress(os)(address, ordinal)),
+    chain(({ hash }) => findTransactionByHash(os)(hash)),
     fold(
       (reason) => task.of(errorResponse(reason)),
       (value) => task.of(successResponse(StatusCodes.OK)(value))
@@ -90,6 +112,10 @@ export const getBalanceByAddressHandler = (
 
 const extractHash = (event: APIGatewayEvent) => {
   return { hash: event.pathParameters!.hash };
+};
+
+const extractAddress = (event: APIGatewayEvent) => {
+  return { address: event.pathParameters!.address };
 };
 
 const extractTerm = (event: APIGatewayEvent) => {
