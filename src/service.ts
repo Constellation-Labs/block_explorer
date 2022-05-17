@@ -21,9 +21,11 @@ import {
   findSnapshot,
   findSnapshotRewards,
   findTransactionByHash,
-  findTransactionsByAddress,
+  findTransactionsByTerm,
   findTransactionsByDestination,
   findTransactionsBySource,
+  findTransactionsBySnapshot,
+  findTransactionsByAddress,
 } from "./opensearch";
 
 export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
@@ -42,6 +44,23 @@ export const getGlobalSnapshotRewards = (event: APIGatewayEvent, os: Client) =>
   pipe(
     taskEither.of<ApplicationError, APIGatewayEvent>(event),
     chain(() => findSnapshotRewards(os)),
+    fold(
+      (reason) => task.of(errorResponse(reason)),
+      (value) => task.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getGlobalSnapshotTransactions = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    taskEither.of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateSnapshotsEvent),
+    map(extractTerm),
+    chain(({ termName, termValue }) =>
+      findTransactionsBySnapshot(os)(termValue)
+    ),
     fold(
       (reason) => task.of(errorResponse(reason)),
       (value) => task.of(successResponse(StatusCodes.OK)(value))

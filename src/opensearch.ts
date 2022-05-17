@@ -5,9 +5,10 @@ import { ApplicationError, StatusCodes } from "./http";
 import {
   Block,
   OpenSearchBlock,
+  OpenSearchSnapshot,
   RewardTransaction,
   Snapshot,
-  Transaction,
+  OpenSearchTransaction,
 } from "./model";
 import {
   findAll,
@@ -17,8 +18,7 @@ import {
   getMultiQuery,
 } from "./query";
 
-import * as TE from "fp-ts/lib/TaskEither";
-import { TaskEither } from "fp-ts/lib/TaskEither";
+import { map, chain, TaskEither } from "fp-ts/lib/TaskEither";
 
 enum OSIndex {
   Snapshots = "snapshots",
@@ -43,28 +43,47 @@ export const findSnapshot = (os: Client) => (term: string) => {
         )
   )(os);
 
-  return findOne(search);
+  return findOne<OpenSearchSnapshot>(search);
 };
 
-export const findTransactionsByAddress =
+export const findTransactionsBySnapshot =
+  (os: Client) =>
+  (term: string): TaskEither<ApplicationError, OpenSearchTransaction[]> => {
+    if (isLatest(term)) {
+      return pipe(
+        findSnapshot(os)(term),
+        chain((s) => {
+          return findTransactionsByTerm(os)(s.ordinal, ["snapshotOrdinal"]);
+        })
+      );
+    }
+
+    return findTransactionsByTerm(os)(term, [
+      isOrdinal(term) ? "snapshotOrdinal" : "snapshotHash",
+    ]);
+  };
+
+export const findTransactionsByAddress = (os: Client) => (address: string) =>
+  findTransactionsByTerm(os)(address, ["source", "destination"]);
+
+export const findTransactionsByTerm =
   (os: Client) =>
   (
-    term: string,
-    field: keyof Transaction | null = null
-  ): TaskEither<ApplicationError, Transaction[]> => {
-    console.log("findTransactionsByAddress", field, term);
+    term: string | number,
+    fields: (keyof OpenSearchTransaction)[]
+  ): TaskEither<ApplicationError, OpenSearchTransaction[]> => {
     const search =
-      field !== null
-        ? getByFieldQuery<Transaction>(
+      fields.length === 1
+        ? getByFieldQuery<OpenSearchTransaction>(
             OSIndex.Transactions,
-            field,
-            term,
+            fields[0],
+            term.toString(),
             "snapshotOrdinal"
           )
-        : getMultiQuery<Transaction>(
+        : getMultiQuery<OpenSearchTransaction>(
             OSIndex.Transactions,
-            ["source", "destination"],
-            term
+            fields,
+            term.toString()
           );
 
     return findAll(search(os));
@@ -72,22 +91,19 @@ export const findTransactionsByAddress =
 
 export const findTransactionsBySource =
   (os: Client) =>
-  (term: string): TaskEither<ApplicationError, Transaction[]> =>
-    findTransactionsByAddress(os)(term, "source");
+  (term: string): TaskEither<ApplicationError, OpenSearchTransaction[]> =>
+    findTransactionsByTerm(os)(term, ["source"]);
 
 export const findTransactionsByDestination =
   (os: Client) =>
-  (
-    term: string,
-    searchAfter: number = 0
-  ): TaskEither<ApplicationError, Transaction[]> =>
-    findTransactionsByAddress(os)(term, "destination");
+  (term: string): TaskEither<ApplicationError, OpenSearchTransaction[]> =>
+    findTransactionsByTerm(os)(term, ["destination"]);
 
 export const findTransactionByHash =
   (os: Client) =>
-  (hash: string): TaskEither<ApplicationError, Transaction> =>
+  (hash: string): TaskEither<ApplicationError, OpenSearchTransaction> =>
     findOne(
-      getByFieldQuery<Transaction>(
+      getByFieldQuery<OpenSearchTransaction>(
         OSIndex.Transactions,
         "hash",
         hash,
@@ -100,7 +116,7 @@ export const findSnapshotRewards = (
 ): TaskEither<ApplicationError, RewardTransaction[]> =>
   pipe(
     findSnapshot(os)("latest"),
-    TE.map((snapshot) => snapshot.rewards)
+    map((s) => s.rewards)
   );
 
 export const findBlockByHash =

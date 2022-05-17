@@ -3,6 +3,7 @@ import {
   getBlock,
   getGlobalSnapshot,
   getGlobalSnapshotRewards,
+  getGlobalSnapshotTransactions,
   getTransaction,
   getTransactionsByAddress,
   getTransactionsByDestination,
@@ -14,6 +15,8 @@ const osClient = getClient();
 export const globalSnapshot = (event) => getGlobalSnapshot(event, osClient)();
 export const globalSnapshotRewards = (event) =>
   getGlobalSnapshotRewards(event, osClient)();
+export const globalSnapshotTransactions = (event) =>
+  getGlobalSnapshotTransactions(event, osClient)();
 export const block = (event) => getBlock(event, osClient)();
 export const transaction = (event) => getTransaction(event, osClient)();
 export const transactionsByAddress = (event) =>

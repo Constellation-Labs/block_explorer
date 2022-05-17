@@ -30,6 +30,12 @@ functions:
       - httpApi:
           path: /global-snapshot/latest/rewards
           method: GET
+  globalSnapshotTransactions:
+    handler: src/handler.globalSnapshotTransactions
+    events:
+      - httpApi:
+          path: /global-snapshot/{term}/transaction
+          method: GET
   block:
     handler: src/handler.block
     events:
