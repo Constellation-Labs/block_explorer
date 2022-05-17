@@ -2,7 +2,7 @@ import { ApiResponse, Client } from "@opensearch-project/opensearch";
 import { ApplicationError, StatusCodes } from "./http";
 import { TransportRequestPromise } from "@opensearch-project/opensearch/lib/Transport";
 import { pipe } from "fp-ts/lib/pipeable";
-import { filterOrElse, map, tryCatch } from "fp-ts/lib/TaskEither";
+import { filterOrElse, map, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 
 export enum SortOrder {
   Desc = "desc",
@@ -85,7 +85,9 @@ export const getByFieldQuery =
           },
         });
 
-export const findOne = (search: TransportRequestPromise<ApiResponse>) =>
+export const findOne = <T>(
+  search: TransportRequestPromise<ApiResponse>
+): TaskEither<ApplicationError, T> =>
   pipe(
     tryCatch<ApplicationError, any>(
       () => search.then((r) => (r.body.found ? [r.body] : r.body.hits.hits)),
@@ -100,10 +102,12 @@ export const findOne = (search: TransportRequestPromise<ApiResponse>) =>
       (hits) => hits.length > 0,
       () => new ApplicationError("Not Found", [], StatusCodes.NOT_FOUND)
     ),
-    map((hits) => hits[0]._source)
+    map((hits) => hits[0]._source as T)
   );
 
-export const findAll = <T>(search: TransportRequestPromise<ApiResponse>) =>
+export const findAll = <T>(
+  search: TransportRequestPromise<ApiResponse>
+): TaskEither<ApplicationError, T[]> =>
   pipe(
     tryCatch<ApplicationError, any>(
       () =>
@@ -121,5 +125,7 @@ export const findAll = <T>(search: TransportRequestPromise<ApiResponse>) =>
       (hits) => hits.length > 0,
       () => new ApplicationError("Not Found", [], StatusCodes.NOT_FOUND)
     ),
-    map((hits) => hits._source)
+    map((hits) => {
+      return hits.map((hit) => hit._source as T);
+    })
   );
