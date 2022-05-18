@@ -3,87 +3,101 @@ import { ApplicationError, StatusCodes } from "./http";
 import { TransportRequestPromise } from "@opensearch-project/opensearch/lib/Transport";
 import { pipe } from "fp-ts/lib/pipeable";
 import { filterOrElse, map, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { OpenSearchBalance, WithHash, WithOrdinal } from "./model";
+import {
+  QueryDslQueryContainer,
+  SearchRequest,
+} from "@opensearch-project/opensearch/api/types";
 
 export enum SortOrder {
   Desc = "desc",
   Asc = "asc",
 }
 
+export enum SearchDirection {
+  After = "search_after",
+  Before = "search_before",
+}
+
+type SortOptions<T, K extends keyof T> = {
+  sortField: K;
+  searchSince?: string | number;
+  searchDirection?: SearchDirection;
+  size?: number;
+};
+
 const maxSizeLimit = 10000;
 
-export const getDocumentQuery =
-  <T>(index: string, id: string) =>
-  (os: Client) =>
-    os.get({
-      index,
-      id,
-    });
+export const getDocumentQuery = <T>(index: string, id: string) => ({
+  index,
+  id,
+});
 
-export const getLatestQuery = (index: string) => (os: Client) =>
-  os.search({
-    index,
-    body: {
-      size: 1,
-      sort: {
-        height: { order: SortOrder.Desc },
-      },
-      query: {
-        match_all: {},
+export const getLatestQuery = <T extends WithOrdinal>(index: string): any => ({
+  index,
+  body: {
+    size: 1,
+    sort: {
+      ordinal: { order: SortOrder.Desc },
+    },
+  },
+});
+
+export const getMultiQuery = <T, K extends keyof T, S extends keyof T>(
+  index: string,
+  fields: K[],
+  value: T[keyof T],
+  sort: SortOptions<T, S>
+): SearchRequest => ({
+  index,
+  body: {
+    ...(sort.searchSince ? { search_after: [sort.searchSince] } : {}),
+    size: sort.size || maxSizeLimit,
+    sort: {
+      [sort.sortField]:
+        sort.searchDirection === SearchDirection.After
+          ? SortOrder.Asc
+          : SortOrder.Desc,
+    },
+    query: {
+      bool: {
+        should: fields.map((field) => ({ term: { [field]: value } })),
+        minimum_should_match: 1,
+        boost: 1.0,
       },
     },
-  });
+  },
+});
 
-export const getMultiQuery =
-  <T>(
-    index: string,
-    fields: (keyof T)[],
-    value: string,
-    size: number | null = maxSizeLimit,
-    searchAfter: number | null = +new Date(),
-    order: SortOrder = SortOrder.Desc
-  ) =>
-  (es: Client) => {
-    return es.search({
-      index,
-      body: {
-        size,
-        query: {
-          bool: {
-            should: fields.map((field) => ({ term: { [field]: value } })),
-            minimum_should_match: 1,
-            boost: 1.0,
-          },
+export function getByFieldQuery<T, K extends keyof T, S extends keyof T>(
+  index: string,
+  field: K,
+  value: T[K],
+  sort: SortOptions<T, S>
+): any {
+  if (field === "hash") {
+    return getDocumentQuery(index, String(value));
+  }
+
+  return {
+    index,
+    body: {
+      ...(sort.searchSince ? { search_after: [sort.searchSince] } : {}),
+      size: sort.size || maxSizeLimit,
+      sort: {
+        [sort.sortField]:
+          sort.searchDirection === SearchDirection.After
+            ? SortOrder.Asc
+            : SortOrder.Desc,
+      },
+      query: {
+        term: {
+          [field]: value,
         },
       },
-    });
+    },
   };
-
-export const getByFieldQuery =
-  <T>(
-    index: string,
-    field: keyof T | "hash",
-    value: string,
-    sortField: keyof T,
-    size: number | null = maxSizeLimit,
-    searchAfter: number | null = +new Date(),
-    order: SortOrder = SortOrder.Desc // TODO: searchAfter and order must be bounded (Desc -> current timestamp, Asc -> 0)
-  ) =>
-  (es: Client) =>
-    field === "hash"
-      ? getDocumentQuery(index, value)(es)
-      : es.search({
-          index,
-          body: {
-            size,
-            search_after: [searchAfter],
-            sort: { [sortField]: order },
-            query: {
-              term: {
-                [field]: value,
-              },
-            },
-          },
-        });
+}
 
 export const findOne = <T>(
   search: TransportRequestPromise<ApiResponse>
