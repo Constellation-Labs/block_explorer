@@ -64,3 +64,12 @@ export type OpenSearchBlock = {
 export type BlockReference = WithHash & WithHeight;
 
 export type Block = OpenSearchBlock;
+
+export type OpenSearchBalance = {
+  address: string;
+  balance: number;
+} & WithSnapshotOrdinal &
+  WithSnapshotHash &
+  WithTimestamp;
+
+export type Balance = Pick<OpenSearchBalance, "address" | "balance">;

@@ -66,6 +66,12 @@ functions:
       - httpApi:
           path: /address/{address}/transaction/received
           method: GET
+  balanceByAddress:
+    handler: src/handler.balanceByAddress
+    events:
+      - httpApi:
+          path: /address/{address}/balance/
+          method: GET
 
 plugins:
   - serverless-plugin-typescript

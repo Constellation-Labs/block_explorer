@@ -9,12 +9,10 @@ import {
   TaskEither,
   fromOption,
   fromPredicate,
-  map,
 } from "fp-ts/lib/TaskEither";
 import * as O from "fp-ts/lib/Option";
-import { pipe } from "fp-ts/lib/pipeable";
 import { Lens, Optional } from "monocle-ts";
-import { Either } from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/function";
 
 const pathParams = Lens.fromNullableProp<APIGatewayEvent>()(
   "pathParameters",
@@ -30,7 +28,9 @@ const queryParams = Lens.fromNullableProp<APIGatewayEvent>()(
   "queryStringParameters",
   {}
 );
-type QueryParams = NonNullable<APIGatewayEvent["queryStringParameters"]>;
+type QueryParams = NonNullable<APIGatewayEvent["queryStringParameters"]> & {
+  ordinal?: number;
+};
 
 const bodyNotNull = (
   event: APIGatewayEvent
@@ -118,6 +118,28 @@ const pathParamExists =
       )
     );
 
+const queryParamExists =
+  (queryParam: keyof Partial<PathParams>) => (event: APIGatewayEvent) =>
+    pipe(
+      of<ApplicationError, APIGatewayEvent>(event),
+      chainFirst(queryParamsIsNotNull),
+      chainFirst(() =>
+        pipe(
+          queryParams
+            .composeOptional(Optional.fromPath<QueryParams>()([queryParam]))
+            .getOption(event),
+          fromOption(
+            () =>
+              new ApplicationError(
+                "Error parsing request query params",
+                [`${queryParam} query param should not be empty`],
+                StatusCodes.BAD_REQUEST
+              )
+          )
+        )
+      )
+    );
+
 export const validateSnapshotsEvent = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
@@ -140,4 +162,11 @@ export const validateTransactionByAddressEvent = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
     chain(pathParamExists("address"))
+  );
+
+export const validateBalanceByAddressEvent = (event: APIGatewayEvent) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("address")),
+    chain(queryParamExists("ordinal"))
   );

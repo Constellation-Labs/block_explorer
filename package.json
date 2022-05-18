@@ -7,7 +7,7 @@
     "@opensearch-project/opensearch": "^1.1.0",
     "aws-lambda": "^1.0.6",
     "date-fns": "^2.16.1",
-    "fp-ts": "^2.7.0",
+    "fp-ts": "^2.12.1",
     "serverless-plugin-typescript": "^2.1.0",
     "typescript": "^4.6.4",
     "monocle-ts": "^2.3.13"
