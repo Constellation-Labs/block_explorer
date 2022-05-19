@@ -75,10 +75,6 @@ export function getByFieldQuery<T, K extends keyof T, S extends keyof T>(
   value: T[K],
   sort: SortOptions<T, S>
 ): any {
-  if (field === "hash") {
-    return getDocumentQuery(index, String(value));
-  }
-
   return {
     index,
     body: {
