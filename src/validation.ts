@@ -167,6 +167,5 @@ export const validateTransactionByAddressEvent = (event: APIGatewayEvent) =>
 export const validateBalanceByAddressEvent = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists("address")),
-    chain(queryParamExists("ordinal"))
+    chain(pathParamExists("address"))
   );

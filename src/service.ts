@@ -163,9 +163,12 @@ const extractTerm = (event: APIGatewayEvent) => {
   };
 };
 
-const extractAddressAndOrdinal = (event: APIGatewayEvent) => {
+const extractAddressAndOrdinal = (
+  event: APIGatewayEvent
+): { address: string; ordinal?: number } => {
+  const ordinal = Number(event.queryStringParameters?.ordinal);
   return {
     address: event.pathParameters!.address,
-    ordinal: Number(event.queryStringParameters?.ordinal),
+    ...(!isNaN(ordinal) ? { ordinal } : {}),
   };
 };
