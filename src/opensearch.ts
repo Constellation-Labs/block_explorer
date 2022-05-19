@@ -36,6 +36,16 @@ export const getClient = (): Client => {
   return new Client({ node: process.env.OPENSEARCH_NODE });
 };
 
+export const findSnapshotRewards = (
+  os: Client
+): TaskEither<ApplicationError, RewardTransaction[]> =>
+  pipe(
+    findOne<OpenSearchSnapshot>(
+      os.search(getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots))
+    ),
+    map((s) => s.rewards)
+  );
+
 export const findSnapshot =
   (os: Client) =>
   (term: string): TaskEither<ApplicationError, Snapshot> => {
@@ -157,16 +167,6 @@ export const findBalanceByAddress =
       ),
       map(({ address, balance }) => ({ address, balance }))
     );
-
-export const findSnapshotRewards = (
-  os: Client
-): TaskEither<ApplicationError, RewardTransaction[]> =>
-  pipe(
-    findOne<OpenSearchSnapshot>(
-      getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots)
-    ),
-    map((s) => s.rewards)
-  );
 
 export const findBlockByHash =
   (os: Client) =>

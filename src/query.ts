@@ -1,13 +1,10 @@
-import { ApiResponse, Client } from "@opensearch-project/opensearch";
+import { ApiResponse } from "@opensearch-project/opensearch";
 import { ApplicationError, StatusCodes } from "./http";
 import { TransportRequestPromise } from "@opensearch-project/opensearch/lib/Transport";
-import { pipe } from "fp-ts/lib/pipeable";
+import { pipe } from "fp-ts/lib/function";
 import { filterOrElse, map, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
-import { OpenSearchBalance, WithHash, WithOrdinal } from "./model";
-import {
-  QueryDslQueryContainer,
-  SearchRequest,
-} from "@opensearch-project/opensearch/api/types";
+import { WithOrdinal } from "./model";
+import { SearchRequest } from "@opensearch-project/opensearch/api/types";
 
 export enum SortOrder {
   Desc = "desc",
@@ -101,12 +98,17 @@ export const findOne = <T>(
   pipe(
     tryCatch<ApplicationError, any>(
       () => search.then((r) => (r.body.found ? [r.body] : r.body.hits.hits)),
-      (err) =>
-        new ApplicationError(
-          "OpenSearch error",
-          [err as string],
-          StatusCodes.SERVER_ERROR
-        )
+      (err: any) => {
+        if (err.meta?.body?.found === false) {
+          return new ApplicationError("Not Found", [], StatusCodes.NOT_FOUND);
+        } else {
+          return new ApplicationError(
+            "OpenSearch error",
+            [err as string],
+            StatusCodes.SERVER_ERROR
+          );
+        }
+      }
     ),
     filterOrElse(
       (hits) => hits.length > 0,
