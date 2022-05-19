@@ -30,7 +30,7 @@ jobs:
       - name: Create env file
         run: |
           cat > env.yml << EOF
-          ${{ secrets.API_ENV_20 }}
+          ${{ secrets.API_ENV }}
           EOF
 
       - name: Deploy
