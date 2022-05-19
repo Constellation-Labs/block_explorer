@@ -17,6 +17,7 @@ import {
   findAll,
   findOne,
   getByFieldQuery,
+  getDocumentQuery,
   getLatestQuery,
   getMultiQuery,
   SearchDirection,
@@ -38,17 +39,30 @@ export const getClient = (): Client => {
 export const findSnapshot =
   (os: Client) =>
   (term: string): TaskEither<ApplicationError, Snapshot> => {
-    const query = isLatest(term)
-      ? getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots)
-      : getByFieldQuery<OpenSearchSnapshot, "ordinal" | "hash", "ordinal">(
-          OSIndex.Snapshots,
-          isOrdinal(term) ? "ordinal" : "hash",
-          term,
-          { sortField: "ordinal" }
+    const find = () => {
+      if (isLatest(term)) {
+        return os.search(getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots));
+      }
+      if (isOrdinal(term)) {
+        return os.search(
+          getByFieldQuery<OpenSearchSnapshot, "ordinal", "ordinal">(
+            OSIndex.Snapshots,
+            "ordinal",
+            term,
+            {
+              sortField: "ordinal",
+              size: 1,
+            }
+          )
         );
+      }
+      return os.get(
+        getDocumentQuery<OpenSearchSnapshot>(OSIndex.Snapshots, term)
+      );
+    };
 
     return pipe(
-      findOne<OpenSearchSnapshot>(os.search(query)),
+      findOne<OpenSearchSnapshot>(find()),
       map(({ rewards, ...snapshot }) => snapshot)
     );
   };
@@ -114,15 +128,8 @@ export const findTransactionByHash =
   (hash: string): TaskEither<ApplicationError, Transaction> =>
     pipe(
       findOne<OpenSearchTransaction>(
-        os.search(
-          getByFieldQuery<OpenSearchTransaction, "hash", "snapshotOrdinal">(
-            OSIndex.Transactions,
-            "hash",
-            hash,
-            {
-              sortField: "snapshotOrdinal",
-            }
-          )
+        os.get(
+          getDocumentQuery<OpenSearchTransaction>(OSIndex.Transactions, hash)
         )
       ),
       map(({ salt, ...tx }) => tx)
@@ -165,14 +172,7 @@ export const findBlockByHash =
   (os: Client) =>
   (hash: string): TaskEither<ApplicationError, Block> =>
     findOne<OpenSearchBlock>(
-      os.search(
-        getByFieldQuery<OpenSearchBlock, "hash", "snapshotOrdinal">(
-          OSIndex.Blocks,
-          "hash",
-          hash,
-          { sortField: "snapshotOrdinal" }
-        )
-      )
+      os.get(getDocumentQuery<OpenSearchBlock>(OSIndex.Blocks, hash))
     );
 
 const isOrdinal = (term: string | number): term is number =>
