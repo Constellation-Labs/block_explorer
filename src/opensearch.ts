@@ -130,7 +130,7 @@ export const findTransactionByHash =
 
 export const findBalanceByAddress =
   (os: Client) =>
-  (address: string, ordinal: number): TaskEither<ApplicationError, Balance> =>
+  (address: string, ordinal?: number): TaskEither<ApplicationError, Balance> =>
     pipe(
       findOne<OpenSearchBalance>(
         os.search(
@@ -141,7 +141,8 @@ export const findBalanceByAddress =
             {
               sortField: "snapshotOrdinal",
               size: 1,
-              searchSince: ordinal + 1, // To achieve (0, ordinal> we need to make (0, ordinal + 1)
+              // To achieve (0, ordinal> we need to make (0, ordinal + 1)
+              ...(ordinal !== undefined ? { searchSince: ordinal + 1 } : {}),
               searchDirection: SearchDirection.Before,
             }
           )
