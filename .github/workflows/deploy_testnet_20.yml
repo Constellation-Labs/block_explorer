@@ -1,0 +1,42 @@
+on:
+  push:
+    branches:
+      - v3
+
+name: Deploy testnet 2.0 serverless
+
+jobs:
+  deploy:
+    name: Deploy serverless
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test -- --coverage --ci
+
+      - name: Create env file
+        run: |
+          cat > env.yml << EOF
+          ${{ secrets.API_ENV_20 }}
+          EOF
+
+      - name: Deploy
+        uses: serverless/github-action@master
+        with:
+          args: deploy --stage testnet20 --region us-west-1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}

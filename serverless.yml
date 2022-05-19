@@ -6,7 +6,7 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
   region: us-west-1
   stage: ${self:custom.stage}
   environment:
@@ -70,7 +70,7 @@ functions:
     handler: src/handler.balanceByAddress
     events:
       - httpApi:
-          path: /address/{address}/balance/
+          path: /address/{address}/balance
           method: GET
 
 plugins:
