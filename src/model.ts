@@ -18,7 +18,7 @@ export type WithSnapshotHash = {
   snapshotHash: number;
 };
 
-type WithHeight = {
+export type WithHeight = {
   height: number;
 };
 
@@ -32,25 +32,30 @@ export type OpenSearchSnapshot = {
   WithHash &
   WithHeight;
 
-export type Snapshot = Omit<OpenSearchSnapshot, "rewards">;
-
 export type RewardTransaction = {
   destination: string;
   amount: number;
 };
+
+export type Snapshot = Omit<OpenSearchSnapshot, "rewards">;
 
 export type OpenSearchTransaction = {
   source: string;
   destination: string;
   amount: number;
   fee: number;
-  parent: WithHash & WithOrdinal;
+  parent: TransactionReference;
   blockHash: string;
   salt: number;
+  transactionOriginal: object;
 } & WithTimestamp &
   WithSnapshotHash &
   WithSnapshotOrdinal &
   WithHash;
+
+export type TransactionReference = WithHash & WithOrdinal;
+
+export type Transaction = Omit<OpenSearchTransaction, "salt">;
 
 export type OpenSearchBlock = {
   transactions: string[];
