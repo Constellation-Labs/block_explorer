@@ -1,22 +1,22 @@
-import { ApiResponse } from "@opensearch-project/opensearch";
-import { ApplicationError, StatusCodes } from "./http";
-import { TransportRequestPromise } from "@opensearch-project/opensearch/lib/Transport";
-import { pipe } from "fp-ts/lib/function";
-import { filterOrElse, map, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
-import { WithOrdinal } from "./model";
-import { SearchRequest } from "@opensearch-project/opensearch/api/types";
+import { ApiResponse } from '@opensearch-project/opensearch';
+import { ApplicationError, StatusCodes } from './http';
+import { TransportRequestPromise } from '@opensearch-project/opensearch/lib/Transport';
+import { pipe } from 'fp-ts/lib/function';
+import { filterOrElse, map, TaskEither, tryCatch } from 'fp-ts/lib/TaskEither';
+import { WithOrdinal } from './model';
+import { SearchRequest } from '@opensearch-project/opensearch/api/types';
 
 export enum SortOrder {
-  Desc = "desc",
-  Asc = "asc",
+  Desc = 'desc',
+  Asc = 'asc',
 }
 
 export enum SearchDirection {
-  After = "search_after",
-  Before = "search_before",
+  After = 'search_after',
+  Before = 'search_before',
 }
 
-type SortOptions<T, K extends keyof T> = {
+export type SortOptions<T, K extends keyof T> = {
   sortField: K;
   searchSince?: string | number;
   searchDirection?: SearchDirection;
@@ -100,10 +100,10 @@ export const findOne = <T>(
       () => search.then((r) => (r.body.found ? [r.body] : r.body.hits.hits)),
       (err: any) => {
         if (err.meta?.body?.found === false) {
-          return new ApplicationError("Not Found", [], StatusCodes.NOT_FOUND);
+          return new ApplicationError('Not Found', [], StatusCodes.NOT_FOUND);
         } else {
           return new ApplicationError(
-            "OpenSearch error",
+            'OpenSearch error',
             [err as string],
             StatusCodes.SERVER_ERROR
           );
@@ -112,7 +112,7 @@ export const findOne = <T>(
     ),
     filterOrElse(
       (hits) => hits.length > 0,
-      () => new ApplicationError("Not Found", [], StatusCodes.NOT_FOUND)
+      () => new ApplicationError('Not Found', [], StatusCodes.NOT_FOUND)
     ),
     map((hits) => hits[0]._source as T)
   );
@@ -128,14 +128,14 @@ export const findAll = <T>(
         }),
       (err) =>
         new ApplicationError(
-          "OpenSearch error",
+          'OpenSearch error',
           [err as string],
           StatusCodes.SERVER_ERROR
         )
     ),
     filterOrElse(
       (hits) => hits.length > 0,
-      () => new ApplicationError("Not Found", [], StatusCodes.NOT_FOUND)
+      () => new ApplicationError('Not Found', [], StatusCodes.NOT_FOUND)
     ),
     map((hits) => {
       return hits.map((hit) => hit._source as T);
