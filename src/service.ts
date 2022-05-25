@@ -1,21 +1,23 @@
-import { Client } from "@opensearch-project/opensearch";
-import { APIGatewayEvent } from "aws-lambda";
-import * as T from "fp-ts/lib/Task";
-import { chain, fold, map, of } from "fp-ts/lib/TaskEither";
+import { Client } from '@opensearch-project/opensearch';
+import { APIGatewayEvent } from 'aws-lambda';
+import * as T from 'fp-ts/lib/Task';
+import * as O from 'fp-ts/lib/Option';
+import { chain, fold, map, of } from 'fp-ts/lib/TaskEither';
 import {
   ApplicationError,
   errorResponse,
   StatusCodes,
   successResponse,
-} from "./http";
+} from './http';
 
 import {
+  extractPagination,
   validateBalanceByAddressEvent,
   validateBlocksEvent,
   validateSnapshotsEvent,
   validateTransactionByAddressEvent,
   validateTransactionByHashEvent,
-} from "./validation";
+} from './validation';
 import {
   findBlockByHash,
   findSnapshot,
@@ -27,8 +29,9 @@ import {
   findTransactionsBySnapshot,
   findTransactionsByAddress,
   findBalanceByAddress,
-} from "./opensearch";
-import { pipe } from "fp-ts/lib/function";
+} from './opensearch';
+import { pipe } from 'fp-ts/lib/function';
+import { Transaction } from './model';
 
 export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
   pipe(
@@ -61,7 +64,13 @@ export const getGlobalSnapshotTransactions = (
     chain(validateSnapshotsEvent),
     map(extractTerm),
     chain(({ termName, termValue }) =>
-      findTransactionsBySnapshot(os)(termValue)
+      pipe(
+        extractPagination<Transaction>(event),
+        map((pagination) => ({ termName, termValue, pagination }))
+      )
+    ),
+    chain(({ termName, termValue, pagination }) =>
+      findTransactionsBySnapshot(os)(termValue, pagination)
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
@@ -85,7 +94,17 @@ export const getTransactionsByAddress = (event: APIGatewayEvent, os: Client) =>
     of<ApplicationError, APIGatewayEvent>(event),
     chain(validateTransactionByAddressEvent),
     map(extractAddress),
-    chain(({ address }) => findTransactionsByAddress(os)(address)),
+    chain(({ address }) =>
+      pipe(
+        extractPagination<Transaction>(event),
+        map((pagination) => {
+          return { address, pagination };
+        })
+      )
+    ),
+    chain(({ address, pagination }) =>
+      findTransactionsByAddress(os)(address, pagination)
+    ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
@@ -97,7 +116,18 @@ export const getTransactionsBySource = (event: APIGatewayEvent, os: Client) =>
     of<ApplicationError, APIGatewayEvent>(event),
     chain(validateTransactionByAddressEvent),
     map(extractAddress),
-    chain(({ address }) => findTransactionsBySource(os)(address)),
+    chain(({ address }) =>
+      pipe(
+        extractPagination<Transaction>(event),
+        map((pagination) => {
+          console.log('pagination!', pagination);
+          return { address, pagination };
+        })
+      )
+    ),
+    chain(({ address, pagination }) =>
+      findTransactionsBySource(os)(address, pagination)
+    ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
@@ -112,7 +142,15 @@ export const getTransactionsByDestination = (
     of<ApplicationError, APIGatewayEvent>(event),
     chain(validateTransactionByAddressEvent),
     map(extractAddress),
-    chain(({ address }) => findTransactionsByDestination(os)(address)),
+    chain(({ address }) =>
+      pipe(
+        extractPagination<Transaction>(event),
+        map((pagination) => ({ address, pagination }))
+      )
+    ),
+    chain(({ address, pagination }) =>
+      findTransactionsByDestination(os)(address, pagination)
+    ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
@@ -152,13 +190,13 @@ const extractAddress = (event: APIGatewayEvent) => {
 };
 
 const extractTerm = (event: APIGatewayEvent) => {
-  if (event.pathParameters!.term == "latest")
+  if (event.pathParameters!.term == 'latest')
     return {
-      termName: "ordinal",
-      termValue: "latest",
+      termName: 'ordinal',
+      termValue: 'latest',
     };
   return {
-    termName: isNaN(Number(event.pathParameters!.term)) ? "hash" : "ordinal",
+    termName: isNaN(Number(event.pathParameters!.term)) ? 'hash' : 'ordinal',
     termValue: event.pathParameters!.term,
   };
 };
