@@ -133,10 +133,6 @@ export const findAll = <T>(
           StatusCodes.SERVER_ERROR
         )
     ),
-    filterOrElse(
-      (hits) => hits.length > 0,
-      () => new ApplicationError('Not Found', [], StatusCodes.NOT_FOUND)
-    ),
     map((hits) => {
       return hits.map((hit) => hit._source as T);
     })
