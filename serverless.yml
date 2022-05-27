@@ -22,55 +22,55 @@ functions:
     handler: src/handler.globalSnapshot
     events:
       - httpApi:
-          path: /global-snapshot/{term}
+          path: /global-snapshots/{term}
           method: GET
   globalSnapshotRewards:
     handler: src/handler.globalSnapshotRewards
     events:
       - httpApi:
-          path: /global-snapshot/latest/rewards
+          path: /global-snapshots/latest/rewards
           method: GET
   globalSnapshotTransactions:
     handler: src/handler.globalSnapshotTransactions
     events:
       - httpApi:
-          path: /global-snapshot/{term}/transaction
+          path: /global-snapshots/{term}/transaction
           method: GET
   block:
     handler: src/handler.block
     events:
       - httpApi:
-          path: /block/{hash}
+          path: /blocks/{hash}
           method: GET
   transaction:
     handler: src/handler.transaction
     events:
       - httpApi:
-          path: /transaction/{hash}
+          path: /transactions/{hash}
           method: GET
   transactionsByAddress:
     handler: src/handler.transactionsByAddress
     events:
       - httpApi:
-          path: /address/{address}/transaction
+          path: /addresses/{address}/transactions
           method: GET
   transactionsBySource:
     handler: src/handler.transactionsBySource
     events:
       - httpApi:
-          path: /address/{address}/transaction/sent
+          path: /addresses/{address}/transactions/sent
           method: GET
   transactionsByDestination:
     handler: src/handler.transactionsByDestination
     events:
       - httpApi:
-          path: /address/{address}/transaction/received
+          path: /addresses/{address}/transactions/received
           method: GET
   balanceByAddress:
     handler: src/handler.balanceByAddress
     events:
       - httpApi:
-          path: /address/{address}/balance
+          path: /addresses/{address}/balances
           method: GET
 
 plugins:
