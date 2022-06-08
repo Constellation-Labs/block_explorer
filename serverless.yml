@@ -34,7 +34,7 @@ functions:
     handler: src/handler.globalSnapshotTransactions
     events:
       - httpApi:
-          path: /global-snapshots/{term}/transaction
+          path: /global-snapshots/{term}/transactions
           method: GET
   block:
     handler: src/handler.block
