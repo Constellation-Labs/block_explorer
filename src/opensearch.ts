@@ -1,7 +1,7 @@
-import { Client } from "@opensearch-project/opensearch";
-import { pipe } from "fp-ts/lib/function";
+import { Client } from '@opensearch-project/opensearch';
+import { pipe } from 'fp-ts/lib/function';
 
-import { ApplicationError, StatusCodes } from "./http";
+import { ApplicationError, StatusCodes } from './http';
 import {
   Balance,
   Block,
@@ -12,22 +12,21 @@ import {
   RewardTransaction,
   Snapshot,
   Transaction,
-} from "./model";
+} from './model';
 import {
   findAll,
   findOne,
+  getAll,
   getByFieldQuery,
   getDocumentQuery,
   getLatestQuery,
   getMultiQuery,
   SearchDirection,
   SortOptions,
-} from "./query";
+} from './query';
 
-import { chain, map, TaskEither } from "fp-ts/lib/TaskEither";
-import { Pagination } from "./validation";
-import * as O from "fp-ts/lib/Option";
-import { Option } from "fp-ts/lib/Option";
+import { chain, map, TaskEither } from 'fp-ts/lib/TaskEither';
+import { Pagination } from './validation';
 
 enum OSIndex {
   Snapshots = "snapshots",
@@ -50,36 +49,59 @@ export const findSnapshotRewards = (
     map((s) => s.rewards)
   );
 
+export const listSnapshots =
+  (os: Client) =>
+    (pagination: Pagination<Snapshot>): TaskEither<ApplicationError, OpenSearchSnapshot[]> => {
+      const sortOptions: SortOptions<OpenSearchSnapshot, 'ordinal'> = {
+        ...pagination,
+        sortField: 'ordinal',
+      };
+
+      return findAll(os.search(getAll<OpenSearchSnapshot, 'ordinal'>(OSIndex.Snapshots, sortOptions)));
+    };
+
+export const listTransactions =
+  (os: Client) =>
+    (pagination: Pagination<Snapshot>): TaskEither<ApplicationError, OpenSearchSnapshot[]> => {
+      const sortOptions: SortOptions<OpenSearchTransaction, 'hash'> = {
+        ...pagination,
+        sortField: 'hash',
+      };
+
+      return findAll(os.search(getAll<OpenSearchTransaction, 'hash'>(OSIndex.Transactions, sortOptions)));
+    };
+
 export const findSnapshot =
   (os: Client) =>
-  (term: string): TaskEither<ApplicationError, Snapshot> => {
-    const find = () => {
-      if (isLatest(term)) {
-        return os.search(getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots));
-      }
-      if (isOrdinal(term)) {
-        return os.search(
-          getByFieldQuery<OpenSearchSnapshot, "ordinal", "ordinal">(
-            OSIndex.Snapshots,
-            "ordinal",
-            term,
-            {
-              sortField: "ordinal",
-              size: 1,
-            }
-          )
+    (term: string): TaskEither<ApplicationError, Snapshot> => {
+      const find = () => {
+        if (isLatest(term)) {
+          return os.search(getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots));
+        }
+        if (isOrdinal(term)) {
+          return os.search(
+            getByFieldQuery<OpenSearchSnapshot, 'ordinal', 'ordinal'>(
+              OSIndex.Snapshots,
+              'ordinal',
+              term,
+              {
+                sortField: 'ordinal',
+                size: 1,
+              }
+            )
+          );
+        }
+        return os.get(
+          getDocumentQuery<OpenSearchSnapshot>(OSIndex.Snapshots, term)
         );
-      }
-      return os.get(
-        getDocumentQuery<OpenSearchSnapshot>(OSIndex.Snapshots, term)
+      };
+
+      return pipe(
+        findOne<OpenSearchSnapshot>(find()),
+        map(({ rewards, ...snapshot }) => snapshot)
       );
     };
 
-    return pipe(
-      findOne<OpenSearchSnapshot>(find()),
-      map(({ rewards, ...snapshot }) => snapshot)
-    );
-  };
 
 export const findTransactionsBySnapshot =
   (os: Client) =>
