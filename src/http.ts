@@ -1,5 +1,6 @@
 const DEFAULT_HEADERS = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*'
 }
 
 export enum StatusCodes {
