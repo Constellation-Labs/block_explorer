@@ -24,63 +24,54 @@ functions:
       - httpApi:
           path: /global-snapshots/{term}
           method: GET
-          cors: true
   globalSnapshotRewards:
     handler: src/handler.globalSnapshotRewards
     events:
       - httpApi:
           path: /global-snapshots/latest/rewards
           method: GET
-          cors: true
   globalSnapshotTransactions:
     handler: src/handler.globalSnapshotTransactions
     events:
       - httpApi:
           path: /global-snapshots/{term}/transactions
           method: GET
-          cors: true
   block:
     handler: src/handler.block
     events:
       - httpApi:
           path: /blocks/{hash}
           method: GET
-          cors: true
   transaction:
     handler: src/handler.transaction
     events:
       - httpApi:
           path: /transactions/{hash}
           method: GET
-          cors: true
   transactionsByAddress:
     handler: src/handler.transactionsByAddress
     events:
       - httpApi:
           path: /addresses/{address}/transactions
           method: GET
-          cors: true
   transactionsBySource:
     handler: src/handler.transactionsBySource
     events:
       - httpApi:
           path: /addresses/{address}/transactions/sent
           method: GET
-          cors: true
   transactionsByDestination:
     handler: src/handler.transactionsByDestination
     events:
       - httpApi:
           path: /addresses/{address}/transactions/received
           method: GET
-          cors: true
   balanceByAddress:
     handler: src/handler.balanceByAddress
     events:
       - httpApi:
           path: /addresses/{address}/balances
           method: GET
-          cors: true
 
 plugins:
   - serverless-plugin-typescript
