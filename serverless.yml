@@ -18,6 +18,12 @@ provider:
   versionFunctions: false
 
 functions:
+  globalSnapshots:
+    handler: src/handler.globalSnapshots
+    events:
+      - httpApi:
+          path: /global-snapshots
+          method: GET
   globalSnapshot:
     handler: src/handler.globalSnapshot
     events:
@@ -41,6 +47,12 @@ functions:
     events:
       - httpApi:
           path: /blocks/{hash}
+          method: GET
+  transactions:
+    handler: src/handler.transactions
+    events:
+      - httpApi:
+          path: /transactions
           method: GET
   transaction:
     handler: src/handler.transaction

@@ -1,14 +1,8 @@
 import { Client } from '@opensearch-project/opensearch';
 import { APIGatewayEvent } from 'aws-lambda';
 import * as T from 'fp-ts/lib/Task';
-import * as O from 'fp-ts/lib/Option';
 import { chain, fold, map, of } from 'fp-ts/lib/TaskEither';
-import {
-  ApplicationError,
-  errorResponse,
-  StatusCodes,
-  successResponse,
-} from './http';
+import { ApplicationError, errorResponse, StatusCodes, successResponse, } from './http';
 
 import {
   extractPagination,
@@ -19,19 +13,40 @@ import {
   validateTransactionByHashEvent,
 } from './validation';
 import {
+  findBalanceByAddress,
   findBlockByHash,
   findSnapshot,
   findSnapshotRewards,
   findTransactionByHash,
-  findTransactionsByTerm,
-  findTransactionsByDestination,
-  findTransactionsBySource,
-  findTransactionsBySnapshot,
   findTransactionsByAddress,
-  findBalanceByAddress,
+  findTransactionsByDestination,
+  findTransactionsBySnapshot,
+  findTransactionsBySource,
+  listSnapshots,
+  listTransactions,
 } from './opensearch';
 import { pipe } from 'fp-ts/lib/function';
-import { Transaction } from './model';
+import { Snapshot, Transaction } from './model';
+
+export const getGlobalSnapshots = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(() =>
+      pipe(
+        extractPagination<Snapshot>(event),
+        map((pagination) => {
+          return { pagination };
+        })
+      )
+    ),
+    chain(({ pagination }) =>
+      listSnapshots(os)(pagination)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
 
 export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
   pipe(
@@ -89,6 +104,27 @@ export const getBlock = (event: APIGatewayEvent, os: Client) =>
       (value) => T.of(successResponse(StatusCodes.OK)(value))
     )
   );
+
+export const getTransactions = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(() =>
+      pipe(
+        extractPagination<Snapshot>(event),
+        map((pagination) => {
+          return { pagination };
+        })
+      )
+    ),
+    chain(({ pagination }) =>
+      listTransactions(os)(pagination)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
 export const getTransactionsByAddress = (event: APIGatewayEvent, os: Client) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),

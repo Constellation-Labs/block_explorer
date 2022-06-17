@@ -92,6 +92,28 @@ export function getByFieldQuery<T, K extends keyof T, S extends keyof T>(
   };
 }
 
+export function getAll<T, S extends keyof T>(
+  index: string,
+  sort: SortOptions<T, S>
+): any {
+  return {
+    index,
+    body: {
+      ...(sort.searchSince ? { search_after: [sort.searchSince] } : {}),
+      size: sort.size || maxSizeLimit,
+      sort: {
+        [sort.sortField]:
+          sort.searchDirection === SearchDirection.After
+            ? SortOrder.Asc
+            : SortOrder.Desc,
+      },
+      query: {
+        match_all: {},
+      },
+    },
+  };
+}
+
 export const findOne = <T>(
   search: TransportRequestPromise<ApiResponse>
 ): TaskEither<ApplicationError, T> =>
