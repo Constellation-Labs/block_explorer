@@ -1,19 +1,19 @@
-import { APIGatewayEvent } from 'aws-lambda';
-import { ApplicationError, StatusCodes } from './http';
+import { APIGatewayEvent } from "aws-lambda";
+import { ApplicationError, StatusCodes } from "./http";
 import {
   chain,
   chainFirst,
+  fromOption,
+  fromPredicate,
   left,
   of,
   right,
   TaskEither,
-  fromOption,
-  fromPredicate,
-} from 'fp-ts/lib/TaskEither';
-import * as O from 'fp-ts/lib/Option';
-import { Lens, Optional } from 'monocle-ts';
-import { pipe } from 'fp-ts/lib/function';
-import { SearchDirection } from './query';
+} from "fp-ts/lib/TaskEither";
+import * as O from "fp-ts/lib/Option";
+import { Lens, Optional } from "monocle-ts";
+import { pipe } from "fp-ts/lib/function";
+import { SearchDirection, SortOptions } from "./query";
 
 export type Pagination<T> =
   | {
@@ -21,29 +21,32 @@ export type Pagination<T> =
       searchDirection: SearchDirection;
       searchSince: string;
     }
-  | { size?: number };
+  | { size?: number }
+  | { size?: number; next: string };
 
 type PaginationQueryParams = {
   search_after?: string;
   search_before?: string;
   limit?: string;
+  next?: string;
 };
 
 type QueryParams = PaginationQueryParams;
 
 const pathParams = Lens.fromNullableProp<APIGatewayEvent>()(
-  'pathParameters',
+  "pathParameters",
   {}
 );
 type PathParams = NonNullable<
-  APIGatewayEvent['pathParameters'] & {
+  APIGatewayEvent["pathParameters"] & {
+    hash?: string;
     term?: string;
     address?: string;
   }
 >;
 
 const queryParams = Lens.fromNullableProp<APIGatewayEvent>()(
-  'queryStringParameters',
+  "queryStringParameters",
   {}
 );
 
@@ -56,8 +59,8 @@ const bodyNotNull = (
     fromOption(
       () =>
         new ApplicationError(
-          'Error parsing request body',
-          ['Body cannot be empty'],
+          "Error parsing request body",
+          ["Body cannot be empty"],
           StatusCodes.BAD_REQUEST
         )
     )
@@ -68,8 +71,8 @@ const queryParamsIsNotNull = (event: APIGatewayEvent) =>
     () => Object.keys(queryParams.get(event)).length > 0,
     () =>
       new ApplicationError(
-        'Error parsing request query params',
-        ['Query params should not be empty'],
+        "Error parsing request query params",
+        ["Query params should not be empty"],
         StatusCodes.BAD_REQUEST
       )
   )(event);
@@ -79,8 +82,8 @@ const pathParamsIsNotNull = (event: APIGatewayEvent) =>
     () => Object.keys(pathParams.get(event)).length > 0,
     () =>
       new ApplicationError(
-        'Error parsing request path params',
-        ['Path params should not be empty'],
+        "Error parsing request path params",
+        ["Path params should not be empty"],
         StatusCodes.BAD_REQUEST
       )
   )(event);
@@ -92,11 +95,12 @@ export const extractPagination = <T>(
   const searchBefore = params?.search_before;
   const searchAfter = params?.search_after;
   const limit = Number(params?.limit);
+  const next = params?.next;
 
   if (searchBefore && searchAfter) {
     return left(
       new ApplicationError(
-        'search_after & search_before should be mutually exclusive',
+        "search_after & search_before should be mutually exclusive",
         [],
         StatusCodes.BAD_REQUEST
       )
@@ -106,11 +110,27 @@ export const extractPagination = <T>(
   if (params?.limit !== undefined && isNaN(limit)) {
     return left(
       new ApplicationError(
-        'limit must be a number',
+        "limit must be a number",
         [],
         StatusCodes.BAD_REQUEST
       )
     );
+  }
+
+  if (next && searchAfter && searchBefore) {
+    return left(
+      new ApplicationError(
+        "next and search_after/search_before should be mutually exclusive",
+        [],
+        StatusCodes.BAD_REQUEST
+      )
+    );
+  }
+
+  if (next) {
+    return right({
+      next,
+    });
   }
 
   return right({
@@ -121,6 +141,16 @@ export const extractPagination = <T>(
       undefined,
     size: limit,
   });
+};
+
+export const toNextString = <T>(options: SortOptions<T>): string => {
+  const buffer = Buffer.from(JSON.stringify(options));
+  return buffer.toString("base64");
+};
+
+export const fromNextString = <T>(next: string): SortOptions<T> => {
+  const buffer = Buffer.from(next, "base64");
+  return JSON.parse(buffer.toString("ascii"));
 };
 
 const pathParamExists =
@@ -136,7 +166,7 @@ const pathParamExists =
           fromOption(
             () =>
               new ApplicationError(
-                'Error parsing request path params',
+                "Error parsing request path params",
                 [`${pathParam} param should not be empty`],
                 StatusCodes.BAD_REQUEST
               )
@@ -158,7 +188,7 @@ const queryParamExists =
           fromOption(
             () =>
               new ApplicationError(
-                'Error parsing request query params',
+                "Error parsing request query params",
                 [`${queryParam} query param should not be empty`],
                 StatusCodes.BAD_REQUEST
               )
@@ -170,29 +200,29 @@ const queryParamExists =
 export const validateSnapshotsEvent = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists('term'))
+    chain(pathParamExists("term"))
   );
 
 export const validateBlocksEvent = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists('hash'))
+    chain(pathParamExists("hash"))
   );
 
 export const validateTransactionByHashEvent = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists('hash'))
+    chain(pathParamExists("hash"))
   );
 
 export const validateTransactionByAddressEvent = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists('address'))
+    chain(pathParamExists("address"))
   );
 
 export const validateBalanceByAddressEvent = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists('address'))
+    chain(pathParamExists("address"))
   );

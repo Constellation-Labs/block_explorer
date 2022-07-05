@@ -82,7 +82,7 @@ functions:
     handler: src/handler.balanceByAddress
     events:
       - httpApi:
-          path: /addresses/{address}/balances
+          path: /addresses/{address}/balance
           method: GET
 
 plugins:
