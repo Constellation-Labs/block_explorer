@@ -1,8 +1,13 @@
-import { Client } from '@opensearch-project/opensearch';
-import { APIGatewayEvent } from 'aws-lambda';
-import * as T from 'fp-ts/lib/Task';
-import { chain, fold, map, of } from 'fp-ts/lib/TaskEither';
-import { ApplicationError, errorResponse, StatusCodes, successResponse, } from './http';
+import { Client } from "@opensearch-project/opensearch";
+import { APIGatewayEvent } from "aws-lambda";
+import * as T from "fp-ts/lib/Task";
+import { chain, fold, map, of } from "fp-ts/lib/TaskEither";
+import {
+  ApplicationError,
+  errorResponse,
+  StatusCodes,
+  successResponse,
+} from "./http";
 
 import {
   extractPagination,
@@ -11,7 +16,7 @@ import {
   validateSnapshotsEvent,
   validateTransactionByAddressEvent,
   validateTransactionByHashEvent,
-} from './validation';
+} from "./validation";
 import {
   findBalanceByAddress,
   findBlockByHash,
@@ -24,9 +29,9 @@ import {
   findTransactionsBySource,
   listSnapshots,
   listTransactions,
-} from './opensearch';
-import { pipe } from 'fp-ts/lib/function';
-import { Snapshot, Transaction } from './model';
+} from "./opensearch";
+import { pipe } from "fp-ts/lib/function";
+import { Snapshot, Transaction } from "./model";
 
 export const getGlobalSnapshots = (event: APIGatewayEvent, os: Client) =>
   pipe(
@@ -39,9 +44,7 @@ export const getGlobalSnapshots = (event: APIGatewayEvent, os: Client) =>
         })
       )
     ),
-    chain(({ pagination }) =>
-      listSnapshots(os)(pagination)
-    ),
+    chain(({ pagination }) => listSnapshots(os)(pagination)),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
@@ -116,9 +119,7 @@ export const getTransactions = (event: APIGatewayEvent, os: Client) =>
         })
       )
     ),
-    chain(({ pagination }) =>
-      listTransactions(os)(pagination)
-    ),
+    chain(({ pagination }) => listTransactions(os)(pagination)),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
@@ -155,10 +156,7 @@ export const getTransactionsBySource = (event: APIGatewayEvent, os: Client) =>
     chain(({ address }) =>
       pipe(
         extractPagination<Transaction>(event),
-        map((pagination) => {
-          console.log('pagination!', pagination);
-          return { address, pagination };
-        })
+        map((pagination) => ({ address, pagination }))
       )
     ),
     chain(({ address, pagination }) =>
@@ -226,13 +224,13 @@ const extractAddress = (event: APIGatewayEvent) => {
 };
 
 const extractTerm = (event: APIGatewayEvent) => {
-  if (event.pathParameters!.term == 'latest')
+  if (event.pathParameters!.term == "latest")
     return {
-      termName: 'ordinal',
-      termValue: 'latest',
+      termName: "ordinal",
+      termValue: "latest",
     };
   return {
-    termName: isNaN(Number(event.pathParameters!.term)) ? 'hash' : 'ordinal',
+    termName: isNaN(Number(event.pathParameters!.term)) ? "hash" : "ordinal",
     termValue: event.pathParameters!.term,
   };
 };
