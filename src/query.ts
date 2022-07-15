@@ -134,8 +134,8 @@ export const findOne = <T>(
     tryCatch<ApplicationError, any>(
       () => search.then((r) => (r.body.found ? [r.body] : r.body.hits.hits)),
       (err: any) => {
-        if (err.meta.body?.found === false) {
-          return new ApplicationError("Not Found", [], StatusCodes.NOT_FOUND);
+        if (err.meta?.body?.found === false) {
+          return new ApplicationError("Not Found", [""], StatusCodes.NOT_FOUND);
         } else {
           return new ApplicationError(
             "OpenSearch error",
