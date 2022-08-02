@@ -11,7 +11,7 @@ import {
   OpenSearchTransaction,
   RewardTransaction,
   Snapshot,
-  Transaction,
+  Transaction
 } from "./model";
 import {
   findAll,
@@ -24,7 +24,7 @@ import {
   SearchDirection,
   SortOption,
   SortOptions,
-  SortOptionSince,
+  SortOptionSince
 } from "./query";
 
 import {
@@ -34,10 +34,9 @@ import {
   of,
   orElse,
   right,
-  TaskEither,
+  TaskEither
 } from "fp-ts/lib/TaskEither";
 import { fromNextString, Pagination, toNextString } from "./validation";
-import { Lens } from "monocle-ts";
 
 enum OSIndex {
   Snapshots = "snapshots",
@@ -53,7 +52,7 @@ export type Result<T> = {
 
 export type PaginatedResult<T> = {
   data: T[];
-  meta: {
+  meta?: {
     next: string;
   };
 };
@@ -268,10 +267,17 @@ export const findTransactionsBySnapshot =
     return pipe(
       findSnapshot(os)(term),
       chain((s) =>
-        findTransactionsByTerm(os)(
-          s.data.ordinal,
-          ["snapshotOrdinal"],
-          pagination
+        pipe(
+          findTransactionsByTerm(os)(
+            s.data.ordinal,
+            ["snapshotOrdinal"],
+            pagination
+          ),
+          orElse((e: ApplicationError) =>
+            e.statusCode === StatusCodes.NOT_FOUND
+              ? right({ data: [] })
+              : left(e)
+          )
         )
       )
     );
