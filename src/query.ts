@@ -33,7 +33,7 @@ export type SortOptions<T> = {
   size?: number;
 };
 
-const maxSizeLimit = 10000;
+export const maxSizeLimit = 10000;
 
 export const getDocumentQuery = <T>(index: string, id: string) => ({
   index,
