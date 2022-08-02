@@ -20,8 +20,7 @@ import {
   getByFieldQuery,
   getDocumentQuery,
   getLatestQuery,
-  getMultiQuery,
-  SearchDirection,
+  getMultiQuery, maxSizeLimit, SearchDirection,
   SortOption,
   SortOptions,
   SortOptionSince
@@ -67,6 +66,9 @@ const getResultWithNextString = <T>(
 ): TaskEither<ApplicationError, PaginatedResult<T>> => {
   if (data.length === 0)
     return left(new ApplicationError("Not found", [], StatusCodes.NOT_FOUND));
+
+  if (data.length < (sortOptions.size || maxSizeLimit))
+    return right({ data })
 
   const element =
     sortOptions.options[0]?.searchDirection === SearchDirection.Before
