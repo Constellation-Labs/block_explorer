@@ -34,7 +34,7 @@ functions:
     handler: src/handler.globalSnapshotRewards
     events:
       - httpApi:
-          path: /global-snapshots/latest/rewards
+          path: /global-snapshots/{term}/rewards
           method: GET
   globalSnapshotTransactions:
     handler: src/handler.globalSnapshotTransactions
