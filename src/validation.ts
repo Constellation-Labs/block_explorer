@@ -10,7 +10,6 @@ import {
   right,
   TaskEither,
 } from "fp-ts/lib/TaskEither";
-import * as O from "fp-ts/lib/Option";
 import { Lens, Optional } from "monocle-ts";
 import { pipe } from "fp-ts/lib/function";
 import { SearchDirection, SortOptions } from "./query";
@@ -49,22 +48,6 @@ const queryParams = Lens.fromNullableProp<APIGatewayEvent>()(
   "queryStringParameters",
   {}
 );
-
-const bodyNotNull = (
-  event: APIGatewayEvent
-): TaskEither<ApplicationError, APIGatewayEvent> =>
-  pipe(
-    O.of(event),
-    O.chainFirst((a) => O.fromNullable(a.body)),
-    fromOption(
-      () =>
-        new ApplicationError(
-          "Error parsing request body",
-          ["Body cannot be empty"],
-          StatusCodes.BAD_REQUEST
-        )
-    )
-  );
 
 const queryParamsIsNotNull = (event: APIGatewayEvent) =>
   fromPredicate(
@@ -168,28 +151,6 @@ const pathParamExists =
               new ApplicationError(
                 "Error parsing request path params",
                 [`${pathParam} param should not be empty`],
-                StatusCodes.BAD_REQUEST
-              )
-          )
-        )
-      )
-    );
-
-const queryParamExists =
-  (queryParam: keyof Partial<QueryParams>) => (event: APIGatewayEvent) =>
-    pipe(
-      of<ApplicationError, APIGatewayEvent>(event),
-      chainFirst(queryParamsIsNotNull),
-      chainFirst(() =>
-        pipe(
-          queryParams
-            .composeOptional(Optional.fromPath<QueryParams>()([queryParam]))
-            .getOption(event),
-          fromOption(
-            () =>
-              new ApplicationError(
-                "Error parsing request query params",
-                [`${queryParam} query param should not be empty`],
                 StatusCodes.BAD_REQUEST
               )
           )
