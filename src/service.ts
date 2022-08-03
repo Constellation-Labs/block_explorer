@@ -66,7 +66,9 @@ export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
 export const getGlobalSnapshotRewards = (event: APIGatewayEvent, os: Client) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(() => findSnapshotRewards(os)),
+    chain(validateSnapshotsEvent),
+    map(extractTerm),
+    chain(({ termName, termValue }) => findSnapshotRewards(os)(termValue)),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))

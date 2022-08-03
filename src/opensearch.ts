@@ -96,15 +96,13 @@ const getSortOptions = <T, R>(pagination: Pagination<T>) => ({
     "next" in pagination ? fromNextString<R>(pagination.next) : def,
 });
 
-export const findSnapshotRewards = (
-  os: Client
-): TaskEither<ApplicationError, Result<RewardTransaction[]>> =>
-  pipe(
-    findOne<OpenSearchSnapshot>(
-      os.search(getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots))
-    ),
-    map((r) => ({ ...r, data: r.data.rewards }))
-  );
+export const findSnapshotRewards =
+  (os: Client) =>
+    (term: string): TaskEither<ApplicationError, Result<RewardTransaction[]>> =>
+      pipe(
+        findOne<OpenSearchSnapshot>(findSnapshotByTerm(os)(term)),
+        map((r) => ({ ...r, data: r.data.rewards }))
+      );
 
 export const listSnapshots =
   (os: Client) =>
@@ -225,8 +223,19 @@ export const listTransactions =
 
 export const findSnapshot =
   (os: Client) =>
-  (term: string): TaskEither<ApplicationError, Result<Snapshot>> => {
-    const find = () => {
+    (term: string): TaskEither<ApplicationError, Result<Snapshot>> => {
+      return pipe(
+        findOne<OpenSearchSnapshot>(findSnapshotByTerm(os)(term)),
+        map((s) => {
+          const { rewards, ...rest } = s.data;
+          return { ...s, data: rest };
+        })
+      );
+    };
+
+const findSnapshotByTerm =
+  (os: Client) =>
+    (term: string) => {
       if (isLatest(term)) {
         return os.search(getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots));
       }
@@ -247,18 +256,6 @@ export const findSnapshot =
         getDocumentQuery<OpenSearchSnapshot>(OSIndex.Snapshots, term)
       );
     };
-
-    return pipe(
-      findOne<OpenSearchSnapshot>(find()),
-      map((s) => {
-        const { rewards, ...rest } = s.data;
-        return {
-          ...s,
-          data: rest,
-        };
-      })
-    );
-  };
 
 export const findTransactionsBySnapshot =
   (os: Client) =>
