@@ -3,7 +3,7 @@ on:
     types:
       - published
 
-name: Deploy mainnet serverless
+name: Deploy mainnet 2.0 serverless
 
 jobs:
   deploy:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: [14.x]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -36,7 +36,7 @@ jobs:
       - name: Deploy
         uses: serverless/github-action@master
         with:
-          args: deploy --stage mainnet --region us-west-1
+          args: deploy --stage mainnet20 --region us-west-1
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.MAINNET_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MAINNET_AWS_SECRET_ACCESS_KEY }}
