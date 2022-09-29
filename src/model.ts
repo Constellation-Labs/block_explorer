@@ -77,4 +77,4 @@ export type OpenSearchBalance = {
   WithSnapshotHash &
   WithTimestamp;
 
-export type Balance = Pick<OpenSearchBalance, "address" | "balance">;
+export type Balance = Pick<OpenSearchBalance, "balance"> & { ordinal: number };

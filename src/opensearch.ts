@@ -11,7 +11,7 @@ import {
   OpenSearchTransaction,
   RewardTransaction,
   Snapshot,
-  Transaction
+  Transaction,
 } from "./model";
 import {
   findAll,
@@ -20,10 +20,12 @@ import {
   getByFieldQuery,
   getDocumentQuery,
   getLatestQuery,
-  getMultiQuery, maxSizeLimit, SearchDirection,
+  getMultiQuery,
+  maxSizeLimit,
+  SearchDirection,
   SortOption,
   SortOptions,
-  SortOptionSince
+  SortOptionSince,
 } from "./query";
 
 import {
@@ -33,7 +35,7 @@ import {
   of,
   orElse,
   right,
-  TaskEither
+  TaskEither,
 } from "fp-ts/lib/TaskEither";
 import { fromNextString, Pagination, toNextString } from "./validation";
 
@@ -67,8 +69,7 @@ const getResultWithNextString = <T>(
   if (data.length === 0)
     return left(new ApplicationError("Not found", [], StatusCodes.NOT_FOUND));
 
-  if (data.length < (sortOptions.size || maxSizeLimit))
-    return right({ data })
+  if (data.length < (sortOptions.size || maxSizeLimit)) return right({ data });
 
   const element =
     sortOptions.options[0]?.searchDirection === SearchDirection.Before
@@ -98,11 +99,11 @@ const getSortOptions = <T, R>(pagination: Pagination<T>) => ({
 
 export const findSnapshotRewards =
   (os: Client) =>
-    (term: string): TaskEither<ApplicationError, Result<RewardTransaction[]>> =>
-      pipe(
-        findOne<OpenSearchSnapshot>(findSnapshotByTerm(os)(term)),
-        map((r) => ({ ...r, data: r.data.rewards }))
-      );
+  (term: string): TaskEither<ApplicationError, Result<RewardTransaction[]>> =>
+    pipe(
+      findOne<OpenSearchSnapshot>(findSnapshotByTerm(os)(term)),
+      map((r) => ({ ...r, data: r.data.rewards }))
+    );
 
 export const listSnapshots =
   (os: Client) =>
@@ -223,39 +224,35 @@ export const listTransactions =
 
 export const findSnapshot =
   (os: Client) =>
-    (term: string): TaskEither<ApplicationError, Result<Snapshot>> => {
-      return pipe(
-        findOne<OpenSearchSnapshot>(findSnapshotByTerm(os)(term)),
-        map((s) => {
-          const { rewards, ...rest } = s.data;
-          return { ...s, data: rest };
-        })
-      );
-    };
+  (term: string): TaskEither<ApplicationError, Result<Snapshot>> => {
+    return pipe(
+      findOne<OpenSearchSnapshot>(findSnapshotByTerm(os)(term)),
+      map((s) => {
+        const { rewards, ...rest } = s.data;
+        return { ...s, data: rest };
+      })
+    );
+  };
 
-const findSnapshotByTerm =
-  (os: Client) =>
-    (term: string) => {
-      if (isLatest(term)) {
-        return os.search(getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots));
-      }
-      if (isOrdinal(term)) {
-        return os.search(
-          getByFieldQuery<OpenSearchSnapshot, "ordinal">(
-            OSIndex.Snapshots,
-            "ordinal",
-            term,
-            {
-              options: [{ sortField: "ordinal" }],
-              size: 1,
-            }
-          )
-        );
-      }
-      return os.get(
-        getDocumentQuery<OpenSearchSnapshot>(OSIndex.Snapshots, term)
-      );
-    };
+const findSnapshotByTerm = (os: Client) => (term: string) => {
+  if (isLatest(term)) {
+    return os.search(getLatestQuery<OpenSearchSnapshot>(OSIndex.Snapshots));
+  }
+  if (isOrdinal(term)) {
+    return os.search(
+      getByFieldQuery<OpenSearchSnapshot, "ordinal">(
+        OSIndex.Snapshots,
+        "ordinal",
+        term,
+        {
+          options: [{ sortField: "ordinal" }],
+          size: 1,
+        }
+      )
+    );
+  }
+  return os.get(getDocumentQuery<OpenSearchSnapshot>(OSIndex.Snapshots, term));
+};
 
 export const findTransactionsBySnapshot =
   (os: Client) =>
@@ -383,15 +380,21 @@ export const findBalanceByAddress =
           )
         )
       ),
-      map(({ data: { address, balance }, meta }) => ({
-        data: { address, balance },
+      map(({ data: { snapshotOrdinal, balance }, meta }) => ({
+        data: { ordinal: snapshotOrdinal, balance },
         meta,
       })),
-      orElse((e: ApplicationError) =>
-        e.statusCode === StatusCodes.NOT_FOUND
-          ? right({ data: { address, balance: 0 }, meta: {} })
-          : left(e)
-      )
+      orElse((e: ApplicationError) => {
+        return e.statusCode === StatusCodes.NOT_FOUND
+          ? pipe(
+              findSnapshot(os)("latest"),
+              map((s) => ({
+                data: { ordinal: s.data.ordinal, balance: 0 },
+                meta: {},
+              }))
+            )
+          : left(e);
+      })
     );
 
 export const findBlockByHash =
