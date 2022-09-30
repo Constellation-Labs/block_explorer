@@ -380,8 +380,8 @@ export const findBalanceByAddress =
           )
         )
       ),
-      map(({ data: { snapshotOrdinal, balance }, meta }) => ({
-        data: { ordinal: snapshotOrdinal, balance },
+      map(({ data: { snapshotOrdinal, balance, address }, meta }) => ({
+        data: { ordinal: snapshotOrdinal, balance, address },
         meta,
       })),
       orElse((e: ApplicationError) => {
@@ -389,7 +389,7 @@ export const findBalanceByAddress =
           ? pipe(
               findSnapshot(os)("latest"),
               map((s) => ({
-                data: { ordinal: s.data.ordinal, balance: 0 },
+                data: { ordinal: s.data.ordinal, balance: 0, address },
                 meta: {},
               }))
             )
