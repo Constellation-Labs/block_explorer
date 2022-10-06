@@ -1,51 +1,82 @@
 export type WithTimestamp = {
-    timestamp: string
-}
+  timestamp: string;
+};
 
-export type WithKeyword<T> = { [P in keyof T & string as `${P}.keyword`]: T[P] };
+export type WithHash = {
+  hash: string;
+};
 
-export enum SortOrder {
-    Desc = 'desc',
-    Asc = 'asc'
-}
+export type WithOrdinal = {
+  ordinal: number;
+};
 
-export type Snapshot = {
-    checkpointBlocks: string[]
-    hash: string
-    height: number
-} & WithTimestamp
+export type WithSnapshotOrdinal = {
+  snapshotOrdinal: number;
+};
 
-export type CheckpointBlock = {
-    hash: string
-    height: Height
-    transactions: string[]
-    notifications: string[]
-    observations: string[]
-    children: number
-    snapshotHash: string
-    soeHash: string
-    parentSOEHashes: string[]
-} & WithTimestamp
+export type WithSnapshotHash = {
+  snapshotHash: number;
+};
 
-type TransactionBase = {
-    hash: string
-    amount: number
-    receiver: string
-    sender: string
-    fee: number
-    isDummy: boolean
-    lastTransactionRef: {
-        prevHash: string
-        ordinal: number
-    }
-    snapshotHash: string
-    checkpointBlock: string
-    transactionOriginal: any
-}
+export type WithHeight = {
+  height: number;
+};
 
-export type Transaction = TransactionBase & WithKeyword<TransactionBase> & WithTimestamp
+export type OpenSearchSnapshot = {
+  subHeight: number;
+  lastSnapshotHash: string;
+  blocks: string[];
+  rewards: RewardTransaction[];
+} & WithTimestamp &
+  WithOrdinal &
+  WithHash &
+  WithHeight;
 
-type Height = {
-    min: number,
-    max: number
-}
+export type RewardTransaction = {
+  destination: string;
+  amount: number;
+};
+
+export type Snapshot = Omit<OpenSearchSnapshot, "rewards">;
+
+export type OpenSearchTransaction = {
+  source: string;
+  destination: string;
+  amount: number;
+  fee: number;
+  parent: TransactionReference;
+  blockHash: string;
+  salt: number;
+  transactionOriginal: object;
+} & WithTimestamp &
+  WithSnapshotHash &
+  WithSnapshotOrdinal &
+  WithHash;
+
+export type TransactionReference = WithHash & WithOrdinal;
+
+export type Transaction = Omit<OpenSearchTransaction, "salt">;
+
+export type OpenSearchBlock = {
+  transactions: string[];
+  parent: BlockReference[];
+} & WithTimestamp &
+  WithSnapshotOrdinal &
+  WithSnapshotHash &
+  WithHash &
+  WithHeight;
+
+export type BlockReference = WithHash & WithHeight;
+
+export type Block = OpenSearchBlock;
+
+export type OpenSearchBalance = {
+  address: string;
+  balance: number;
+} & WithSnapshotOrdinal &
+  WithSnapshotHash &
+  WithTimestamp;
+
+export type Balance = Pick<OpenSearchBalance, "balance" | "address"> & {
+  ordinal: number;
+};

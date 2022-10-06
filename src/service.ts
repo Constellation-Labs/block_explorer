@@ -1,116 +1,248 @@
-import {Client} from '@elastic/elasticsearch'
-import {ApplicationError, errorResponse, StatusCodes, successResponse} from './http'
-import {APIGatewayEvent} from 'aws-lambda'
-import {chain, fold, map, taskEither} from 'fp-ts/lib/TaskEither'
-import {pipe} from 'fp-ts/lib/pipeable'
-import {parseISO} from 'date-fns'
+import { Client } from "@opensearch-project/opensearch";
+import { APIGatewayEvent } from "aws-lambda";
+import * as T from "fp-ts/lib/Task";
+import { chain, fold, map, of } from "fp-ts/lib/TaskEither";
 import {
-    getCheckpointBlock,
-    getSnapshot,
-    getTransaction,
-    getTransactionByAddress,
-    getTransactionByReceiver,
-    getTransactionBySender,
-    getTransactionBySnapshot
-} from './elastic'
+  ApplicationError,
+  errorResponse,
+  StatusCodes,
+  successResponse,
+} from "./http";
+
 import {
-    validateAddressesEvent,
-    validateCheckpointBlocksEvent,
-    validateSnapshotsEvent,
-    validateTransactionsEvent
-} from './validation'
-import {task} from "fp-ts/lib/Task";
+  extractPagination,
+  validateBalanceByAddressEvent,
+  validateBlocksEvent,
+  validateSnapshotsEvent,
+  validateTransactionByAddressEvent,
+  validateTransactionByHashEvent,
+} from "./validation";
+import {
+  findBalanceByAddress,
+  findBlockByHash,
+  findSnapshot,
+  findSnapshotRewards,
+  findTransactionByHash,
+  findTransactionsByAddress,
+  findTransactionsByDestination,
+  findTransactionsBySnapshot,
+  findTransactionsBySource,
+  listSnapshots,
+  listTransactions,
+} from "./opensearch";
+import { pipe } from "fp-ts/lib/function";
+import { Snapshot, Transaction } from "./model";
 
-const extractParameters = (event: APIGatewayEvent) => {
-    const searchAfter = event.queryStringParameters && event.queryStringParameters!.search_after
+export const getGlobalSnapshots = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(() =>
+      pipe(
+        extractPagination<Snapshot>(event),
+        map((pagination) => {
+          return { pagination };
+        })
+      )
+    ),
+    chain(({ pagination }) => listSnapshots(os)(pagination)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
 
+export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateSnapshotsEvent),
+    map(extractTerm),
+    chain(({ termName, termValue }) => findSnapshot(os)(termValue)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getGlobalSnapshotRewards = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateSnapshotsEvent),
+    map(extractTerm),
+    chain(({ termName, termValue }) => findSnapshotRewards(os)(termValue)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getGlobalSnapshotTransactions = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateSnapshotsEvent),
+    map(extractTerm),
+    chain(({ termName, termValue }) =>
+      pipe(
+        extractPagination<Transaction>(event),
+        map((pagination) => ({ termName, termValue, pagination }))
+      )
+    ),
+    chain(({ termName, termValue, pagination }) =>
+      findTransactionsBySnapshot(os)(termValue, pagination)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getBlock = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateBlocksEvent),
+    map(extractHash),
+    chain(({ hash }) => findBlockByHash(os)(hash)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getTransactions = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(() =>
+      pipe(
+        extractPagination<Snapshot>(event),
+        map((pagination) => {
+          return { pagination };
+        })
+      )
+    ),
+    chain(({ pagination }) => listTransactions(os)(pagination)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getTransactionsByAddress = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateTransactionByAddressEvent),
+    map(extractAddress),
+    chain(({ address }) =>
+      pipe(
+        extractPagination<Transaction>(event),
+        map((pagination) => {
+          return { address, pagination };
+        })
+      )
+    ),
+    chain(({ address, pagination }) =>
+      findTransactionsByAddress(os)(address, pagination)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getTransactionsBySource = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateTransactionByAddressEvent),
+    map(extractAddress),
+    chain(({ address }) =>
+      pipe(
+        extractPagination<Transaction>(event),
+        map((pagination) => ({ address, pagination }))
+      )
+    ),
+    chain(({ address, pagination }) =>
+      findTransactionsBySource(os)(address, pagination)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getTransactionsByDestination = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateTransactionByAddressEvent),
+    map(extractAddress),
+    chain(({ address }) =>
+      pipe(
+        extractPagination<Transaction>(event),
+        map((pagination) => ({ address, pagination }))
+      )
+    ),
+    chain(({ address, pagination }) =>
+      findTransactionsByDestination(os)(address, pagination)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getBalanceByAddress = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateBalanceByAddressEvent),
+    map(extractAddressAndOrdinal),
+    chain(({ address, ordinal }) => findBalanceByAddress(os)(address, ordinal)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getTransaction = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateTransactionByHashEvent),
+    map(extractHash),
+    chain(({ hash }) => findTransactionByHash(os)(hash)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+const extractHash = (event: APIGatewayEvent) => {
+  return { hash: event.pathParameters!.hash };
+};
+
+const extractAddress = (event: APIGatewayEvent) => {
+  return { address: event.pathParameters!.address };
+};
+
+const extractTerm = (event: APIGatewayEvent) => {
+  if (event.pathParameters!.term == "latest")
     return {
-        term: event.pathParameters!.term,
-        limit: (event.queryStringParameters && event.queryStringParameters!.limit && +event.queryStringParameters!.limit) || undefined,
-        searchAfter: searchAfter && +parseISO(searchAfter) || +(new Date())
-    }
-}
+      termName: "ordinal",
+      termValue: "latest",
+    };
+  return {
+    termName: isNaN(Number(event.pathParameters!.term)) ? "hash" : "ordinal",
+    termValue: event.pathParameters!.term,
+  };
+};
 
-export const getSnapshotHandler = (event: APIGatewayEvent, es: Client) =>
-    pipe(
-        taskEither.of<ApplicationError, APIGatewayEvent>(event),
-        chain(validateSnapshotsEvent),
-        map(event => event.pathParameters!.term),
-        chain(getSnapshot(es)),
-        fold(
-            reason => task.of(errorResponse(reason)),
-            value => task.of(successResponse(StatusCodes.OK)(value))
-        )
-    )
-
-export const getCheckpointBlocksHandler = (event: APIGatewayEvent, es: Client) =>
-    pipe(
-        taskEither.of<ApplicationError, APIGatewayEvent>(event),
-        chain(validateCheckpointBlocksEvent),
-        map(event => event.pathParameters!.term),
-        chain(getCheckpointBlock(es)),
-        fold(
-            reason => task.of(errorResponse(reason)),
-            value => task.of(successResponse(StatusCodes.OK)(value))
-        )
-    )
-
-export const getTransactionsHandler = (event: APIGatewayEvent, es: Client) =>
-    pipe(
-        taskEither.of<ApplicationError, APIGatewayEvent>(event),
-        chain(validateTransactionsEvent),
-        map(event => event.pathParameters!.term),
-        chain(getTransaction(es)),
-        fold(
-            reason => task.of(errorResponse(reason)),
-            value => task.of(successResponse(StatusCodes.OK)(value))
-        )
-    )
-
-export const getTransactionsBySnapshotHandler = (event: APIGatewayEvent, es: Client) =>
-    pipe(
-        taskEither.of<ApplicationError, APIGatewayEvent>(event),
-        chain(validateTransactionsEvent),
-        map(extractParameters),
-        chain(({term, limit, searchAfter}) => getTransactionBySnapshot(es)(term, limit, searchAfter)),
-        fold(
-            reason => task.of(errorResponse(reason)),
-            value => task.of(successResponse(StatusCodes.OK)(value))
-        )
-    )
-
-export const getTransactionsByAddressHandler = (event: APIGatewayEvent, es: Client) =>
-    pipe(
-        taskEither.of<ApplicationError, APIGatewayEvent>(event),
-        chain(validateAddressesEvent),
-        map(extractParameters),
-        chain(({term, limit, searchAfter}) => getTransactionByAddress(es)(term, null, limit, searchAfter)),
-        fold(
-            reason => task.of(errorResponse(reason)),
-            value => task.of(successResponse(StatusCodes.OK)(value))
-        )
-    )
-
-export const getTransactionsBySenderHandler = (event: APIGatewayEvent, es: Client) =>
-    pipe(
-        taskEither.of<ApplicationError, APIGatewayEvent>(event),
-        chain(validateAddressesEvent),
-        map(extractParameters),
-        chain(({term, limit, searchAfter}) => getTransactionBySender(es)(term, limit, searchAfter)),
-        fold(
-            reason => task.of(errorResponse(reason)),
-            value => task.of(successResponse(StatusCodes.OK)(value))
-        )
-    )
-
-export const getTransactionsByReceiverHandler = (event: APIGatewayEvent, es: Client) =>
-    pipe(
-        taskEither.of<ApplicationError, APIGatewayEvent>(event),
-        chain(validateAddressesEvent),
-        map(extractParameters),
-        chain(({term, limit, searchAfter}) => getTransactionByReceiver(es)(term, limit, searchAfter)),
-        fold(
-            reason => task.of(errorResponse(reason)),
-            value => task.of(successResponse(StatusCodes.OK)(value))
-        )
-    )
+const extractAddressAndOrdinal = (
+  event: APIGatewayEvent
+): { address: string; ordinal?: number } => {
+  const ordinal = Number(event.queryStringParameters?.ordinal);
+  return {
+    address: event.pathParameters!.address,
+    ...(!isNaN(ordinal) ? { ordinal } : {}),
+  };
+};

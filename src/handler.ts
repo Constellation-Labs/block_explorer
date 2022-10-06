@@ -1,20 +1,34 @@
-import {getClient} from './elastic'
+import { getClient } from './opensearch';
 import {
-    getCheckpointBlocksHandler,
-    getSnapshotHandler,
-    getTransactionsByAddressHandler,
-    getTransactionsByReceiverHandler,
-    getTransactionsBySenderHandler,
-    getTransactionsBySnapshotHandler,
-    getTransactionsHandler
-} from './service'
+  getBalanceByAddress,
+  getBlock,
+  getGlobalSnapshot,
+  getGlobalSnapshotRewards,
+  getGlobalSnapshots,
+  getGlobalSnapshotTransactions,
+  getTransaction,
+  getTransactions,
+  getTransactionsByAddress,
+  getTransactionsByDestination,
+  getTransactionsBySource,
+} from './service';
 
-const client = getClient()
+const osClient = getClient();
 
-export const snapshots = event => getSnapshotHandler(event, client)()
-export const checkpointBlocks = event => getCheckpointBlocksHandler(event, client)()
-export const transactions = event => getTransactionsHandler(event, client)()
-export const transactionsBySnapshot = event => getTransactionsBySnapshotHandler(event, client)()
-export const transactionsByAddress = event => getTransactionsByAddressHandler(event, client)()
-export const transactionsBySender = event => getTransactionsBySenderHandler(event, client)()
-export const transactionsByReceiver = event => getTransactionsByReceiverHandler(event, client)()
+export const globalSnapshot = (event) => getGlobalSnapshot(event, osClient)();
+export const globalSnapshots = (event) => getGlobalSnapshots(event, osClient)();
+export const globalSnapshotRewards = (event) =>
+    getGlobalSnapshotRewards(event, osClient)();
+export const globalSnapshotTransactions = (event) =>
+    getGlobalSnapshotTransactions(event, osClient)();
+export const block = (event) => getBlock(event, osClient)();
+export const transaction = (event) => getTransaction(event, osClient)();
+export const transactions = (event) => getTransactions(event, osClient)();
+export const transactionsByAddress = (event) =>
+    getTransactionsByAddress(event, osClient)();
+export const transactionsBySource = (event) =>
+    getTransactionsBySource(event, osClient)();
+export const transactionsByDestination = (event) =>
+    getTransactionsByDestination(event, osClient)();
+export const balanceByAddress = (event) =>
+    getBalanceByAddress(event, osClient)();

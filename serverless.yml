@@ -6,11 +6,11 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
   region: us-west-1
   stage: ${self:custom.stage}
   environment:
-    ELASTIC_SEARCH: ${self:custom.env.elasticsearch}
+    OPENSEARCH_NODE: ${self:custom.env.opensearch}
     SLS_DEBUG: '*'
   httpApi:
     cors: true
@@ -18,47 +18,71 @@ provider:
   versionFunctions: false
 
 functions:
-  snapshots:
-    handler: src/handler.snapshots
+  globalSnapshots:
+    handler: src/handler.globalSnapshots
     events:
       - httpApi:
-          path: /snapshot/{term}
+          path: /global-snapshots
           method: GET
-  checkpoint-blocks:
-    handler: src/handler.checkpointBlocks
+  globalSnapshot:
+    handler: src/handler.globalSnapshot
     events:
       - httpApi:
-          path: /checkpoint-block/{term}
+          path: /global-snapshots/{term}
+          method: GET
+  globalSnapshotRewards:
+    handler: src/handler.globalSnapshotRewards
+    events:
+      - httpApi:
+          path: /global-snapshots/{term}/rewards
+          method: GET
+  globalSnapshotTransactions:
+    handler: src/handler.globalSnapshotTransactions
+    events:
+      - httpApi:
+          path: /global-snapshots/{term}/transactions
+          method: GET
+  block:
+    handler: src/handler.block
+    events:
+      - httpApi:
+          path: /blocks/{hash}
           method: GET
   transactions:
     handler: src/handler.transactions
     events:
       - httpApi:
-          path: /transaction/{term}
+          path: /transactions
           method: GET
-  transactionsBySnapshot:
-    handler: src/handler.transactionsBySnapshot
+  transaction:
+    handler: src/handler.transaction
     events:
       - httpApi:
-          path: /snapshot/{term}/transaction
+          path: /transactions/{hash}
           method: GET
   transactionsByAddress:
     handler: src/handler.transactionsByAddress
     events:
       - httpApi:
-          path: /address/{term}/transaction
+          path: /addresses/{address}/transactions
           method: GET
-  transactionsBySender:
-    handler: src/handler.transactionsBySender
+  transactionsBySource:
+    handler: src/handler.transactionsBySource
     events:
       - httpApi:
-          path: /address/{term}/transaction/sent
+          path: /addresses/{address}/transactions/sent
           method: GET
-  transactionsByReceiver:
-    handler: src/handler.transactionsByReceiver
+  transactionsByDestination:
+    handler: src/handler.transactionsByDestination
     events:
       - httpApi:
-          path: /address/{term}/transaction/received
+          path: /addresses/{address}/transactions/received
+          method: GET
+  balanceByAddress:
+    handler: src/handler.balanceByAddress
+    events:
+      - httpApi:
+          path: /addresses/{address}/balance
           method: GET
 
 plugins:

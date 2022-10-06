@@ -1,106 +1,189 @@
-import {APIGatewayEvent} from 'aws-lambda'
-import {ApplicationError, StatusCodes} from './http'
-import {chain, left, of, right, TaskEither} from 'fp-ts/lib/TaskEither'
-import {pipe} from 'fp-ts/lib/pipeable'
-import {Lens} from 'monocle-ts'
+import { APIGatewayEvent } from "aws-lambda";
+import { ApplicationError, StatusCodes } from "./http";
+import {
+  chain,
+  chainFirst,
+  fromOption,
+  fromPredicate,
+  left,
+  of,
+  right,
+  TaskEither,
+} from "fp-ts/lib/TaskEither";
+import { Lens, Optional } from "monocle-ts";
+import { pipe } from "fp-ts/lib/function";
+import { SearchDirection, SortOptions } from "./query";
 
-const pathParams = Lens.fromNullableProp<APIGatewayEvent>()('pathParameters', {})
-type PathParams = NonNullable<APIGatewayEvent['pathParameters']>
-
-const queryParams = Lens.fromNullableProp<APIGatewayEvent>()('queryStringParameters', {})
-type QueryParams = NonNullable<APIGatewayEvent['queryStringParameters']>
-
-const bodyNotNull = (event: APIGatewayEvent) => {
-    if (event.body === null) {
-        return left<ApplicationError, APIGatewayEvent>(
-            new ApplicationError(
-                'Error parsing request body',
-                ['Body cannot be empty'],
-                StatusCodes.BAD_REQUEST
-            )
-        )
+export type Pagination<T> =
+  | {
+      size?: number;
+      searchDirection: SearchDirection;
+      searchSince: string;
     }
-    return right<ApplicationError, APIGatewayEvent>(event)
-}
+  | { size?: number }
+  | { size?: number; next: string };
 
-const queryParamsIsNotNull = (event: APIGatewayEvent) => {
-    if (Object.keys(queryParams.get(event)).length == 0) {
-        return left<ApplicationError, APIGatewayEvent>(
-            new ApplicationError(
-                'Error parsing request query params',
-                ['Query params should not be empty'],
+type PaginationQueryParams = {
+  search_after?: string;
+  search_before?: string;
+  limit?: string;
+  next?: string;
+};
+
+type QueryParams = PaginationQueryParams;
+
+const pathParams = Lens.fromNullableProp<APIGatewayEvent>()(
+  "pathParameters",
+  {}
+);
+type PathParams = NonNullable<
+  APIGatewayEvent["pathParameters"] & {
+    hash?: string;
+    term?: string;
+    address?: string;
+  }
+>;
+
+const queryParams = Lens.fromNullableProp<APIGatewayEvent>()(
+  "queryStringParameters",
+  {}
+);
+
+const queryParamsIsNotNull = (event: APIGatewayEvent) =>
+  fromPredicate(
+    () => Object.keys(queryParams.get(event)).length > 0,
+    () =>
+      new ApplicationError(
+        "Error parsing request query params",
+        ["Query params should not be empty"],
+        StatusCodes.BAD_REQUEST
+      )
+  )(event);
+
+const pathParamsIsNotNull = (event: APIGatewayEvent) =>
+  fromPredicate(
+    () => Object.keys(pathParams.get(event)).length > 0,
+    () =>
+      new ApplicationError(
+        "Error parsing request path params",
+        ["Path params should not be empty"],
+        StatusCodes.BAD_REQUEST
+      )
+  )(event);
+
+export const extractPagination = <T>(
+  event: APIGatewayEvent
+): TaskEither<ApplicationError, Pagination<T>> => {
+  const params = event.queryStringParameters as PaginationQueryParams;
+  const searchBefore = params?.search_before;
+  const searchAfter = params?.search_after;
+  const limit = Number(params?.limit);
+  const next = params?.next;
+
+  if (searchBefore && searchAfter) {
+    return left(
+      new ApplicationError(
+        "search_after & search_before should be mutually exclusive",
+        [],
+        StatusCodes.BAD_REQUEST
+      )
+    );
+  }
+
+  if (params?.limit !== undefined && isNaN(limit)) {
+    return left(
+      new ApplicationError(
+        "limit must be a number",
+        [],
+        StatusCodes.BAD_REQUEST
+      )
+    );
+  }
+
+  if (next && searchAfter && searchBefore) {
+    return left(
+      new ApplicationError(
+        "next and search_after/search_before should be mutually exclusive",
+        [],
+        StatusCodes.BAD_REQUEST
+      )
+    );
+  }
+
+  if (next) {
+    return right({
+      next,
+    });
+  }
+
+  return right({
+    searchSince: searchAfter || searchBefore,
+    searchDirection:
+      (searchAfter && SearchDirection.After) ||
+      (searchBefore && SearchDirection.Before) ||
+      undefined,
+    size: limit,
+  });
+};
+
+export const toNextString = <T>(options: SortOptions<T>): string => {
+  const buffer = Buffer.from(JSON.stringify(options));
+  return buffer.toString("base64");
+};
+
+export const fromNextString = <T>(next: string): SortOptions<T> => {
+  const buffer = Buffer.from(next, "base64");
+  return JSON.parse(buffer.toString("ascii"));
+};
+
+const pathParamExists =
+  (pathParam: keyof Partial<PathParams>) => (event: APIGatewayEvent) =>
+    pipe(
+      of<ApplicationError, APIGatewayEvent>(event),
+      chainFirst(pathParamsIsNotNull),
+      chainFirst(() =>
+        pipe(
+          pathParams
+            .composeOptional(Optional.fromPath<PathParams>()([pathParam]))
+            .getOption(event),
+          fromOption(
+            () =>
+              new ApplicationError(
+                "Error parsing request path params",
+                [`${pathParam} param should not be empty`],
                 StatusCodes.BAD_REQUEST
-            )
+              )
+          )
         )
-    }
-    return right<ApplicationError, APIGatewayEvent>(event)
-}
-
-const pathParamsIsNotNull = (event: APIGatewayEvent) => {
-    if (Object.keys(pathParams.get(event)).length == 0) {
-        return left<ApplicationError, APIGatewayEvent>(
-            new ApplicationError(
-                'Error parsing request path params',
-                ['Path params should not be empty'],
-                StatusCodes.BAD_REQUEST
-            )
-        )
-    }
-    return right<ApplicationError, APIGatewayEvent>(event)
-}
-
-const searchAfterAndLimitNeitherOrBothNull = (event: APIGatewayEvent) => pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(() => {
-        const searchAfter = queryParams.compose(Lens.fromProp<QueryParams>()('search_after')).get(event)
-        const limit = queryParams.compose(Lens.fromProp<QueryParams>()('limit')).get(event)
-
-        const areBoth = searchAfter && limit
-        const areNone = !searchAfter && !limit
-
-        return areBoth || areNone
-            ? right<ApplicationError, APIGatewayEvent>(event)
-            : left<ApplicationError, APIGatewayEvent>(
-                new ApplicationError(
-                    'Error parsing request query params',
-                    ['Both search_after and limit should not be empty'],
-                    StatusCodes.BAD_REQUEST))
-        }
-    )
-)
-
-const termIsNotNull = (event: APIGatewayEvent) => pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamsIsNotNull),
-    chain(() => !pathParams.compose(Lens.fromProp<PathParams>()('term'))
-        ? left<ApplicationError, APIGatewayEvent>(
-            new ApplicationError(
-                'Error parsing request path params',
-                ['Term param should not be empty'],
-                StatusCodes.BAD_REQUEST))
-        : right<ApplicationError, APIGatewayEvent>(event))
-)
+      )
+    );
 
 export const validateSnapshotsEvent = (event: APIGatewayEvent) =>
-    pipe(
-        of<ApplicationError, APIGatewayEvent>(event),
-        chain(termIsNotNull)
-    )
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("term"))
+  );
 
-export const validateCheckpointBlocksEvent = (event: APIGatewayEvent) =>
-    pipe(
-        of<ApplicationError, APIGatewayEvent>(event),
-        chain(termIsNotNull)
-    )
+export const validateBlocksEvent = (event: APIGatewayEvent) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("hash"))
+  );
 
-export const validateTransactionsEvent = (event: APIGatewayEvent) =>
-    pipe(
-        of<ApplicationError, APIGatewayEvent>(event),
-        chain(termIsNotNull)
-    )
+export const validateTransactionByHashEvent = (event: APIGatewayEvent) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("hash"))
+  );
 
-export const validateAddressesEvent = (event: APIGatewayEvent) =>
-    pipe(
-        of<ApplicationError, APIGatewayEvent>(event),
-        chain(termIsNotNull)
-    )
+export const validateTransactionByAddressEvent = (event: APIGatewayEvent) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("address"))
+  );
+
+export const validateBalanceByAddressEvent = (event: APIGatewayEvent) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("address"))
+  );

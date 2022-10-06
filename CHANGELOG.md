@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.0.1] 2022-10-05
+- Fix returned type of balances endpoint
+
+## [v3.0.0] 2022-09-22
+Mainnet 2.0 - upgraded block explorer
+
 ## [v2.0.4] 2021-10-15
 ### Fixed
 - Fetch by address using keyword field

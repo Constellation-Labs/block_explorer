@@ -1,9 +1,9 @@
 on:
-  release:
-    types:
-      - published
+  push:
+    branches:
+      - v3
 
-name: Deploy mainnet 2.0 serverless
+name: Deploy testnet 2.0 serverless
 
 jobs:
   deploy:
@@ -36,7 +36,7 @@ jobs:
       - name: Deploy
         uses: serverless/github-action@master
         with:
-          args: deploy --stage mainnet20 --region us-west-1
+          args: deploy --stage testnet20 --region us-west-1
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.MAINNET_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MAINNET_AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
