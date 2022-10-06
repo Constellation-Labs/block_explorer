@@ -20,8 +20,9 @@
     "@types/jest": "^26.0.14",
     "@types/node": "^14.0.13",
     "babel-jest": "^26.5.2",
-    "jest": "^26.5.3",
-    "prettier": "2.7.1"
+    "jest": "^26.6.3",
+    "prettier": "2.7.1",
+    "serverless": "^3.22.0"
   },
   "scripts": {
     "test": "jest"
