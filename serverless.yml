@@ -6,8 +6,8 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs14.x
-  region: us-west-1
+  runtime: nodejs16.x
+  region: us-east-2
   stage: ${self:custom.stage}
   environment:
     OPENSEARCH_NODE: ${self:custom.env.opensearch}
@@ -24,18 +24,21 @@ functions:
       - httpApi:
           path: /global-snapshots
           method: GET
+    timeout: 45 
   globalSnapshot:
     handler: src/handler.globalSnapshot
     events:
       - httpApi:
           path: /global-snapshots/{term}
           method: GET
+    timeout: 45 
   globalSnapshotRewards:
     handler: src/handler.globalSnapshotRewards
     events:
       - httpApi:
           path: /global-snapshots/{term}/rewards
           method: GET
+    timeout: 10 
   globalSnapshotTransactions:
     handler: src/handler.globalSnapshotTransactions
     events:
@@ -87,3 +90,4 @@ functions:
 
 plugins:
   - serverless-plugin-typescript
+  - serverless-offline
