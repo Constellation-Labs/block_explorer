@@ -150,7 +150,7 @@ const exportTransactionSortOptions =
                   searchSince: r.data.snapshotOrdinal,
                 },
                 {
-                  sortField: "source",
+                  sortField: "source.keyword",
                   searchDirection:
                     options["searchDirection"] || SearchDirection.Before,
                   searchSince: r.data.source,
