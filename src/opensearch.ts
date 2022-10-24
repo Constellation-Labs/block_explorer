@@ -71,10 +71,7 @@ const getResultWithNextString = <T>(
 
   if (data.length < (sortOptions.size || maxSizeLimit)) return right({ data });
 
-  const element =
-    sortOptions.options[0]?.searchDirection === SearchDirection.Before
-      ? data[0]
-      : data[data.length - 1];
+  const element = data[data.length - 1];
 
   const getValue = <T>(option: SortOption<T> | SortOptionSince<T>) =>
     option.sortField.split(".").reduce((acc, n) => acc[n], element);
