@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.0.2] 2022-11-17
+- Fix 'next' reference for pagination
+
 ## [v3.0.1] 2022-10-05
 - Fix returned type of balances endpoint
 
