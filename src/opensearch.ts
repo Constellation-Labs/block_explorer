@@ -15,9 +15,11 @@ import {
 } from "./model";
 import {
   findAll,
+  findFirst,
   findOne,
   getAll,
   getByFieldQuery,
+  getByFieldsQuery,
   getDocumentQuery,
   getLatestQuery,
   getMultiQuery,
@@ -26,6 +28,7 @@ import {
   SortOption,
   SortOptions,
   SortOptionSince,
+  SortOrder,
 } from "./query";
 
 import {
@@ -35,6 +38,8 @@ import {
   of,
   orElse,
   right,
+  bind,
+  bindTo,
   TaskEither,
 } from "fp-ts/lib/TaskEither";
 import { fromNextString, Pagination, toNextString } from "./validation";
@@ -354,43 +359,84 @@ export const findBalanceByAddress =
     address: string,
     ordinal?: number
   ): TaskEither<ApplicationError, Result<Balance>> =>
+    ordinal
+      ? findBalanceByAddressAndOrdinal(os)(address, ordinal)
+      : findLatestBalanceByAddress(os)(address);
+
+const findBalanceByAddressAndOrdinal =
+  (os: Client) =>
+  (
+    address: string,
+    ordinal: number
+  ): TaskEither<ApplicationError, Result<Balance>> =>
     pipe(
-      findOne<OpenSearchBalance>(
+      findFirst<OpenSearchBalance>(
         os.search(
-          getByFieldQuery<OpenSearchBalance, "address">(
+          getByFieldsQuery<OpenSearchBalance>(
             OSIndex.Balances,
-            "address",
-            address,
-            {
-              options: [
-                {
-                  sortField: "snapshotOrdinal",
-                  // To achieve (0, ordinal> we need to make (0, ordinal + 1)
-                  ...(ordinal !== undefined
-                    ? { searchSince: ordinal + 1 }
-                    : {}),
-                  searchDirection: SearchDirection.Before,
-                },
-              ],
-              size: 1,
-            }
+            { address, snapshotOrdinal: ordinal },
+            { snapshotOrdinal: SortOrder.Desc },
+            { size: 1 }
           )
         )
       ),
-      map(({ data: { snapshotOrdinal, balance, address }, meta }) => ({
-        data: { ordinal: snapshotOrdinal, balance, address },
-        meta,
-      })),
-      orElse((e: ApplicationError) => {
-        return e.statusCode === StatusCodes.NOT_FOUND
-          ? pipe(
-              findSnapshot(os)("latest"),
-              map((s) => ({
-                data: { ordinal: s.data.ordinal, balance: 0, address },
-                meta: {},
-              }))
+      map((b) => {
+        const data = b
+          ? {
+              balance: b.balance,
+              ordinal: b.snapshotOrdinal,
+              address: b.address,
+            }
+          : { balance: 0, ordinal, address };
+
+        return {
+          data,
+          meta: {},
+        };
+      })
+    );
+
+const findLatestBalanceByAddress =
+  (os: Client) =>
+  (address: string): TaskEither<ApplicationError, Result<Balance>> =>
+    pipe(
+      findFirst<OpenSearchBalance>(
+        os.search(
+          getByFieldsQuery<OpenSearchBalance>(
+            OSIndex.Balances,
+            { address },
+            { snapshotOrdinal: SortOrder.Desc },
+            { size: 1 }
+          )
+        )
+      ),
+      bindTo("balance"),
+      bind("snapshot", () =>
+        findOne<OpenSearchSnapshot>(
+          os.search(
+            getByFieldsQuery<OpenSearchSnapshot>(
+              OSIndex.Snapshots,
+              {},
+              { ordinal: SortOrder.Desc },
+              { size: 1 }
             )
-          : left(e);
+          )
+        )
+      ),
+      map(({ balance: b, snapshot: { data: s } }) => {
+        const data =
+          b && b.snapshotOrdinal >= s.ordinal - 1
+            ? {
+                balance: b.balance,
+                ordinal: b.snapshotOrdinal,
+                address: b.address,
+              }
+            : { balance: 0, ordinal: s.ordinal, address };
+
+        return {
+          data,
+          meta: {},
+        };
       })
     );
 

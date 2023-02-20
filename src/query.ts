@@ -113,6 +113,30 @@ export function getByFieldQuery<T, K extends keyof T>(
   };
 }
 
+export function getByFieldsQuery<T>(
+  index: string,
+  must: Partial<T> = {},
+  sort: { [K in keyof T]?: SortOrder } = {},
+  page: { size: number } = { size: maxSizeLimit }
+): any {
+  return {
+    index,
+    body: {
+      size: page.size,
+      sort: Object.entries(sort).map(([field, value]) => ({
+        [field]: { order: value },
+      })),
+      query: {
+        bool: {
+          must: Object.entries(must).map(([field, value]) => ({
+            term: { [field]: value },
+          })),
+        },
+      },
+    },
+  };
+}
+
 export function getAll<T>(index: string, sort: SortOptions<T>): any {
   return {
     index,
@@ -152,6 +176,27 @@ export const findOne = <T>(
     map((hits) => ({
       data: hits[0]._source as T,
     }))
+  );
+
+export const findFirst = <T>(
+  search: TransportRequestPromise<ApiResponse>
+): TaskEither<ApplicationError, T | undefined> =>
+  pipe(
+    tryCatch<ApplicationError, any>(
+      () =>
+        search.then((r) => {
+          return r.body.hits.hits;
+        }),
+      (err) =>
+        new ApplicationError(
+          "OpenSearch error",
+          [err as string],
+          StatusCodes.SERVER_ERROR
+        )
+    ),
+    map((hits) => {
+      return hits[0]?._source as T;
+    })
   );
 
 export const findAll = <T>(
