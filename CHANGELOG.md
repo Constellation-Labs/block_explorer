@@ -2,6 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Fix false non-zero balances
 
 ## [v3.0.2] 2022-11-17
 - Fix 'next' reference for pagination
