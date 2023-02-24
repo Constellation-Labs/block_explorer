@@ -10,7 +10,7 @@ name: Deploy app from tag
 
 jobs:
   deploy:
-    name: Deploy serverless
+    name: Deploy ${{ github.ref_name }} to ${{ inputs.environment }}
     runs-on: ubuntu-20.04
     environment: ${{ inputs.environment }}
     if: github.ref_type == 'tag'
@@ -32,7 +32,7 @@ jobs:
           ${{ secrets.API_ENV }}
           EOF
 
-      - name: Deploy to ${{ inputs.environment }}
+      - name: Serverless deploy
         uses: serverless/github-action@v3
         with:
           args: deploy --stage ${{ inputs.environment }}20 --region us-west-1
