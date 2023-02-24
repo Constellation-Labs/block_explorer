@@ -12,6 +12,7 @@ jobs:
   deploy:
     name: Deploy serverless
     runs-on: ubuntu-20.04
+    environment: ${{ inputs.environment }}
     if: github.ref_type == 'tag'
     steps:
       - name: Checkout code
