@@ -3,6 +3,9 @@ service: api
 custom:
   stage: ${opt:stage, 'local'}
   env: ${file(env.yml):${self:custom.stage}, file(env.yml):default}
+  # set serverless offline http port, since default port 3000 is already in use by Grafana in the local tessellation cluster
+  serverless-offline:
+    httpPort: 3001
 
 provider:
   name: aws
