@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [v3.0.5] 2023-03-30
 - Revert "Fix false non-zero balances"
 
 ## [v3.0.4] 2023-02-24
