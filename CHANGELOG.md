@@ -2,6 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Revert "Fix false non-zero balances"
 
 ## [v3.0.4] 2023-02-24
 - Fix deploy workflow
