@@ -3,10 +3,9 @@ import { ApplicationError, StatusCodes } from "./http";
 import { TransportRequestPromise } from "@opensearch-project/opensearch/lib/Transport";
 import { pipe } from "fp-ts/lib/function";
 import { filterOrElse, map, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
-import { WithOrdinal } from "./model";
+import { CurrencyData, Ordinal } from "./model";
 import { SearchRequest } from "@opensearch-project/opensearch/api/types";
 import { Result } from "./opensearch";
-
 export enum SortOrder {
   Desc = "desc",
   Asc = "asc",
@@ -35,18 +34,34 @@ export type SortOptions<T> = {
 
 export const maxSizeLimit = 10000;
 
-export const getDocumentQuery = <T>(index: string, id: string) => ({
+export const getDocumentQuery = <T>(
+  index: string,
+  id: string,
+  currencyIdentifier?: string
+) => ({
   index,
-  id,
+  id: currencyIdentifier ? currencyIdentifier + id : id,
 });
 
-export const getLatestQuery = <T extends WithOrdinal>(index: string): any => ({
+export const getLatestQuery = <T extends Ordinal>(
+  index: string,
+  currencyIdentifier?: string
+): any => ({
   index,
   body: {
     size: 1,
     sort: {
-      ordinal: { order: SortOrder.Desc },
+      [currencyIdentifier ? "data.ordinal" : "ordinal"]: {
+        order: SortOrder.Desc,
+      },
     },
+    ...(currencyIdentifier
+      ? {
+          query: {
+            bool: { must: [{ match: { identifier: currencyIdentifier } }] },
+          },
+        }
+      : {}),
   },
 });
 
@@ -60,11 +75,11 @@ const getSearchSince = <T>(sort: SortOptions<T>) => {
     : {};
 };
 
-const getSort = <T>(sort: SortOptions<T>) => {
+const getSort = <T>(sort: SortOptions<T>, currencyIdentifier?: string) => {
   return sort.options.length === 0
     ? []
     : sort.options.map((s) => ({
-        [s.sortField]:
+        [currencyIdentifier ? `data.${s.sortField}` : s.sortField]:
           s.searchDirection === SearchDirection.After
             ? SortOrder.Asc
             : SortOrder.Desc,
@@ -75,16 +90,22 @@ export const getMultiQuery = <T, K extends keyof T>(
   index: string,
   fields: K[],
   value: T[keyof T],
-  sort: SortOptions<T>
+  sort: SortOptions<T>,
+  currencyIdentifier?: string
 ): SearchRequest => ({
   index,
   body: {
     ...getSearchSince<T>(sort),
     size: sort.size || maxSizeLimit,
-    sort: getSort<T>(sort),
+    sort: getSort<T>(sort, currencyIdentifier),
     query: {
       bool: {
-        should: fields.map((field) => ({ term: { [field]: value } })),
+        should: fields.map((field) => ({
+          term: { [currencyIdentifier ? `data.${field}` : field]: value },
+        })),
+        ...(currencyIdentifier
+          ? { must: [{ match: { identifier: currencyIdentifier } }] }
+          : {}),
         minimum_should_match: 1,
         boost: 1.0,
       },
@@ -96,39 +117,58 @@ export function getByFieldQuery<T, K extends keyof T>(
   index: string,
   field: K,
   value: T[K],
-  sort: SortOptions<T>
+  sort: SortOptions<T>,
+  currencyIdentifier?: string
 ): any {
   return {
     index,
     body: {
       ...getSearchSince<T>(sort),
       size: sort.size || maxSizeLimit,
-      sort: getSort<T>(sort),
+      sort: getSort<T>(sort, currencyIdentifier),
       query: {
-        term: {
-          [field]: value,
+        bool: {
+          must: [
+            {
+              term: { [currencyIdentifier ? `data.${field}` : field]: value },
+            },
+            ...(currencyIdentifier
+              ? [{ term: { identifier: currencyIdentifier } }]
+              : []),
+          ],
         },
       },
     },
   };
 }
 
-export function getAll<T>(index: string, sort: SortOptions<T>): any {
+export function getAll<T>(
+  index: string,
+  sort: SortOptions<T>,
+  currencyIdentifier?: string
+): any {
   return {
     index,
     body: {
       ...getSearchSince<T>(sort),
       size: sort.size || maxSizeLimit,
-      sort: getSort<T>(sort),
-      query: {
-        match_all: {},
-      },
+      sort: getSort<T>(sort, currencyIdentifier),
+      query: currencyIdentifier
+        ? {
+            bool: {
+              must: [{ term: { identifier: currencyIdentifier } }],
+            },
+          }
+        : {
+            match_all: {},
+          },
     },
   };
 }
 
 export const findOne = <T>(
-  search: TransportRequestPromise<ApiResponse>
+  search: TransportRequestPromise<ApiResponse>,
+  currencyIdentifier?: string
 ): TaskEither<ApplicationError, Result<T>> =>
   pipe(
     tryCatch<ApplicationError, any>(
@@ -151,11 +191,18 @@ export const findOne = <T>(
     ),
     map((hits) => ({
       data: hits[0]._source as T,
-    }))
+    })),
+    map((h) => {
+      // console.log(currencyIdentifier, isWrapped(h.data))
+      return isWrapped<T>(h.data) && currencyIdentifier
+        ? { ...h, data: h.data.data }
+        : h;
+    })
   );
 
 export const findAll = <T>(
-  search: TransportRequestPromise<ApiResponse>
+  search: TransportRequestPromise<ApiResponse>,
+  currencyIdentifier?: string
 ): TaskEither<ApplicationError, T[]> =>
   pipe(
     tryCatch<ApplicationError, any>(
@@ -172,5 +219,10 @@ export const findAll = <T>(
     ),
     map((hits) => {
       return hits.map((hit) => hit._source as T);
-    })
+    }),
+    map((hits) =>
+      hits.map((h) => (isWrapped(h) && currencyIdentifier ? h.data : h))
+    )
   );
+
+const isWrapped = <T>(a: any): a is CurrencyData<T> => a.identifier && a.data;

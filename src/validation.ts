@@ -29,9 +29,6 @@ type PaginationQueryParams = {
   limit?: string;
   next?: string;
 };
-
-type QueryParams = PaginationQueryParams;
-
 const pathParams = Lens.fromNullableProp<APIGatewayEvent>()(
   "pathParameters",
   {}
@@ -158,31 +155,25 @@ const pathParamExists =
       )
     );
 
-export const validateSnapshotsEvent = (event: APIGatewayEvent) =>
+export const validateCurrencyIdentifierParam = (event: APIGatewayEvent) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(pathParamExists("identifier"))
+  );
+
+export const validateTermParam = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
     chain(pathParamExists("term"))
   );
 
-export const validateBlocksEvent = (event: APIGatewayEvent) =>
+export const validateHashParam = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
     chain(pathParamExists("hash"))
   );
 
-export const validateTransactionByHashEvent = (event: APIGatewayEvent) =>
-  pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists("hash"))
-  );
-
-export const validateTransactionByAddressEvent = (event: APIGatewayEvent) =>
-  pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists("address"))
-  );
-
-export const validateBalanceByAddressEvent = (event: APIGatewayEvent) =>
+export const validateAddressParam = (event: APIGatewayEvent) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
     chain(pathParamExists("address"))

@@ -88,6 +88,74 @@ functions:
           path: /addresses/{address}/balance
           method: GET
 
+
+  currencySnapshots:
+    handler: src/handler.currencySnapshots
+    events:
+      - httpApi:
+          path: /currency/{identifier}/snapshots
+          method: GET
+  currencySnapshot:
+    handler: src/handler.currencySnapshot
+    events:
+      - httpApi:
+          path: /currency/{identifier}/snapshots/{term}
+          method: GET
+  currencySnapshotRewards:
+    handler: src/handler.currencySnapshotRewards
+    events:
+      - httpApi:
+          path: /currency/{identifier}/snapshots/{term}/rewards
+          method: GET
+  currencySnapshotTransactions:
+    handler: src/handler.currencySnapshotTransactions
+    events:
+      - httpApi:
+          path: /currency/{identifier}/snapshots/{term}/transactions
+          method: GET
+  currencyBlock:
+    handler: src/handler.currencyBlock
+    events:
+      - httpApi:
+          path: /currency/{identifier}/blocks/{hash}
+          method: GET
+  currencyTransactions:
+    handler: src/handler.currencyTransactions
+    events:
+      - httpApi:
+          path: /currency/{identifier}/transactions
+          method: GET
+  currencyTransaction:
+    handler: src/handler.currencyTransaction
+    events:
+      - httpApi:
+          path: /currency/{identifier}/transactions/{hash}
+          method: GET
+  currencyTransactionsByAddress:
+    handler: src/handler.currencyTransactionsByAddress
+    events:
+      - httpApi:
+          path: /currency/{identifier}/addresses/{address}/transactions
+          method: GET
+  currencyTransactionsBySource:
+    handler: src/handler.currencyTransactionsBySource
+    events:
+      - httpApi:
+          path: /currency/{identifier}/addresses/{address}/transactions/sent
+          method: GET
+  currencyTransactionsByDestination:
+    handler: src/handler.currencyTransactionsByDestination
+    events:
+      - httpApi:
+          path: /currency/{identifier}/addresses/{address}/transactions/received
+          method: GET
+  currencyBalanceByAddress:
+    handler: src/handler.currencyBalanceByAddress
+    events:
+      - httpApi:
+          path: /currency/{identifier}/addresses/{address}/balance
+          method: GET
+
 plugins:
   - serverless-plugin-typescript
   - serverless-offline
