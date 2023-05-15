@@ -4,7 +4,6 @@ const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
 };
-
 export enum StatusCodes {
   OK = 200,
   CREATED = 201,
@@ -13,21 +12,33 @@ export enum StatusCodes {
   SERVER_ERROR = 500,
 }
 
+type ErrorCodes =
+  | StatusCodes.BAD_REQUEST
+  | StatusCodes.NOT_FOUND
+  | StatusCodes.SERVER_ERROR;
+type SuccessCodes = Exclude<StatusCodes, ErrorCodes>;
+
 export class ApplicationError {
   public readonly message: string;
   public readonly errors: string[];
-  public readonly statusCode: StatusCodes;
+  public readonly statusCode: ErrorCodes;
 
-  public constructor(message: string, errors: string[], status: StatusCodes) {
+  public constructor(message: string, errors: string[], status: ErrorCodes) {
     this.message = message;
     this.errors = errors;
     this.statusCode = status;
   }
 }
 
+type SuccessResponse = {
+  statusCode: SuccessCodes;
+  headers: typeof DEFAULT_HEADERS;
+  body: string;
+};
+
 export const successResponse =
-  (statusCode: StatusCodes) =>
-  <T>(result: Result<T> | PaginatedResult<T>) => {
+  (statusCode: SuccessCodes) =>
+  <T>(result: Result<T> | PaginatedResult<T>): Response => {
     return {
       statusCode,
       headers: DEFAULT_HEADERS,
@@ -35,8 +46,16 @@ export const successResponse =
     };
   };
 
-export const errorResponse = (error: ApplicationError) => ({
+type ErrorResponse = {
+  statusCode: ErrorCodes;
+  headers: typeof DEFAULT_HEADERS;
+  body: string;
+};
+
+export const errorResponse = (error: ApplicationError): Response => ({
   statusCode: error.statusCode,
   headers: DEFAULT_HEADERS,
   body: JSON.stringify({ message: error.message, errors: error.errors }),
 });
+
+export type Response = SuccessResponse | ErrorResponse;

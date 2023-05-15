@@ -1,21 +1,22 @@
 import { Client } from "@opensearch-project/opensearch";
 import { APIGatewayEvent } from "aws-lambda";
 import * as T from "fp-ts/lib/Task";
+import { Task } from "fp-ts/lib/Task";
 import { chain, fold, map, of } from "fp-ts/lib/TaskEither";
 import {
   ApplicationError,
   errorResponse,
+  Response,
   StatusCodes,
   successResponse,
 } from "./http";
 
 import {
   extractPagination,
-  validateBalanceByAddressEvent,
-  validateBlocksEvent,
-  validateSnapshotsEvent,
-  validateTransactionByAddressEvent,
-  validateTransactionByHashEvent,
+  validateTermParam,
+  validateAddressParam,
+  validateHashParam,
+  validateCurrencyIdentifierParam,
 } from "./validation";
 import {
   findBalanceByAddress,
@@ -32,6 +33,27 @@ import {
 } from "./opensearch";
 import { pipe } from "fp-ts/lib/function";
 import { Snapshot, Transaction } from "./model";
+
+export const getCurrencySnapshots = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateCurrencyIdentifierParam),
+    chain(() =>
+      pipe(
+        extractPagination<Snapshot>(event),
+        map((pagination) => {
+          return { pagination, ...extractCurrencyIdentifier(event) };
+        })
+      )
+    ),
+    chain(({ pagination, currencyIdentifier }) =>
+      listSnapshots(os)(pagination, currencyIdentifier)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
 
 export const getGlobalSnapshots = (event: APIGatewayEvent, os: Client) =>
   pipe(
@@ -51,10 +73,13 @@ export const getGlobalSnapshots = (event: APIGatewayEvent, os: Client) =>
     )
   );
 
-export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
+export const getGlobalSnapshot = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateSnapshotsEvent),
+    chain(validateTermParam),
     map(extractTerm),
     chain(({ termName, termValue }) => findSnapshot(os)(termValue)),
     fold(
@@ -63,12 +88,57 @@ export const getGlobalSnapshot = (event: APIGatewayEvent, os: Client) =>
     )
   );
 
-export const getGlobalSnapshotRewards = (event: APIGatewayEvent, os: Client) =>
+export const getCurrencySnapshot = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateSnapshotsEvent),
+    chain(validateCurrencyIdentifierParam),
+    chain(validateTermParam),
+    map((event) => ({
+      ...extractTerm(event),
+      ...extractCurrencyIdentifier(event),
+    })),
+    chain(({ termName, termValue, currencyIdentifier }) =>
+      findSnapshot(os)(termValue, currencyIdentifier)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getGlobalSnapshotRewards = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateTermParam),
     map(extractTerm),
     chain(({ termName, termValue }) => findSnapshotRewards(os)(termValue)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getCurrencySnapshotRewards = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateCurrencyIdentifierParam),
+    chain(validateTermParam),
+    map((event) => ({
+      ...extractTerm(event),
+      ...extractCurrencyIdentifier(event),
+    })),
+    chain(({ termName, termValue, currencyIdentifier }) =>
+      findSnapshotRewards(os)(termValue, currencyIdentifier)
+    ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
@@ -78,10 +148,10 @@ export const getGlobalSnapshotRewards = (event: APIGatewayEvent, os: Client) =>
 export const getGlobalSnapshotTransactions = (
   event: APIGatewayEvent,
   os: Client
-) =>
+): Task<Response> =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateSnapshotsEvent),
+    chain(validateTermParam),
     map(extractTerm),
     chain(({ termName, termValue }) =>
       pipe(
@@ -98,15 +168,73 @@ export const getGlobalSnapshotTransactions = (
     )
   );
 
-export const getBlock = (event: APIGatewayEvent, os: Client) =>
+export const getCurrencySnapshotTransactions = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateBlocksEvent),
-    map(extractHash),
-    chain(({ hash }) => findBlockByHash(os)(hash)),
+    chain(validateTermParam),
+    chain(validateCurrencyIdentifierParam),
+    map((event) => ({
+      ...extractTerm(event),
+      ...extractCurrencyIdentifier(event),
+    })),
+    chain(({ termName, termValue, currencyIdentifier }) =>
+      pipe(
+        extractPagination<Transaction>(event),
+        map((pagination) => ({
+          termName,
+          termValue,
+          pagination,
+          currencyIdentifier,
+        }))
+      )
+    ),
+    chain(({ termName, termValue, pagination, currencyIdentifier }) =>
+      findTransactionsBySnapshot(os)(termValue, pagination, currencyIdentifier)
+    ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getCurrencyBlock = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateCurrencyIdentifierParam),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (validatedEvent) => getBlock(validatedEvent, os)
+    )
+  );
+
+export const getBlock = (event: APIGatewayEvent, os: Client): Task<Response> =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateHashParam),
+    map(extractHash),
+    map((hash) => ({
+      ...hash,
+      ...extractCurrencyIdentifier(event),
+    })),
+    chain(({ hash, currencyIdentifier }) =>
+      findBlockByHash(os)(hash, currencyIdentifier)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getCurrencyTransactions = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateCurrencyIdentifierParam),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (validatedEvent) => getTransactions(validatedEvent, os)
     )
   );
 
@@ -117,32 +245,53 @@ export const getTransactions = (event: APIGatewayEvent, os: Client) =>
       pipe(
         extractPagination<Snapshot>(event),
         map((pagination) => {
-          return { pagination };
+          return {
+            pagination,
+            ...extractCurrencyIdentifier(event),
+          };
         })
       )
     ),
-    chain(({ pagination }) => listTransactions(os)(pagination)),
+    chain(({ pagination, currencyIdentifier }) =>
+      listTransactions(os)(pagination, currencyIdentifier)
+    ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
     )
   );
 
-export const getTransactionsByAddress = (event: APIGatewayEvent, os: Client) =>
+export const getCurrencyTransactionsByAddress = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateTransactionByAddressEvent),
+    chain(validateCurrencyIdentifierParam),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (validatedEvent) => getTransactionsByAddress(validatedEvent, os)
+    )
+  );
+
+export const getTransactionsByAddress = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateAddressParam),
     map(extractAddress),
     chain(({ address }) =>
       pipe(
         extractPagination<Transaction>(event),
         map((pagination) => {
-          return { address, pagination };
+          return { address, pagination, ...extractCurrencyIdentifier(event) };
         })
       )
     ),
-    chain(({ address, pagination }) =>
-      findTransactionsByAddress(os)(address, pagination)
+    chain(({ address, pagination, currencyIdentifier }) =>
+      findTransactionsByAddress(os)(address, pagination, currencyIdentifier)
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
@@ -150,42 +299,82 @@ export const getTransactionsByAddress = (event: APIGatewayEvent, os: Client) =>
     )
   );
 
-export const getTransactionsBySource = (event: APIGatewayEvent, os: Client) =>
+export const getCurrencyTransactionsBySource = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateTransactionByAddressEvent),
+    chain(validateCurrencyIdentifierParam),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (validatedEvent) => getTransactionsBySource(validatedEvent, os)
+    )
+    // chain((validatedEvent) =>
+    //   TE.fromTask(getTransactionsBySource(validatedEvent, os))
+    // )
+  );
+
+export const getTransactionsBySource = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateAddressParam),
     map(extractAddress),
     chain(({ address }) =>
       pipe(
         extractPagination<Transaction>(event),
-        map((pagination) => ({ address, pagination }))
+        map((pagination) => ({
+          address,
+          pagination,
+          ...extractCurrencyIdentifier(event),
+        }))
       )
     ),
-    chain(({ address, pagination }) =>
-      findTransactionsBySource(os)(address, pagination)
+    chain(({ address, pagination, currencyIdentifier }) =>
+      findTransactionsBySource(os)(address, pagination, currencyIdentifier)
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getCurrencyTransactionsByDestination = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateCurrencyIdentifierParam),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (validatedEvent) => getTransactionsByDestination(validatedEvent, os)
     )
   );
 
 export const getTransactionsByDestination = (
   event: APIGatewayEvent,
   os: Client
-) =>
+): Task<Response> =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateTransactionByAddressEvent),
+    chain(validateAddressParam),
     map(extractAddress),
     chain(({ address }) =>
       pipe(
         extractPagination<Transaction>(event),
-        map((pagination) => ({ address, pagination }))
+        map((pagination) => ({
+          address,
+          pagination,
+          ...extractCurrencyIdentifier(event),
+        }))
       )
     ),
-    chain(({ address, pagination }) =>
-      findTransactionsByDestination(os)(address, pagination)
+    chain(({ address, pagination, currencyIdentifier }) =>
+      findTransactionsByDestination(os)(address, pagination, currencyIdentifier)
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
@@ -193,29 +382,78 @@ export const getTransactionsByDestination = (
     )
   );
 
-export const getBalanceByAddress = (event: APIGatewayEvent, os: Client) =>
+export const getCurrencyBalanceByAddress = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateBalanceByAddressEvent),
+    chain(validateCurrencyIdentifierParam),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (validatedEvent) => getBalanceByAddress(validatedEvent, os)
+    )
+  );
+
+export const getBalanceByAddress = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateAddressParam),
     map(extractAddressAndOrdinal),
-    chain(({ address, ordinal }) => findBalanceByAddress(os)(address, ordinal)),
+    map((params) => ({
+      ...params,
+      ...extractCurrencyIdentifier(event),
+    })),
+    chain(({ address, ordinal, currencyIdentifier }) =>
+      findBalanceByAddress(os)(address, ordinal, currencyIdentifier)
+    ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
     )
   );
 
-export const getTransaction = (event: APIGatewayEvent, os: Client) =>
+export const getCurrencyTransaction = (event: APIGatewayEvent, os: Client) =>
   pipe(
     of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateTransactionByHashEvent),
+    chain(validateCurrencyIdentifierParam),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (validatedEvent) => getTransaction(validatedEvent, os)
+    )
+  );
+
+export const getTransaction = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateHashParam),
     map(extractHash),
-    chain(({ hash }) => findTransactionByHash(os)(hash)),
+    map((hash) => ({
+      ...hash,
+      ...extractCurrencyIdentifier(event),
+    })),
+    chain(({ hash, currencyIdentifier }) =>
+      findTransactionByHash(os)(hash, currencyIdentifier)
+    ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
     )
   );
+
+const extractCurrencyIdentifier = (
+  event: APIGatewayEvent
+): Partial<{ currencyIdentifier?: string }> => {
+  return {
+    currencyIdentifier: event.pathParameters?.identifier,
+  };
+};
 
 const extractHash = (event: APIGatewayEvent) => {
   return { hash: event.pathParameters!.hash };
