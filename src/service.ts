@@ -456,11 +456,11 @@ const extractCurrencyIdentifier = (
 };
 
 const extractHash = (event: APIGatewayEvent) => {
-  return { hash: event.pathParameters!.hash };
+  return { hash: event.pathParameters!.hash! };
 };
 
 const extractAddress = (event: APIGatewayEvent) => {
-  return { address: event.pathParameters!.address };
+  return { address: event.pathParameters!.address! };
 };
 
 const extractTerm = (event: APIGatewayEvent) => {
@@ -470,8 +470,8 @@ const extractTerm = (event: APIGatewayEvent) => {
       termValue: "latest",
     };
   return {
-    termName: isNaN(Number(event.pathParameters!.term)) ? "hash" : "ordinal",
-    termValue: event.pathParameters!.term,
+    termName: isNaN(Number(event.pathParameters!.term!)) ? "hash" : "ordinal",
+    termValue: event.pathParameters!.term!,
   };
 };
 
@@ -480,7 +480,7 @@ const extractAddressAndOrdinal = (
 ): { address: string; ordinal?: number } => {
   const ordinal = Number(event.queryStringParameters?.ordinal);
   return {
-    address: event.pathParameters!.address,
+    address: event.pathParameters!.address!,
     ...(!isNaN(ordinal) ? { ordinal } : {}),
   };
 };

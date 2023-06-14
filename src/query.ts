@@ -101,7 +101,9 @@ export const getMultiQuery = <T, K extends keyof T>(
     query: {
       bool: {
         should: fields.map((field) => ({
-          term: { [currencyIdentifier ? `data.${field}` : field]: value },
+          term: {
+            [currencyIdentifier ? `data.${String(field)}` : field]: value,
+          },
         })),
         ...(currencyIdentifier
           ? { must: [{ match: { identifier: currencyIdentifier } }] }
@@ -130,7 +132,9 @@ export function getByFieldQuery<T, K extends keyof T>(
         bool: {
           must: [
             {
-              term: { [currencyIdentifier ? `data.${field}` : field]: value },
+              term: {
+                [currencyIdentifier ? `data.${String(field)}` : field]: value,
+              },
             },
             ...(currencyIdentifier
               ? [{ term: { identifier: currencyIdentifier } }]
