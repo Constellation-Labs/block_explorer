@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.0.6] 2023-06-15
+- Currency Framework support
+
 ## [v3.0.5] 2023-03-30
 - Revert "Fix false non-zero balances"
 
