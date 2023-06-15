@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v3.1.0] 2023-06-15
+- Fix currency snapshot rewards
+
 ## [v3.0.6] 2023-06-15
 - Currency Framework support
 
