@@ -66,7 +66,7 @@ export const getGlobalSnapshots = (event: APIGatewayEvent, os: Client) =>
         })
       )
     ),
-    chain(({ pagination }) => listSnapshots(os)(pagination)),
+    chain(({ pagination }) => listSnapshots(os)(pagination, null)),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
@@ -81,7 +81,7 @@ export const getGlobalSnapshot = (
     of<ApplicationError, APIGatewayEvent>(event),
     chain(validateTermParam),
     map(extractTerm),
-    chain(({ termName, termValue }) => findSnapshot(os)(termValue)),
+    chain(({ termName, termValue }) => findSnapshot(os)(termValue, null)),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
@@ -117,7 +117,9 @@ export const getGlobalSnapshotRewards = (
     of<ApplicationError, APIGatewayEvent>(event),
     chain(validateTermParam),
     map(extractTerm),
-    chain(({ termName, termValue }) => findSnapshotRewards(os)(termValue)),
+    chain(({ termName, termValue }) =>
+      findSnapshotRewards(os)(termValue, null)
+    ),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
@@ -160,7 +162,7 @@ export const getGlobalSnapshotTransactions = (
       )
     ),
     chain(({ termName, termValue, pagination }) =>
-      findTransactionsBySnapshot(os)(termValue, pagination)
+      findTransactionsBySnapshot(os)(termValue, pagination, null)
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
@@ -408,7 +410,7 @@ export const getBalanceByAddress = (
       ...extractCurrencyIdentifier(event),
     })),
     chain(({ address, ordinal, currencyIdentifier }) =>
-      findBalanceByAddress(os)(address, ordinal, currencyIdentifier)
+      findBalanceByAddress(os)(address, currencyIdentifier, ordinal)
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
@@ -449,9 +451,9 @@ export const getTransaction = (
 
 const extractCurrencyIdentifier = (
   event: APIGatewayEvent
-): Partial<{ currencyIdentifier?: string }> => {
+): { currencyIdentifier: string | null } => {
   return {
-    currencyIdentifier: event.pathParameters?.identifier,
+    currencyIdentifier: event.pathParameters?.identifier || null,
   };
 };
 

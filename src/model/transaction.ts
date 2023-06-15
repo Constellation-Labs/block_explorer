@@ -5,7 +5,6 @@ import {
   SnapshotOrdinal,
   Timestamp,
 } from "./properties";
-import { CurrencyData } from "./currency-data";
 
 export type OpenSearchTransaction = {
   source: string;
@@ -20,8 +19,6 @@ export type OpenSearchTransaction = {
   SnapshotHash &
   SnapshotOrdinal &
   Hash;
-
-export type OpenSearchCurrencyTransaction = CurrencyData<OpenSearchTransaction>;
 
 export type TransactionReference = Hash & Ordinal;
 
