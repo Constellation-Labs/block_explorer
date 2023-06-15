@@ -5,7 +5,6 @@ import {
   SnapshotOrdinal,
   Timestamp,
 } from "./properties";
-import { CurrencyData } from "./currency-data";
 
 export type OpenSearchBlock = {
   transactions: string[];
@@ -15,8 +14,6 @@ export type OpenSearchBlock = {
   SnapshotHash &
   Hash &
   Height;
-
-export type OpenSearchCurrencyBlock = CurrencyData<Block>;
 
 export type BlockReference = Hash & Height;
 

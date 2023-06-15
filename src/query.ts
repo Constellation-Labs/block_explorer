@@ -37,7 +37,7 @@ export const maxSizeLimit = 10000;
 export const getDocumentQuery = <T>(
   index: string,
   id: string,
-  currencyIdentifier?: string
+  currencyIdentifier: string | null
 ) => ({
   index,
   id: currencyIdentifier ? currencyIdentifier + id : id,
@@ -45,7 +45,7 @@ export const getDocumentQuery = <T>(
 
 export const getLatestQuery = <T extends Ordinal>(
   index: string,
-  currencyIdentifier?: string
+  currencyIdentifier: string | null
 ): any => ({
   index,
   body: {
@@ -75,7 +75,10 @@ const getSearchSince = <T>(sort: SortOptions<T>) => {
     : {};
 };
 
-const getSort = <T>(sort: SortOptions<T>, currencyIdentifier?: string) => {
+const getSort = <T>(
+  sort: SortOptions<T>,
+  currencyIdentifier: string | null
+) => {
   return sort.options.length === 0
     ? []
     : sort.options.map((s) => ({
@@ -91,7 +94,7 @@ export const getMultiQuery = <T, K extends keyof T>(
   fields: K[],
   value: T[keyof T],
   sort: SortOptions<T>,
-  currencyIdentifier?: string
+  currencyIdentifier: string | null
 ): SearchRequest => ({
   index,
   body: {
@@ -120,7 +123,7 @@ export function getByFieldQuery<T, K extends keyof T>(
   field: K,
   value: T[K],
   sort: SortOptions<T>,
-  currencyIdentifier?: string
+  currencyIdentifier: string | null
 ): any {
   return {
     index,
@@ -149,7 +152,7 @@ export function getByFieldQuery<T, K extends keyof T>(
 export function getAll<T>(
   index: string,
   sort: SortOptions<T>,
-  currencyIdentifier?: string
+  currencyIdentifier: string | null
 ): any {
   return {
     index,
@@ -172,7 +175,7 @@ export function getAll<T>(
 
 export const findOne = <T>(
   search: TransportRequestPromise<ApiResponse>,
-  currencyIdentifier?: string
+  currencyIdentifier: string | null
 ): TaskEither<ApplicationError, Result<T>> =>
   pipe(
     tryCatch<ApplicationError, any>(
@@ -206,7 +209,7 @@ export const findOne = <T>(
 
 export const findAll = <T>(
   search: TransportRequestPromise<ApiResponse>,
-  currencyIdentifier?: string
+  currencyIdentifier: string | null
 ): TaskEither<ApplicationError, T[]> =>
   pipe(
     tryCatch<ApplicationError, any>(
