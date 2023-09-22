@@ -43,7 +43,8 @@ enum OSIndex {
   Snapshots = "snapshots",
   Blocks = "blocks",
   Transactions = "transactions",
-  Balances = "balances",
+  Balances = "balances.1",
+  Balances2 = "balances",
   CurrencySnapshots = "currency-snapshots",
   CurrencyBlocks = "currency-blocks",
   CurrencyTransactions = "currency-transactions",
@@ -100,63 +101,63 @@ const getSortOptions = <T, R>(pagination: Pagination<T>) => ({
 
 export const findSnapshotRewards =
   (os: Client) =>
-  (
-    term: string,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, Result<RewardTransaction[]>> =>
-    pipe(
-      findOne<OpenSearchSnapshot>(
-        findSnapshotByTerm(os)(term, currencyIdentifier),
-        currencyIdentifier
-      ),
-      map((r) => ({ ...r, data: r.data.rewards }))
-    );
+    (
+      term: string,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, Result<RewardTransaction[]>> =>
+      pipe(
+        findOne<OpenSearchSnapshot>(
+          findSnapshotByTerm(os)(term, currencyIdentifier),
+          currencyIdentifier
+        ),
+        map((r) => ({ ...r, data: r.data.rewards }))
+      );
 
 export const listSnapshots =
   (os: Client) =>
-  (
-    pagination: Pagination<Snapshot>,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, PaginatedResult<OpenSearchSnapshot>> => {
-    const { size, ...options } = pagination;
-    const sortOptions = getSortOptions<Snapshot, OpenSearchSnapshot>(
-      pagination
-    ).withDefault({
-      size,
-      options: [
-        {
-          ...options,
-          searchDirection: options["searchDirection"] || SearchDirection.Before,
-          sortField: "ordinal",
-        },
-      ],
-    });
+    (
+      pagination: Pagination<Snapshot>,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, PaginatedResult<OpenSearchSnapshot>> => {
+      const { size, ...options } = pagination;
+      const sortOptions = getSortOptions<Snapshot, OpenSearchSnapshot>(
+        pagination
+      ).withDefault({
+        size,
+        options: [
+          {
+            ...options,
+            searchDirection: options["searchDirection"] || SearchDirection.Before,
+            sortField: "ordinal",
+          },
+        ],
+      });
 
-    return pipe(
-      findAll<OpenSearchSnapshot>(
-        os.search(
-          getAll<OpenSearchSnapshot>(
-            currencyIdentifier ? OSIndex.CurrencySnapshots : OSIndex.Snapshots,
-            sortOptions,
-            currencyIdentifier
-          )
+      return pipe(
+        findAll<OpenSearchSnapshot>(
+          os.search(
+            getAll<OpenSearchSnapshot>(
+              currencyIdentifier ? OSIndex.CurrencySnapshots : OSIndex.Snapshots,
+              sortOptions,
+              currencyIdentifier
+            )
+          ),
+          currencyIdentifier
         ),
-        currencyIdentifier
-      ),
-      chain((a) => getResultWithNextString(a, sortOptions))
-    );
-  };
+        chain((a) => getResultWithNextString(a, sortOptions))
+      );
+    };
 
 const exportTransactionSortOptions =
   (os: Client) =>
-  (
-    pagination: Pagination<Transaction>,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, SortOptions<OpenSearchTransaction>> => {
-    const { size, ...options } = pagination;
+    (
+      pagination: Pagination<Transaction>,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, SortOptions<OpenSearchTransaction>> => {
+      const { size, ...options } = pagination;
 
-    return pagination["searchSince"]
-      ? (() => {
+      return pagination["searchSince"]
+        ? (() => {
           return pipe(
             findTransactionByHash(os)(
               pagination["searchSince"],
@@ -187,7 +188,7 @@ const exportTransactionSortOptions =
             }))
           );
         })()
-      : of(
+        : of(
           getSortOptions<Transaction, OpenSearchTransaction>(
             pagination
           ).withDefault({
@@ -214,58 +215,58 @@ const exportTransactionSortOptions =
             ],
           })
         );
-  };
+    };
 
 export const listTransactions =
   (os: Client) =>
-  (
-    pagination: Pagination<Transaction>,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> =>
-    pipe(
-      exportTransactionSortOptions(os)(pagination, currencyIdentifier),
-      chain<
-        ApplicationError,
-        SortOptions<OpenSearchTransaction>,
-        PaginatedResult<OpenSearchTransaction>
-      >((sortOptions) =>
-        pipe(
-          findAll<OpenSearchTransaction>(
-            os.search(
-              getAll<OpenSearchTransaction>(
-                currencyIdentifier
-                  ? OSIndex.CurrencyTransactions
-                  : OSIndex.Transactions,
-                sortOptions,
-                currencyIdentifier
-              )
+    (
+      pagination: Pagination<Transaction>,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> =>
+      pipe(
+        exportTransactionSortOptions(os)(pagination, currencyIdentifier),
+        chain<
+          ApplicationError,
+          SortOptions<OpenSearchTransaction>,
+          PaginatedResult<OpenSearchTransaction>
+        >((sortOptions) =>
+          pipe(
+            findAll<OpenSearchTransaction>(
+              os.search(
+                getAll<OpenSearchTransaction>(
+                  currencyIdentifier
+                    ? OSIndex.CurrencyTransactions
+                    : OSIndex.Transactions,
+                  sortOptions,
+                  currencyIdentifier
+                )
+              ),
+              currencyIdentifier
             ),
-            currencyIdentifier
-          ),
-          chain((a) =>
-            getResultWithNextString<OpenSearchTransaction>(a, sortOptions)
+            chain((a) =>
+              getResultWithNextString<OpenSearchTransaction>(a, sortOptions)
+            )
           )
         )
-      )
-    );
+      );
 
 export const findSnapshot =
   (os: Client) =>
-  (
-    term: string,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, Result<Snapshot>> => {
-    return pipe(
-      findOne<OpenSearchSnapshot>(
-        findSnapshotByTerm(os)(term, currencyIdentifier),
-        currencyIdentifier
-      ),
-      map((s) => {
-        const { rewards, ...rest } = s.data;
-        return { ...s, data: rest };
-      })
-    );
-  };
+    (
+      term: string,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, Result<Snapshot>> => {
+      return pipe(
+        findOne<OpenSearchSnapshot>(
+          findSnapshotByTerm(os)(term, currencyIdentifier),
+          currencyIdentifier
+        ),
+        map((s) => {
+          const { rewards, ...rest } = s.data;
+          return { ...s, data: rest };
+        })
+      );
+    };
 
 const findSnapshotByTerm =
   (os: Client) => (term: string, currencyIdentifier: string | null) => {
@@ -299,67 +300,67 @@ const findSnapshotByTerm =
 
 export const findTransactionsBySnapshot =
   (os: Client) =>
-  (
-    term: string,
-    pagination: Pagination<Transaction>,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> => {
-    return pipe(
-      findSnapshot(os)(term, currencyIdentifier),
-      chain((s) =>
-        pipe(
-          findTransactionsByTerm(os)(
-            s.data.ordinal,
-            ["snapshotOrdinal"],
-            pagination,
-            currencyIdentifier
-          ),
-          orElse((e: ApplicationError) =>
-            e.statusCode === StatusCodes.NOT_FOUND
-              ? right({ data: [] })
-              : left(e)
+    (
+      term: string,
+      pagination: Pagination<Transaction>,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> => {
+      return pipe(
+        findSnapshot(os)(term, currencyIdentifier),
+        chain((s) =>
+          pipe(
+            findTransactionsByTerm(os)(
+              s.data.ordinal,
+              ["snapshotOrdinal"],
+              pagination,
+              currencyIdentifier
+            ),
+            orElse((e: ApplicationError) =>
+              e.statusCode === StatusCodes.NOT_FOUND
+                ? right({ data: [] })
+                : left(e)
+            )
           )
         )
-      )
-    );
-  };
+      );
+    };
 
 export const findTransactionsByAddress =
   (os: Client) =>
-  (
-    address: string,
-    pagination: Pagination<Transaction>,
-    currencyIdentifier: string | null
-  ) =>
-    findTransactionsByTerm(os)(
-      address,
-      ["source", "destination"],
-      pagination,
-      currencyIdentifier
-    );
+    (
+      address: string,
+      pagination: Pagination<Transaction>,
+      currencyIdentifier: string | null
+    ) =>
+      findTransactionsByTerm(os)(
+        address,
+        ["source", "destination"],
+        pagination,
+        currencyIdentifier
+      );
 
 export const findTransactionsByTerm =
   (os: Client) =>
-  (
-    term: string | number,
-    fields: (keyof OpenSearchTransaction)[],
-    pagination: Pagination<Transaction>,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> =>
-    pipe(
-      exportTransactionSortOptions(os)(pagination, currencyIdentifier),
-      chain<
-        ApplicationError,
-        SortOptions<OpenSearchTransaction>,
-        PaginatedResult<OpenSearchTransaction>
-      >((sortOptions) => {
-        const index = currencyIdentifier
-          ? OSIndex.CurrencyTransactions
-          : OSIndex.Transactions;
+    (
+      term: string | number,
+      fields: (keyof OpenSearchTransaction)[],
+      pagination: Pagination<Transaction>,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> =>
+      pipe(
+        exportTransactionSortOptions(os)(pagination, currencyIdentifier),
+        chain<
+          ApplicationError,
+          SortOptions<OpenSearchTransaction>,
+          PaginatedResult<OpenSearchTransaction>
+        >((sortOptions) => {
+          const index = currencyIdentifier
+            ? OSIndex.CurrencyTransactions
+            : OSIndex.Transactions;
 
-        const query =
-          fields.length === 1
-            ? getByFieldQuery<
+          const query =
+            fields.length === 1
+              ? getByFieldQuery<
                 OpenSearchTransaction,
                 keyof OpenSearchTransaction
               >(
@@ -369,7 +370,7 @@ export const findTransactionsByTerm =
                 sortOptions,
                 currencyIdentifier
               )
-            : getMultiQuery<OpenSearchTransaction, keyof OpenSearchTransaction>(
+              : getMultiQuery<OpenSearchTransaction, keyof OpenSearchTransaction>(
                 index,
                 fields,
                 term.toString(),
@@ -377,136 +378,151 @@ export const findTransactionsByTerm =
                 currencyIdentifier
               );
 
-        return pipe(
-          findAll<OpenSearchTransaction>(os.search(query), currencyIdentifier),
-          chain((a) => getResultWithNextString(a, sortOptions))
-        );
-      })
-    );
+          return pipe(
+            findAll<OpenSearchTransaction>(os.search(query), currencyIdentifier),
+            chain((a) => getResultWithNextString(a, sortOptions))
+          );
+        })
+      );
 
 export const findTransactionsBySource =
   (os: Client) =>
-  (
-    term: string,
-    pagination: Pagination<Transaction>,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> =>
-    findTransactionsByTerm(os)(
-      term,
-      ["source"],
-      pagination,
-      currencyIdentifier
-    );
+    (
+      term: string,
+      pagination: Pagination<Transaction>,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> =>
+      findTransactionsByTerm(os)(
+        term,
+        ["source"],
+        pagination,
+        currencyIdentifier
+      );
 
 export const findTransactionsByDestination =
   (os: Client) =>
-  (
-    term: string,
-    pagination: Pagination<Transaction>,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> =>
-    findTransactionsByTerm(os)(
-      term,
-      ["destination"],
-      pagination,
-      currencyIdentifier
-    );
+    (
+      term: string,
+      pagination: Pagination<Transaction>,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, PaginatedResult<OpenSearchTransaction>> =>
+      findTransactionsByTerm(os)(
+        term,
+        ["destination"],
+        pagination,
+        currencyIdentifier
+      );
 
 export const findTransactionByHash =
   (os: Client) =>
-  (
-    hash: string,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, Result<Transaction>> =>
-    pipe(
-      findOne<OpenSearchTransaction>(
-        os.get(
-          getDocumentQuery<OpenSearchTransaction>(
-            currencyIdentifier
-              ? OSIndex.CurrencyTransactions
-              : OSIndex.Transactions,
-            hash,
-            currencyIdentifier
-          )
+    (
+      hash: string,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, Result<Transaction>> =>
+      pipe(
+        findOne<OpenSearchTransaction>(
+          os.get(
+            getDocumentQuery<OpenSearchTransaction>(
+              currencyIdentifier
+                ? OSIndex.CurrencyTransactions
+                : OSIndex.Transactions,
+              hash,
+              currencyIdentifier
+            )
+          ),
+          currencyIdentifier
         ),
-        currencyIdentifier
-      ),
-      map((r) => {
-        const { salt, ...tx } = r.data;
-        return {
-          ...r,
-          data: tx,
-        };
-      })
-    );
+        map((r) => {
+          const { salt, ...tx } = r.data;
+          return {
+            ...r,
+            data: tx,
+          };
+        })
+      );
 
 export const findBalanceByAddress =
   (os: Client) =>
-  (
-    address: string,
-    currencyIdentifier: string | null,
-    ordinal?: number
-  ): TaskEither<ApplicationError, Result<Balance>> => {
-    const sort = {
-      options: [
-        {
-          sortField: "snapshotOrdinal",
-          // To achieve (0, ordinal> we need to make (0, ordinal + 1)
-          ...(ordinal !== undefined ? { searchSince: ordinal + 1 } : {}),
-          searchDirection: SearchDirection.Before,
-        },
-      ],
-      size: 1,
-    };
+    (
+      address: string,
+      currencyIdentifier: string | null,
+      ordinal?: number
+    ): TaskEither<ApplicationError, Result<Balance>> => {
+      const sort = {
+        options: [
+          {
+            sortField: "snapshotOrdinal",
+            // To achieve (0, ordinal> we need to make (0, ordinal + 1)
+            ...(ordinal !== undefined ? { searchSince: ordinal + 1 } : {}),
+            searchDirection: SearchDirection.Before,
+          },
+        ],
+        size: 1,
+      };
 
-    return pipe(
-      findOne<OpenSearchBalance>(
-        os.search(
-          getByFieldQuery<OpenSearchBalance, "address">(
-            currencyIdentifier ? OSIndex.CurrencyBalances : OSIndex.Balances,
-            "address",
-            address,
-            sort,
+      return pipe(
+        findOne<OpenSearchBalance>(
+          os.search(
+            getByFieldQuery<OpenSearchBalance, "address">(
+              currencyIdentifier ? OSIndex.CurrencyBalances : OSIndex.Balances,
+              "address",
+              address,
+              sort,
+              currencyIdentifier
+            )
+          ),
+          currencyIdentifier
+        ),
+        orElse(() => {
+          return findOne<OpenSearchBalance>(
+            os.search(
+              getByFieldQuery<OpenSearchBalance, "address">(
+                currencyIdentifier ? OSIndex.CurrencyBalances : OSIndex.Balances2,
+                "address",
+                address,
+                sort,
+                currencyIdentifier
+              )
+            ),
             currencyIdentifier
           )
-        ),
-        currencyIdentifier
-      ),
-      map(({ data: { snapshotOrdinal, balance, address }, meta }) => ({
-        data: { ordinal: snapshotOrdinal, balance, address },
-        meta,
-      })),
-      orElse((e: ApplicationError) => {
-        return e.statusCode === StatusCodes.NOT_FOUND
-          ? pipe(
+
+        }),
+        map(({ data: { snapshotOrdinal, balance, address }, meta }) => ({
+          data: { ordinal: snapshotOrdinal, balance, address },
+          meta,
+        })),
+        orElse((e: ApplicationError) => {
+          return e.statusCode === StatusCodes.NOT_FOUND
+            ? pipe(
               findSnapshot(os)("latest", currencyIdentifier),
               map((s) => ({
                 data: { ordinal: s.data.ordinal, balance: 0, address },
                 meta: {},
               }))
             )
-          : left(e);
-      })
-    );
-  };
+            : left(e);
+        })
+      );
+    };
 
 export const findBlockByHash =
   (os: Client) =>
-  (
-    hash: string,
-    currencyIdentifier: string | null
-  ): TaskEither<ApplicationError, Result<Block>> => {
-    return findOne<OpenSearchBlock>(
-      os.get(
-        getDocumentQuery(
-          currencyIdentifier ? OSIndex.CurrencyBlocks : OSIndex.Blocks,
-          hash,
-          currencyIdentifier
-        )
-      ),
-      currencyIdentifier
-    );
-  };
+    (
+      hash: string,
+      currencyIdentifier: string | null
+    ): TaskEither<ApplicationError, Result<Block>> => {
+      return findOne<OpenSearchBlock>(
+        os.get(
+          getDocumentQuery(
+            currencyIdentifier ? OSIndex.CurrencyBlocks : OSIndex.Blocks,
+            hash,
+            currencyIdentifier
+          )
+        ),
+        currencyIdentifier
+      );
+    };
 
 const isOrdinal = (term: string | number): term is number =>
   /^\d+$/.test(term.toString());
