@@ -43,8 +43,7 @@ enum OSIndex {
   Snapshots = "snapshots",
   Blocks = "blocks",
   Transactions = "transactions",
-  Balances = "balances.1",
-  Balances2 = "balances",
+  Balances = "balances-*",
   CurrencySnapshots = "currency-snapshots",
   CurrencyBlocks = "currency-blocks",
   CurrencyTransactions = "currency-transactions",
@@ -473,21 +472,6 @@ export const findBalanceByAddress =
           ),
           currencyIdentifier
         ),
-        orElse(() => {
-          return findOne<OpenSearchBalance>(
-            os.search(
-              getByFieldQuery<OpenSearchBalance, "address">(
-                currencyIdentifier ? OSIndex.CurrencyBalances : OSIndex.Balances2,
-                "address",
-                address,
-                sort,
-                currencyIdentifier
-              )
-            ),
-            currencyIdentifier
-          )
-
-        }),
         map(({ data: { snapshotOrdinal, balance, address }, meta }) => ({
           data: { ordinal: snapshotOrdinal, balance, address },
           meta,
