@@ -87,7 +87,12 @@ functions:
       - httpApi:
           path: /addresses/{address}/balance
           method: GET
-
+  balances:
+    handler: src/handler.balances
+    events:
+      - httpApi:
+          path: /addresses/balances/{term}
+          method: GET
 
   currencySnapshots:
     handler: src/handler.currencySnapshots

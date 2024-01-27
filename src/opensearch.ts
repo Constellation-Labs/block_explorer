@@ -490,6 +490,56 @@ export const findBalanceByAddress =
       );
     };
 
+export const findBalances =
+  (os: Client) =>
+    (
+      currencyIdentifier: string | null,
+      term: string
+    ): TaskEither<ApplicationError, Result<Array<Balance>>> => {
+
+      const sort = {
+        options: [
+          {
+            sortField: "snapshotOrdinal",
+            searchDirection: SearchDirection.Before
+          }
+        ]
+      };
+
+      const snapshotOrdinal = isOrdinal(term)
+        ? of(term)
+        : pipe(
+          findSnapshot(os)("latest", currencyIdentifier),
+          map((s) => s.data.ordinal)
+        );
+
+      return pipe(
+        snapshotOrdinal,
+        chain((ordinal) =>
+          findAll<OpenSearchBalance>(
+            os.search(
+              getByFieldQuery<OpenSearchBalance, "snapshotOrdinal">(
+                currencyIdentifier ? OSIndex.CurrencyBalances : OSIndex.Balances,
+                "snapshotOrdinal",
+                ordinal,
+                sort,
+                currencyIdentifier
+              )
+            ),
+            currencyIdentifier
+          )
+        ),
+        map((balances: OpenSearchBalance[]) => ({
+          data: balances.map(({ snapshotOrdinal, balance, address }) => ({
+            ordinal: snapshotOrdinal,
+            balance,
+            address
+          })),
+          meta: {}
+        }))
+      );
+    };
+
 export const findBlockByHash =
   (os: Client) =>
     (

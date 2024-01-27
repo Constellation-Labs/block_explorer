@@ -20,6 +20,7 @@ import {
 } from "./validation";
 import {
   findBalanceByAddress,
+  findBalances,
   findBlockByHash,
   findSnapshot,
   findSnapshotRewards,
@@ -411,6 +412,27 @@ export const getBalanceByAddress = (
     })),
     chain(({ address, ordinal, currencyIdentifier }) =>
       findBalanceByAddress(os)(address, currencyIdentifier, ordinal)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getBalances = (
+  event: APIGatewayEvent,
+  os: Client
+): Task<Response> =>
+  pipe(
+    of<ApplicationError, APIGatewayEvent>(event),
+    chain(validateTermParam),
+    map(extractTerm),
+    map((params) => ({
+      ...params,
+      ...extractCurrencyIdentifier(event),
+    })),
+    chain(({ termValue, currencyIdentifier }) =>
+      findBalances(os)(currencyIdentifier, termValue)
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
