@@ -11,4 +11,4 @@ export type OpenSearchSnapshot = {
   Hash &
   Height;
 
-export type Snapshot = Omit<OpenSearchSnapshot, "rewards">;
+export type WithoutRewards<T extends OpenSearchSnapshot> = Omit<T, "rewards">;
