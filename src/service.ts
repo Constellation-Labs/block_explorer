@@ -32,7 +32,8 @@ import {
   listTransactions,
 } from "./opensearch";
 import { pipe } from "fp-ts/lib/function";
-import { Snapshot, Transaction } from "./model";
+import { OpenSearchSnapshot, Transaction, WithoutRewards } from "./model";
+import { OpenSearchCurrencySnapshot } from "./model/currency-snapshot";
 
 export const getCurrencySnapshots = (event: APIGatewayEvent, os: Client) =>
   pipe(
@@ -40,14 +41,17 @@ export const getCurrencySnapshots = (event: APIGatewayEvent, os: Client) =>
     chain(validateCurrencyIdentifierParam),
     chain(() =>
       pipe(
-        extractPagination<Snapshot>(event),
+        extractPagination<WithoutRewards<OpenSearchCurrencySnapshot>>(event),
         map((pagination) => {
           return { pagination, ...extractCurrencyIdentifier(event) };
         })
       )
     ),
     chain(({ pagination, currencyIdentifier }) =>
-      listSnapshots(os)(pagination, currencyIdentifier)
+      listSnapshots<OpenSearchCurrencySnapshot>(os)(
+        pagination,
+        currencyIdentifier
+      )
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
@@ -60,7 +64,7 @@ export const getGlobalSnapshots = (event: APIGatewayEvent, os: Client) =>
     of<ApplicationError, APIGatewayEvent>(event),
     chain(() =>
       pipe(
-        extractPagination<Snapshot>(event),
+        extractPagination<WithoutRewards<OpenSearchSnapshot>>(event),
         map((pagination) => {
           return { pagination };
         })
@@ -101,7 +105,10 @@ export const getCurrencySnapshot = (
       ...extractCurrencyIdentifier(event),
     })),
     chain(({ termName, termValue, currencyIdentifier }) =>
-      findSnapshot(os)(termValue, currencyIdentifier)
+      findSnapshot<OpenSearchCurrencySnapshot>(os)(
+        termValue,
+        currencyIdentifier
+      )
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
@@ -245,7 +252,7 @@ export const getTransactions = (event: APIGatewayEvent, os: Client) =>
     of<ApplicationError, APIGatewayEvent>(event),
     chain(() =>
       pipe(
-        extractPagination<Snapshot>(event),
+        extractPagination<WithoutRewards<OpenSearchCurrencySnapshot>>(event),
         map((pagination) => {
           return {
             pagination,
