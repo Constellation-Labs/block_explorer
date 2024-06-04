@@ -17,6 +17,7 @@
       "node",
       "jest"
     ],
-    "rootDir": "./src"
-  }
+    "rootDir": "./src",
+  },
+  "include": ["src/**/*"]
 }
