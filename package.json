@@ -25,7 +25,8 @@
     "serverless-offline": "^13.0.0"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test:tsc": "tsc --noEmit"
   },
   "license": "MIT"
 }
