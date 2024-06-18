@@ -44,7 +44,7 @@ enum OSIndex {
   Blocks = "blocks",
   Transactions = "transactions",
   Balances = "balances-*",
-  CurrencySnapshots = "currency-snapshots",
+  CurrencySnapshots = "currency-snapshots-*",
   CurrencyBlocks = "currency-blocks",
   CurrencyTransactions = "currency-transactions",
   CurrencyBalances = "currency-balances",
