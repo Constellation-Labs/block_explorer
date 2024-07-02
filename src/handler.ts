@@ -1,6 +1,7 @@
 import { getClient } from "./opensearch";
 import {
   getBalanceByAddress,
+  getBalances,
   getBlock,
   getCurrencyBalanceByAddress,
   getCurrencyBlock,
@@ -44,6 +45,8 @@ export const transactionsByDestination = (event) =>
   getTransactionsByDestination(event, osClient)();
 export const balanceByAddress = (event) =>
   getBalanceByAddress(event, osClient)();
+export const balances = (event) =>
+  getBalances(event, osClient)();
 
 // Currency
 
