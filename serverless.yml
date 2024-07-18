@@ -155,6 +155,36 @@ functions:
       - httpApi:
           path: /currency/{identifier}/addresses/{address}/balance
           method: GET
+  currencyFeeTransaction:
+    handler: src/handler.currencyFeeTransaction
+    events:
+      - httpApi:
+          path: /currency/{identifier}/fee-transactions/{hash}
+          method: GET
+  currencySnapshotFeeTransactions:
+    handler: src/handler.currencySnapshotFeeTransactions
+    events:
+      - httpApi:
+          path: /currency/{identifier}/snapshots/{term}/fee-transactions
+          method: GET
+  currencyFeeTransactionsByAddress:
+    handler: src/handler.currencyFeeTransactionsByAddress
+    events:
+      - httpApi:
+          path: /currency/{identifier}/addresses/{address}/fee-transactions
+          method: GET
+  currencyFeeTransactionsBySource:
+    handler: src/handler.currencyFeeTransactionsBySource
+    events:
+      - httpApi:
+          path: /currency/{identifier}/addresses/{address}/fee-transactions/sent
+          method: GET
+  currencyFeeTransactionsByDestination:
+    handler: src/handler.currencyFeeTransactionsByDestination
+    events:
+      - httpApi:
+          path: /currency/{identifier}/addresses/{address}/fee-transactions/received
+          method: GET
 
 plugins:
   - serverless-plugin-typescript
