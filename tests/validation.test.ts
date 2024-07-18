@@ -1,8 +1,8 @@
 import {
   extractPagination,
-  validateTermParam,
   validateHashParam,
-} from "../src/validation";
+  validateTermParam,
+} from "../src/request-params";
 import { APIGatewayEvent } from "aws-lambda";
 import { Lens } from "monocle-ts";
 import { isLeft, isRight, right } from "fp-ts/lib/Either";
@@ -38,9 +38,7 @@ const setLimit = (limit: string) =>
 
 describe("validateTermParam ", () => {
   it("should not pass when no term in path parameter is provided", async () => {
-    const event = baseEvent;
-
-    const result = await validateTermParam(event)();
+    const result = await validateTermParam(baseEvent)();
 
     expect(isLeft(result)).toBe(true);
   });
@@ -57,9 +55,7 @@ describe("validateTermParam ", () => {
 
 describe("validateHashParam", () => {
   it("should not pass when no hash in path parameter is provided", async () => {
-    const event = baseEvent;
-
-    const result = await validateHashParam(event)();
+    const result = await validateHashParam(baseEvent)();
 
     expect(isLeft(result)).toBe(true);
   });
@@ -103,8 +99,7 @@ describe("extractPagination", () => {
     const event = pipe(baseEvent, setParam("address", "123"), setLimit("12"));
 
     const result = await extractPagination(event)();
-    const expected = right(event);
-
+    right(event);
     expect(isRight(result)).toBe(true);
   });
 
@@ -117,8 +112,7 @@ describe("extractPagination", () => {
     );
 
     const result = await extractPagination(event)();
-    const expected = right(event);
-
+    right(event);
     expect(isRight(result)).toBe(true);
   });
 

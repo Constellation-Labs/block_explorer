@@ -1,17 +1,11 @@
 import { APIGatewayEvent } from "aws-lambda";
 import { ApplicationError, StatusCodes } from "./http";
-import {
-  chain,
-  chainFirst,
-  fromOption,
-  fromPredicate,
-  left,
-  of,
-  right,
-  TaskEither,
-} from "fp-ts/lib/TaskEither";
 import { Lens, Optional } from "monocle-ts";
 import { pipe } from "fp-ts/lib/function";
+import * as O from "fp-ts/Option";
+import * as R from "fp-ts/Record";
+import * as TE from "fp-ts/TaskEither";
+import { TaskEither } from "fp-ts/TaskEither";
 import { SearchDirection, SortOptions } from "./query";
 
 export type Pagination<T> =
@@ -29,6 +23,7 @@ type PaginationQueryParams = {
   limit?: string;
   next?: string;
 };
+
 const pathParams = Lens.fromNullableProp<APIGatewayEvent>()(
   "pathParameters",
   {}
@@ -41,24 +36,8 @@ type PathParams = NonNullable<
   }
 >;
 
-const queryParams = Lens.fromNullableProp<APIGatewayEvent>()(
-  "queryStringParameters",
-  {}
-);
-
-const queryParamsIsNotNull = (event: APIGatewayEvent) =>
-  fromPredicate(
-    () => Object.keys(queryParams.get(event)).length > 0,
-    () =>
-      new ApplicationError(
-        "Error parsing request query params",
-        ["Query params should not be empty"],
-        StatusCodes.BAD_REQUEST
-      )
-  )(event);
-
 const pathParamsIsNotNull = (event: APIGatewayEvent) =>
-  fromPredicate(
+  TE.fromPredicate(
     () => Object.keys(pathParams.get(event)).length > 0,
     () =>
       new ApplicationError(
@@ -78,7 +57,7 @@ export const extractPagination = <T>(
   const next = params?.next;
 
   if (searchBefore && searchAfter) {
-    return left(
+    return TE.left(
       new ApplicationError(
         "search_after & search_before should be mutually exclusive",
         [],
@@ -88,7 +67,7 @@ export const extractPagination = <T>(
   }
 
   if (params?.limit !== undefined && isNaN(limit)) {
-    return left(
+    return TE.left(
       new ApplicationError(
         "limit must be a number",
         [],
@@ -98,7 +77,7 @@ export const extractPagination = <T>(
   }
 
   if (next && searchAfter && searchBefore) {
-    return left(
+    return TE.left(
       new ApplicationError(
         "next and search_after/search_before should be mutually exclusive",
         [],
@@ -108,12 +87,12 @@ export const extractPagination = <T>(
   }
 
   if (next) {
-    return right({
+    return TE.right({
       next,
     });
   }
 
-  return right({
+  return TE.right({
     searchSince: searchAfter || searchBefore,
     searchDirection:
       (searchAfter && SearchDirection.After) ||
@@ -136,14 +115,14 @@ export const fromNextString = <T>(next: string): SortOptions<T> => {
 const pathParamExists =
   (pathParam: keyof Partial<PathParams>) => (event: APIGatewayEvent) =>
     pipe(
-      of<ApplicationError, APIGatewayEvent>(event),
-      chainFirst(pathParamsIsNotNull),
-      chainFirst(() =>
+      TE.of<ApplicationError, APIGatewayEvent>(event),
+      TE.chainFirst(pathParamsIsNotNull),
+      TE.chainFirst(() =>
         pipe(
           pathParams
             .composeOptional(Optional.fromPath<PathParams>()([pathParam]))
             .getOption(event),
-          fromOption(
+          TE.fromOption(
             () =>
               new ApplicationError(
                 "Error parsing request path params",
@@ -155,26 +134,61 @@ const pathParamExists =
       )
     );
 
+export class RequestParamMissingError extends ApplicationError {
+  constructor(param: string) {
+    super(
+      "Error parsing request path params",
+      [`${param} param should not be empty`],
+      StatusCodes.BAD_REQUEST
+    );
+  }
+}
+
+export const getPathParam: <K extends string>(
+  param: K
+) => (event: APIGatewayEvent) => TE.TaskEither<ApplicationError, string> =
+  <K extends string>(param: K) =>
+  (event: APIGatewayEvent) =>
+    pipe(
+      O.fromNullable(event.pathParameters),
+      O.chain((params) =>
+        pipe(
+          params,
+          R.lookup(param),
+          O.chain(
+            O.fromPredicate(
+              (value): value is string => typeof value === "string"
+            )
+          )
+        )
+      ),
+      TE.fromOption(() => new RequestParamMissingError(param))
+    );
+
+/** @deprecated use extractCurrencyIdentifierParam  */
 export const validateCurrencyIdentifierParam = (event: APIGatewayEvent) =>
   pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists("identifier"))
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.chain(pathParamExists("identifier"))
   );
 
+/** @deprecated use extractTermParam  */
 export const validateTermParam = (event: APIGatewayEvent) =>
   pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists("term"))
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.chain(pathParamExists("term"))
   );
 
+/** @deprecated use extractHashParam  */
 export const validateHashParam = (event: APIGatewayEvent) =>
   pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists("hash"))
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.chain(pathParamExists("hash"))
   );
 
+/** @deprecated use extractAddressParam  */
 export const validateAddressParam = (event: APIGatewayEvent) =>
   pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(pathParamExists("address"))
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.chain(pathParamExists("address"))
   );
