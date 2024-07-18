@@ -1,3 +1,42 @@
+type FilterUndefined<T> = T extends undefined ? never : T;
+type FilterNull<T> = T extends null ? never : T;
+type FilterUndefinedAndNull<T> = FilterUndefined<FilterNull<T>>;
+
+type ExtractFromObject<
+  O extends Record<PropertyKey, unknown>,
+  K
+> = K extends keyof O
+  ? O[K]
+  : K extends keyof FilterUndefinedAndNull<O>
+  ? FilterUndefinedAndNull<O>[K] | undefined
+  : undefined;
+
+type ExtractFromArray<A extends readonly any[], K> = any[] extends A
+  ? A extends readonly (infer T)[]
+    ? T | undefined
+    : undefined
+  : K extends keyof A
+  ? A[K]
+  : undefined;
+
+type GetWithArray<O, K> = K extends []
+  ? O
+  : K extends [infer Key, ...infer Rest]
+  ? O extends Record<PropertyKey, unknown>
+    ? GetWithArray<ExtractFromObject<O, Key>, Rest>
+    : O extends readonly any[]
+    ? GetWithArray<ExtractFromArray<O, Key>, Rest>
+    : undefined
+  : never;
+
+export type Path<T> = T extends `${infer Key}.${infer Rest}`
+  ? [Key, ...Path<Rest>]
+  : T extends `${infer Key}`
+  ? [Key]
+  : [];
+
+export type Get<O, K> = GetWithArray<O, Path<K>>;
+
 type Join<K, P> = K extends string | number
   ? P extends string | number
     ? `${K}${"" extends P ? "" : "."}${P}`
@@ -39,26 +78,3 @@ export type Paths<T, D extends number = 10> = [D] extends [never]
         : never;
     }[keyof T]
   : "";
-
-export type Leaves<T, D extends number = 10> = [D] extends [never]
-  ? never
-  : T extends object
-  ? { [K in keyof T]-?: Join<K, Leaves<T[K], Prev[D]>> }[keyof T]
-  : "";
-
-type Idx<T, K> = K extends keyof T
-  ? T[K]
-  : number extends keyof T
-  ? K extends `${number}`
-    ? T[number]
-    : never
-  : never;
-
-export type PathValue<
-  T,
-  P extends Paths<T, 4>
-> = P extends `${infer Key}.${infer Rest}`
-  ? Rest extends Paths<Idx<T, Key>, 4>
-    ? PathValue<Idx<T, Key>, Rest>
-    : never
-  : Idx<T, P>;

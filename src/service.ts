@@ -1,6 +1,7 @@
 import { Client } from "@opensearch-project/opensearch";
 import { APIGatewayEvent } from "aws-lambda";
 import * as T from "fp-ts/lib/Task";
+import * as TE from "fp-ts/lib/TaskEither";
 import { Task } from "fp-ts/lib/Task";
 import { chain, fold, map, of } from "fp-ts/lib/TaskEither";
 import {
@@ -17,10 +18,16 @@ import {
   validateAddressParam,
   validateHashParam,
   validateCurrencyIdentifierParam,
-} from "./validation";
+  getPathParam,
+} from "./request-params";
 import {
   findBalanceByAddress,
   findBlockByHash,
+  findCurrencyFeeTransactionByHash,
+  findCurrencyFeeTransactionsByAddress,
+  findCurrencyFeeTransactionsByDestination,
+  findCurrencyFeeTransactionsBySnapshot,
+  findCurrencyFeeTransactionsBySource,
   findSnapshot,
   findSnapshotRewards,
   findTransactionByHash,
@@ -32,7 +39,6 @@ import {
   listTransactions,
 } from "./opensearch";
 import { pipe } from "fp-ts/lib/function";
-import { OpenSearchSnapshot, Transaction, WithoutRewards } from "./model";
 import { OpenSearchCurrencySnapshot } from "./model/currency-snapshot";
 
 export const getCurrencySnapshots = (event: APIGatewayEvent, os: Client) =>
@@ -41,7 +47,7 @@ export const getCurrencySnapshots = (event: APIGatewayEvent, os: Client) =>
     chain(validateCurrencyIdentifierParam),
     chain(() =>
       pipe(
-        extractPagination<WithoutRewards<OpenSearchCurrencySnapshot>>(event),
+        extractPagination(event),
         map((pagination) => {
           return { pagination, ...extractCurrencyIdentifier(event) };
         })
@@ -64,7 +70,7 @@ export const getGlobalSnapshots = (event: APIGatewayEvent, os: Client) =>
     of<ApplicationError, APIGatewayEvent>(event),
     chain(() =>
       pipe(
-        extractPagination<WithoutRewards<OpenSearchSnapshot>>(event),
+        extractPagination(event),
         map((pagination) => {
           return { pagination };
         })
@@ -164,7 +170,7 @@ export const getGlobalSnapshotTransactions = (
     map(extractTerm),
     chain(({ termName, termValue }) =>
       pipe(
-        extractPagination<Transaction>(event),
+        extractPagination(event),
         map((pagination) => ({ termName, termValue, pagination }))
       )
     ),
@@ -191,7 +197,7 @@ export const getCurrencySnapshotTransactions = (
     })),
     chain(({ termName, termValue, currencyIdentifier }) =>
       pipe(
-        extractPagination<Transaction>(event),
+        extractPagination(event),
         map((pagination) => ({
           termName,
           termValue,
@@ -204,6 +210,29 @@ export const getCurrencySnapshotTransactions = (
       findTransactionsBySnapshot(os)(termValue, pagination, currencyIdentifier)
     ),
     fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getCurrencySnapshotFeeTransactions = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    TE.Do,
+    TE.bind("identifier", () => extractCurrencyIdentifierParam(event)),
+    TE.bind("term", () => extractTermParam(event)),
+    TE.bind("pagination", () => extractPagination(event)),
+    TE.chain(({ identifier, term: { termValue }, pagination }) => {
+      console.log("params: ", { identifier, termValue, pagination });
+      return findCurrencyFeeTransactionsBySnapshot(os)(
+        termValue,
+        pagination,
+        identifier
+      );
+    }),
+    TE.fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))
     )
@@ -252,7 +281,7 @@ export const getTransactions = (event: APIGatewayEvent, os: Client) =>
     of<ApplicationError, APIGatewayEvent>(event),
     chain(() =>
       pipe(
-        extractPagination<WithoutRewards<OpenSearchCurrencySnapshot>>(event),
+        extractPagination(event),
         map((pagination) => {
           return {
             pagination,
@@ -283,6 +312,24 @@ export const getCurrencyTransactionsByAddress = (
     )
   );
 
+export const getCurrencyFeeTransactionsByAddress = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    TE.Do,
+    TE.bind("address", () => extractAddressParam(event)),
+    TE.bind("pagination", () => extractPagination(event)),
+    TE.bind("identifier", () => extractCurrencyIdentifierParam(event)),
+    TE.chain(({ address, pagination, identifier }) =>
+      findCurrencyFeeTransactionsByAddress(os)(address, pagination, identifier)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
 export const getTransactionsByAddress = (
   event: APIGatewayEvent,
   os: Client
@@ -293,7 +340,7 @@ export const getTransactionsByAddress = (
     map(extractAddress),
     chain(({ address }) =>
       pipe(
-        extractPagination<Transaction>(event),
+        extractPagination(event),
         map((pagination) => {
           return { address, pagination, ...extractCurrencyIdentifier(event) };
         })
@@ -319,9 +366,24 @@ export const getCurrencyTransactionsBySource = (
       (reason) => T.of(errorResponse(reason)),
       (validatedEvent) => getTransactionsBySource(validatedEvent, os)
     )
-    // chain((validatedEvent) =>
-    //   TE.fromTask(getTransactionsBySource(validatedEvent, os))
-    // )
+  );
+
+export const getCurrencyFeeTransactionsBySource = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    TE.Do,
+    TE.bind("address", () => extractAddressParam(event)),
+    TE.bind("pagination", () => extractPagination(event)),
+    TE.bind("identifier", () => extractCurrencyIdentifierParam(event)),
+    TE.chain(({ address, pagination, identifier }) =>
+      findCurrencyFeeTransactionsBySource(os)(address, pagination, identifier)
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
   );
 
 export const getTransactionsBySource = (
@@ -334,7 +396,7 @@ export const getTransactionsBySource = (
     map(extractAddress),
     chain(({ address }) =>
       pipe(
-        extractPagination<Transaction>(event),
+        extractPagination(event),
         map((pagination) => ({
           address,
           pagination,
@@ -364,6 +426,28 @@ export const getCurrencyTransactionsByDestination = (
     )
   );
 
+export const getCurrencyFeeTransactionsByDestination = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    TE.Do,
+    TE.bind("address", () => extractAddressParam(event)),
+    TE.bind("pagination", () => extractPagination(event)),
+    TE.bind("identifier", () => extractCurrencyIdentifierParam(event)),
+    TE.chain(({ address, pagination, identifier }) =>
+      findCurrencyFeeTransactionsByDestination(os)(
+        address,
+        pagination,
+        identifier
+      )
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
 export const getTransactionsByDestination = (
   event: APIGatewayEvent,
   os: Client
@@ -374,7 +458,7 @@ export const getTransactionsByDestination = (
     map(extractAddress),
     chain(({ address }) =>
       pipe(
-        extractPagination<Transaction>(event),
+        extractPagination(event),
         map((pagination) => ({
           address,
           pagination,
@@ -427,28 +511,20 @@ export const getBalanceByAddress = (
 
 export const getCurrencyTransaction = (event: APIGatewayEvent, os: Client) =>
   pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateCurrencyIdentifierParam),
-    fold(
+    extractCurrencyIdentifierParam(event),
+    TE.fold(
       (reason) => T.of(errorResponse(reason)),
-      (validatedEvent) => getTransaction(validatedEvent, os)
+      (identifier) => getTransaction(event, os, identifier)
     )
   );
 
-export const getTransaction = (
-  event: APIGatewayEvent,
-  os: Client
-): Task<Response> =>
+export const getCurrencyFeeTransaction = (event: APIGatewayEvent, os: Client) =>
   pipe(
-    of<ApplicationError, APIGatewayEvent>(event),
-    chain(validateHashParam),
-    map(extractHash),
-    map((hash) => ({
-      ...hash,
-      ...extractCurrencyIdentifier(event),
-    })),
-    chain(({ hash, currencyIdentifier }) =>
-      findTransactionByHash(os)(hash, currencyIdentifier)
+    TE.Do,
+    TE.bind("hash", () => extractHashParam(event)),
+    TE.bind("identifier", () => extractCurrencyIdentifierParam(event)),
+    TE.chain(({ hash, identifier }) =>
+      findCurrencyFeeTransactionByHash(os)(hash, identifier)
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
@@ -456,6 +532,21 @@ export const getTransaction = (
     )
   );
 
+export const getTransaction = (
+  event: APIGatewayEvent,
+  os: Client,
+  currencyIdentifier: string | null
+): Task<Response> =>
+  pipe(
+    extractHashParam(event),
+    chain((hash) => findTransactionByHash(os)(hash, currencyIdentifier)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+/** @deprecated use extractCurrencyIdentifierParam  */
 const extractCurrencyIdentifier = (
   event: APIGatewayEvent
 ): { currencyIdentifier: string | null } => {
@@ -464,14 +555,17 @@ const extractCurrencyIdentifier = (
   };
 };
 
+/** @deprecated use extractHashParam  */
 const extractHash = (event: APIGatewayEvent) => {
   return { hash: event.pathParameters!.hash! };
 };
 
+/** @deprecated use extractAddressParam  */
 const extractAddress = (event: APIGatewayEvent) => {
   return { address: event.pathParameters!.address! };
 };
 
+/** @deprecated use extractTermParam  */
 const extractTerm = (event: APIGatewayEvent) => {
   if (event.pathParameters!.term == "latest")
     return {
@@ -484,6 +578,7 @@ const extractTerm = (event: APIGatewayEvent) => {
   };
 };
 
+/** @deprecated use extractAddressParam and extractOrdinalParam  */
 const extractAddressAndOrdinal = (
   event: APIGatewayEvent
 ): { address: string; ordinal?: number } => {
@@ -493,3 +588,38 @@ const extractAddressAndOrdinal = (
     ...(!isNaN(ordinal) ? { ordinal } : {}),
   };
 };
+
+export const extractCurrencyIdentifierParam = (event: APIGatewayEvent) =>
+  pipe(
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.chain(getPathParam("identifier"))
+  );
+
+export const extractTermParam = (event: APIGatewayEvent) =>
+  pipe(
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.chain(getPathParam("term")),
+    TE.map((term) => {
+      if (term == "latest")
+        return {
+          termName: "ordinal",
+          termValue: "latest",
+        };
+      return {
+        termName: isNaN(Number(term)) ? "hash" : "ordinal",
+        termValue: term,
+      };
+    })
+  );
+
+export const extractHashParam = (event: APIGatewayEvent) =>
+  pipe(
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.chain(getPathParam("hash"))
+  );
+
+export const extractAddressParam = (event: APIGatewayEvent) =>
+  pipe(
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.chain(getPathParam("address"))
+  );

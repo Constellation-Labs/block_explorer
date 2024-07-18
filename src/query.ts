@@ -6,6 +6,7 @@ import { filterOrElse, map, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 import { CurrencyData, Ordinal } from "./model";
 import { SearchRequest } from "@opensearch-project/opensearch/api/types";
 import { Result } from "./opensearch";
+
 export enum SortOrder {
   Desc = "desc",
   Asc = "asc",
@@ -17,11 +18,13 @@ export enum SearchDirection {
 }
 
 export type SortOption<T> = {
+  // TODO: Use Paths<T>
   sortField: string; // path or nested path
   searchDirection?: SearchDirection;
 };
 
 export type SortOptionSince<T> = {
+  // TODO: Use Paths<T>
   sortField: string; // path or nested path
   searchSince: string | number;
   searchDirection?: SearchDirection;
@@ -200,7 +203,6 @@ export const findOne = <T>(
       data: hits[0]._source as T,
     })),
     map((h) => {
-      // console.log(currencyIdentifier, isWrapped(h.data))
       return isWrapped<T>(h.data) && currencyIdentifier
         ? { ...h, data: h.data.data }
         : h;
