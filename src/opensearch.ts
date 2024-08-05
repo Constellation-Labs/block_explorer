@@ -5,6 +5,7 @@ import { ApplicationError, StatusCodes } from "./http";
 import {
   Balance,
   Block,
+  CurrencyData,
   FeeTransaction,
   OpenSearchBalance,
   OpenSearchBlock,
@@ -28,6 +29,7 @@ import {
   SortOption,
   SortOptions,
   SortOptionSince,
+  SortOrder,
 } from "./query";
 
 import {
@@ -38,9 +40,12 @@ import {
   orElse,
   right,
   TaskEither,
+  tryCatch,
 } from "fp-ts/lib/TaskEither";
 import { fromNextString, Pagination, toNextString } from "./request-params";
 import { Get, Paths } from "./ts-extensions";
+import { Metagraph } from "./model/metagraph";
+import { OpenSearchCurrencySnapshot } from "./model/currency-snapshot";
 
 enum OSIndex {
   Snapshots = "snapshots",
@@ -181,6 +186,129 @@ export const findSnapshotRewards =
       ),
       map((r) => ({ ...r, data: r.data.rewards }))
     );
+
+export const listMetagraphs =
+  (os: Client) =>
+  (
+    limit?: number,
+    next?: string
+  ): TaskEither<ApplicationError, PaginatedResult<any>> => {
+    const query = {
+      size: 0,
+      aggs: {
+        metagraphs: {
+          composite: {
+            sources: [
+              {
+                identifier: {
+                  terms: {
+                    field: "identifier" as Paths<
+                      CurrencyData<OpenSearchCurrencySnapshot>
+                    >,
+                  },
+                },
+              },
+            ],
+            size: limit,
+            ...(next ? { after: { identifier: next } } : {}),
+          },
+          aggs: {
+            latestSnapshot: {
+              top_hits: {
+                sort: [
+                  {
+                    "data.ordinal": {
+                      order: SortOrder.Desc,
+                    },
+                  } as {
+                    [K in Paths<CurrencyData<OpenSearchCurrencySnapshot>>]: {
+                      order: SortOrder;
+                    };
+                  } & { [key: string]: never },
+                ],
+                _source: {
+                  includes: [
+                    "identifier",
+                    "data.hash",
+                    "data.ownerAddress",
+                    "data.stakingAddress",
+                  ] as Paths<CurrencyData<OpenSearchCurrencySnapshot>>[],
+                },
+                size: 1,
+              },
+            },
+          },
+        },
+      },
+    };
+
+    type LastMetagraphSnapshot = Pick<
+      CurrencyData<OpenSearchCurrencySnapshot>,
+      "identifier"
+    > & {
+      data: Pick<
+        CurrencyData<OpenSearchCurrencySnapshot>["data"],
+        "hash" | "ownerAddress" | "stakingAddress"
+      >;
+    };
+
+    type MetagraphBucket = {
+      latestSnapshot: {
+        hits: {
+          hits: [{ _source: LastMetagraphSnapshot }];
+        };
+      };
+    };
+
+    type MetagraphsAggregation = {
+      after_key: {
+        identifier:
+          | CurrencyData<OpenSearchCurrencySnapshot>["identifier"]
+          | null;
+      };
+      buckets: MetagraphBucket[];
+    };
+
+    const afterKeyToMetaNext = (
+      after_key: MetagraphsAggregation["after_key"]
+    ): PaginatedResult<Metagraph>["meta"] => {
+      const nextIdentifier = after_key?.identifier;
+      return nextIdentifier ? { next: nextIdentifier } : undefined;
+    };
+
+    return pipe(
+      tryCatch<ApplicationError, MetagraphsAggregation>(
+        () =>
+          os
+            .search({
+              index: OSIndex.CurrencySnapshots,
+              body: query,
+            })
+            .then((r) => r.body.aggregations.metagraphs),
+        (err) =>
+          new ApplicationError(
+            "OpenSearch error",
+            [err as string],
+            StatusCodes.SERVER_ERROR
+          )
+      ),
+      map(({ after_key, buckets }) => {
+        const data = buckets
+          .map(({ latestSnapshot }) => latestSnapshot.hits.hits)
+          .map(([hit]) => hit._source)
+          .map((latestSnapshot) => ({
+            identifier: latestSnapshot.identifier,
+            lastSnapshotHash: latestSnapshot.data.hash,
+            stakingAddress: latestSnapshot.data.stakingAddress,
+            ownerAddress: latestSnapshot.data.ownerAddress,
+          }));
+
+        const meta = afterKeyToMetaNext(after_key);
+
+        return { data, meta };
+      })
+    );
+  };
 
 export const listSnapshots =
   <OSS extends OpenSearchSnapshot>(os: Client) =>

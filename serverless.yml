@@ -185,6 +185,12 @@ functions:
       - httpApi:
           path: /currency/{identifier}/addresses/{address}/fee-transactions/received
           method: GET
+  metagraphs:
+    handler: src/handler.metagraphs
+    events:
+      - httpApi:
+          path: /currency
+          method: GET
 
 plugins:
   - serverless-plugin-typescript
