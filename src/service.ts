@@ -35,6 +35,7 @@ import {
   findTransactionsByDestination,
   findTransactionsBySnapshot,
   findTransactionsBySource,
+  listMetagraphs,
   listSnapshots,
   listTransactions,
 } from "./opensearch";
@@ -532,6 +533,18 @@ export const getCurrencyFeeTransaction = (event: APIGatewayEvent, os: Client) =>
     )
   );
 
+export const getMetagraphs = (event: APIGatewayEvent, os: Client) =>
+  pipe(
+    TE.Do,
+    TE.bind("limit", () => extractLimitParam(event)),
+    TE.bind("next", () => extractNextParam(event)),
+    TE.chain(({ limit, next }) => listMetagraphs(os)(limit, next)),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
 export const getTransaction = (
   event: APIGatewayEvent,
   os: Client,
@@ -622,4 +635,31 @@ export const extractAddressParam = (event: APIGatewayEvent) =>
   pipe(
     TE.of<ApplicationError, APIGatewayEvent>(event),
     TE.chain(getPathParam("address"))
+  );
+
+export const extractNextParam = (event: APIGatewayEvent) =>
+  pipe(
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.map((event) => event.queryStringParameters?.next)
+  );
+
+export const extractLimitParam = (event: APIGatewayEvent) =>
+  pipe(
+    TE.of<ApplicationError, APIGatewayEvent>(event),
+    TE.chain((event) => {
+      const limitParam = event.queryStringParameters?.limit;
+      const limit = Number(limitParam);
+
+      if (limitParam !== undefined && isNaN(limit)) {
+        return TE.left(
+          new ApplicationError(
+            "limit must be a number",
+            [],
+            StatusCodes.BAD_REQUEST
+          )
+        );
+      }
+
+      return TE.right(limit || undefined);
+    })
   );

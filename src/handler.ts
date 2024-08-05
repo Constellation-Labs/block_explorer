@@ -22,6 +22,7 @@ import {
   getGlobalSnapshotRewards,
   getGlobalSnapshots,
   getGlobalSnapshotTransactions,
+  getMetagraphs,
   getTransaction,
   getTransactions,
   getTransactionsByAddress,
@@ -86,3 +87,6 @@ export const currencyFeeTransactionsByAddress = (event) =>
   getCurrencyFeeTransactionsByAddress(event, osClient)();
 export const currencyBalanceByAddress = (event) =>
   getCurrencyBalanceByAddress(event, osClient)();
+
+export const metagraphs = (event) =>
+  getMetagraphs(event, osClient)();
