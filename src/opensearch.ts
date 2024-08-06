@@ -292,20 +292,24 @@ export const listMetagraphs =
             StatusCodes.SERVER_ERROR
           )
       ),
-      map(({ after_key, buckets }) => {
+      chain(({ after_key, buckets }) => {
         const data = buckets
           .map(({ latestSnapshot }) => latestSnapshot.hits.hits)
           .map(([hit]) => hit._source)
-          .map((latestSnapshot) => ({
-            identifier: latestSnapshot.identifier,
-            lastSnapshotHash: latestSnapshot.data.hash,
-            stakingAddress: latestSnapshot.data.stakingAddress,
-            ownerAddress: latestSnapshot.data.ownerAddress,
-          }));
+          .map(
+            ({ identifier, data: { hash, stakingAddress, ownerAddress } }) => ({
+              identifier,
+              lastSnapshotHash: hash,
+              stakingAddress,
+              ownerAddress,
+            })
+          );
 
         const meta = afterKeyToMetaNext(after_key);
 
-        return { data, meta };
+        return data.length === 0
+          ? left(new ApplicationError("Not found", [], StatusCodes.NOT_FOUND))
+          : right({ data, meta });
       })
     );
   };
