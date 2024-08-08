@@ -4,12 +4,7 @@ import {
   getBlock,
   getCurrencyBalanceByAddress,
   getCurrencyBlock,
-  getCurrencyFeeTransaction,
-  getCurrencyFeeTransactionsByAddress,
-  getCurrencyFeeTransactionsByDestination,
-  getCurrencyFeeTransactionsBySource,
   getCurrencySnapshot,
-  getCurrencySnapshotFeeTransactions,
   getCurrencySnapshotRewards,
   getCurrencySnapshots,
   getCurrencySnapshotTransactions,
@@ -75,16 +70,6 @@ export const currencyTransactionsBySource = (event) =>
 export const currencyTransactionsByDestination = (event) =>
   getCurrencyTransactionsByDestination(event, osClient)();
 
-export const currencyFeeTransaction = (event) =>
-  getCurrencyFeeTransaction(event, osClient)();
-export const currencySnapshotFeeTransactions = (event) =>
-  getCurrencySnapshotFeeTransactions(event, osClient)();
-export const currencyFeeTransactionsByDestination = (event) =>
-  getCurrencyFeeTransactionsByDestination(event, osClient)();
-export const currencyFeeTransactionsBySource = (event) =>
-  getCurrencyFeeTransactionsBySource(event, osClient)();
-export const currencyFeeTransactionsByAddress = (event) =>
-  getCurrencyFeeTransactionsByAddress(event, osClient)();
 export const currencyBalanceByAddress = (event) =>
   getCurrencyBalanceByAddress(event, osClient)();
 
