@@ -72,13 +72,13 @@ const isSearchSince = <T>(options: any): options is SortOptionSince<T>[] =>
   typeof options[0]?.searchSince === "string" ||
   typeof options[0]?.searchSince === "number";
 
-const getSearchSince = <T>(sort: SortOptions<T>) => {
+export const getSearchSince = <T>(sort: SortOptions<T>) => {
   return isSearchSince<T>(sort.options)
     ? { search_after: sort.options.map((a) => a.searchSince) }
     : {};
 };
 
-const getSort = <T>(
+export const getSort = <T>(
   sort: SortOptions<T>,
   currencyIdentifier: string | null
 ) => {
