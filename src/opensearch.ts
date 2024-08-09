@@ -1,7 +1,7 @@
 import { Client } from "@opensearch-project/opensearch";
 import { pipe } from "fp-ts/lib/function";
 
-import { ApplicationError, StatusCodes } from "./http";
+import { ApplicationError, OpenSearchError, StatusCodes } from "./http";
 import {
   Balance,
   Block,
@@ -24,6 +24,7 @@ import {
   getDocumentQuery,
   getLatestQuery,
   getMultiQuery,
+  getSearchSince,
   maxSizeLimit,
   SearchDirection,
   SortOption,
@@ -45,7 +46,12 @@ import {
 import { fromNextString, Pagination, toNextString } from "./request-params";
 import { Get, Paths } from "./ts-extensions";
 import { Metagraph } from "./model/metagraph";
-import { OpenSearchCurrencySnapshot } from "./model/currency-snapshot";
+import {
+  CurrencySnapshot,
+  OpenSearchCurrencySnapshot,
+  openSearchCurrencySnapshotToV2,
+  OpenSearchCurrencySnapshotV1,
+} from "./model/currency-snapshot";
 
 enum OSIndex {
   Snapshots = "snapshots",
@@ -203,7 +209,7 @@ export const listMetagraphs =
                 identifier: {
                   terms: {
                     field: "identifier" as Paths<
-                      CurrencyData<OpenSearchCurrencySnapshot>
+                      CurrencyData<OpenSearchCurrencySnapshotV1>
                     >,
                   },
                 },
@@ -221,7 +227,7 @@ export const listMetagraphs =
                       order: SortOrder.Desc,
                     },
                   } as {
-                    [K in Paths<CurrencyData<OpenSearchCurrencySnapshot>>]: {
+                    [K in Paths<CurrencyData<OpenSearchCurrencySnapshotV1>>]: {
                       order: SortOrder;
                     };
                   } & { [key: string]: never },
@@ -232,7 +238,7 @@ export const listMetagraphs =
                     "data.hash",
                     "data.ownerAddress",
                     "data.stakingAddress",
-                  ] as Paths<CurrencyData<OpenSearchCurrencySnapshot>>[],
+                  ] as Paths<CurrencyData<OpenSearchCurrencySnapshotV1>>[],
                 },
                 size: 1,
               },
@@ -243,11 +249,11 @@ export const listMetagraphs =
     };
 
     type LastMetagraphSnapshot = Pick<
-      CurrencyData<OpenSearchCurrencySnapshot>,
+      CurrencyData<OpenSearchCurrencySnapshotV1>,
       "identifier"
     > & {
       data: Pick<
-        CurrencyData<OpenSearchCurrencySnapshot>["data"],
+        CurrencyData<OpenSearchCurrencySnapshotV1>["data"],
         "hash" | "ownerAddress" | "stakingAddress"
       >;
     };
@@ -263,7 +269,7 @@ export const listMetagraphs =
     type MetagraphsAggregation = {
       after_key: {
         identifier:
-          | CurrencyData<OpenSearchCurrencySnapshot>["identifier"]
+          | CurrencyData<OpenSearchCurrencySnapshotV1>["identifier"]
           | null;
       };
       buckets: MetagraphBucket[];
@@ -342,6 +348,86 @@ export const listSnapshots =
         currencyIdentifier
       ),
       chain((a) => getResultWithNextString(a, sortOptions))
+    );
+  };
+
+export const findCurrencySnapshotsByOwnerAddress =
+  (os: Client) =>
+  (
+    ownerAddress: string,
+    pagination: Pagination<CurrencySnapshot & { metagraphId: string }>
+  ): TaskEither<
+    OpenSearchError,
+    PaginatedResult<CurrencySnapshot & { metagraphId: string }>
+  > => {
+    const toCurrencyPagination = <T>(
+      pagination: Pagination<T>
+    ): Pagination<CurrencyData<T>> => {
+      return "searchSince" in pagination && pagination.searchSince !== undefined
+        ? { ...pagination, searchSince: `data.${pagination.searchSince}` }
+        : pagination;
+    };
+
+    const { size, ...options } = toCurrencyPagination<
+      CurrencySnapshot & { metagraphId: string }
+    >(pagination);
+    const sortOptions = getSortOptions<
+      CurrencySnapshot,
+      CurrencyData<OpenSearchCurrencySnapshotV1>
+    >(pagination).withDefault({
+      size,
+      options: [
+        {
+          ...options,
+          searchDirection: options["searchDirection"] || SearchDirection.Before,
+          sortField: "data.ordinal" as Paths<
+            CurrencyData<OpenSearchCurrencySnapshotV1>
+          >,
+        },
+      ],
+    });
+
+    const query = {
+      index: OSIndex.CurrencySnapshots,
+      body: {
+        ...getSearchSince<CurrencyData<OpenSearchCurrencySnapshotV1>>(
+          sortOptions
+        ),
+        size: sortOptions.size || maxSizeLimit,
+        _source: {
+          excludes: ["data.rewards"] as Paths<
+            CurrencyData<OpenSearchCurrencySnapshotV1>
+          >[],
+        },
+        query: {
+          bool: {
+            must: {
+              term: { ["data.ownerAddress"]: ownerAddress } as Record<
+                Paths<CurrencyData<OpenSearchCurrencySnapshotV1>>,
+                string
+              >,
+            },
+          },
+        },
+      },
+    };
+
+    return pipe(
+      tryCatch<
+        OpenSearchError,
+        CurrencyData<WithoutRewards<OpenSearchCurrencySnapshot>>[]
+      >(
+        () =>
+          os.search(query).then((r) => r.body.hits.hits.map((h) => h._source)),
+        (err) => new OpenSearchError(err as string)
+      ),
+      map((snapshots) => {
+        return snapshots.map(({ identifier, data }) => ({
+          metagraphId: identifier,
+          ...openSearchCurrencySnapshotToV2(data),
+        }));
+      }),
+      chain((data) => getResultWithNextString(data, sortOptions))
     );
   };
 

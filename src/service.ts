@@ -28,6 +28,7 @@ import {
   findCurrencyFeeTransactionsByDestination,
   findCurrencyFeeTransactionsBySnapshot,
   findCurrencyFeeTransactionsBySource,
+  findCurrencySnapshotsByOwnerAddress,
   findSnapshot,
   findSnapshotRewards,
   findTransactionByHash,
@@ -40,7 +41,7 @@ import {
   listTransactions,
 } from "./opensearch";
 import { pipe } from "fp-ts/lib/function";
-import { OpenSearchCurrencySnapshot } from "./model/currency-snapshot";
+import { OpenSearchCurrencySnapshotV1 } from "./model/currency-snapshot";
 
 export const getCurrencySnapshots = (event: APIGatewayEvent, os: Client) =>
   pipe(
@@ -55,10 +56,27 @@ export const getCurrencySnapshots = (event: APIGatewayEvent, os: Client) =>
       )
     ),
     chain(({ pagination, currencyIdentifier }) =>
-      listSnapshots<OpenSearchCurrencySnapshot>(os)(
+      listSnapshots<OpenSearchCurrencySnapshotV1>(os)(
         pagination,
         currencyIdentifier
       )
+    ),
+    fold(
+      (reason) => T.of(errorResponse(reason)),
+      (value) => T.of(successResponse(StatusCodes.OK)(value))
+    )
+  );
+
+export const getCurrencySnapshotsByOwnerAddress = (
+  event: APIGatewayEvent,
+  os: Client
+) =>
+  pipe(
+    TE.Do,
+    TE.bind("pagination", () => extractPagination(event)),
+    TE.bind("ownerAddress", () => extractAddressParam(event)),
+    TE.chain(({ pagination, ownerAddress }) =>
+      findCurrencySnapshotsByOwnerAddress(os)(ownerAddress, pagination)
     ),
     fold(
       (reason) => T.of(errorResponse(reason)),
@@ -112,7 +130,7 @@ export const getCurrencySnapshot = (
       ...extractCurrencyIdentifier(event),
     })),
     chain(({ termName, termValue, currencyIdentifier }) =>
-      findSnapshot<OpenSearchCurrencySnapshot>(os)(
+      findSnapshot<OpenSearchCurrencySnapshotV1>(os)(
         termValue,
         currencyIdentifier
       )

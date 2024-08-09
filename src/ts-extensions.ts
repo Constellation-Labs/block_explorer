@@ -78,3 +78,20 @@ export type Paths<T, D extends number = 10> = [D] extends [never]
         : never;
     }[keyof T]
   : "";
+
+export type ResolvePath<
+  T,
+  P extends string
+> = P extends `${infer K}.${infer Rest}`
+  ? K extends keyof T
+    ? ResolvePath<T[K], Rest>
+    : never
+  : P extends keyof T
+  ? T[P]
+  : never;
+
+export type ResolveValues<T, K extends Paths<T>> = K extends infer P
+  ? P extends string
+    ? ResolvePath<T, P>
+    : never
+  : never;

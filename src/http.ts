@@ -4,6 +4,7 @@ const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
 };
+
 export enum StatusCodes {
   OK = 200,
   CREATED = 201,
@@ -27,6 +28,12 @@ export class ApplicationError {
     this.message = message;
     this.errors = errors;
     this.statusCode = status;
+  }
+}
+
+export class OpenSearchError extends ApplicationError {
+  public constructor(error: string) {
+    super("OpenSearch error", [error], StatusCodes.SERVER_ERROR);
   }
 }
 
