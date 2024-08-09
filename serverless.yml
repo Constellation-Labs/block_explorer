@@ -95,6 +95,12 @@ functions:
       - httpApi:
           path: /currency/{identifier}/snapshots
           method: GET
+  currencySnapshotsByOwnerAddress:
+    handler: src/handler.currencySnapshotsByOwnerAddress
+    events:
+      - httpApi:
+          path: /addresses/{address}/snapshots
+          method: GET
   currencySnapshot:
     handler: src/handler.currencySnapshot
     events:
