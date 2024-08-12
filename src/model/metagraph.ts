@@ -1,6 +1,6 @@
 export type Metagraph = {
-  identifier: string;
+  id: string;
   lastSnapshotHash: string;
-  ownerAddress?: string | null;
-  stakingAddress?: string | null;
+  ownerAddress: string | null;
+  stakingAddress: string | null;
 };
