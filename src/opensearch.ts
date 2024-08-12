@@ -198,7 +198,7 @@ export const listMetagraphs =
   (
     limit?: number,
     next?: string
-  ): TaskEither<ApplicationError, PaginatedResult<any>> => {
+  ): TaskEither<ApplicationError, PaginatedResult<Metagraph>> => {
     const query = {
       size: 0,
       aggs: {
@@ -238,6 +238,7 @@ export const listMetagraphs =
                     "data.hash",
                     "data.ownerAddress",
                     "data.stakingAddress",
+                    "data.fee",
                   ] as Paths<CurrencyData<OpenSearchCurrencySnapshotV1>>[],
                 },
                 size: 1,
@@ -304,10 +305,10 @@ export const listMetagraphs =
           .map(([hit]) => hit._source)
           .map(
             ({ identifier, data: { hash, stakingAddress, ownerAddress } }) => ({
-              identifier,
+              id: identifier,
               lastSnapshotHash: hash,
-              stakingAddress,
-              ownerAddress,
+              stakingAddress: stakingAddress ?? null,
+              ownerAddress: ownerAddress ?? null,
             })
           );
 
