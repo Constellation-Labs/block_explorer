@@ -554,9 +554,8 @@ export const getCurrencyFeeTransaction = (event: APIGatewayEvent, os: Client) =>
 export const getMetagraphs = (event: APIGatewayEvent, os: Client) =>
   pipe(
     TE.Do,
-    TE.bind("limit", () => extractLimitParam(event)),
-    TE.bind("next", () => extractNextParam(event)),
-    TE.chain(({ limit, next }) => listMetagraphs(os)(limit, next)),
+    TE.bind("pagination", () => extractPagination(event)),
+    TE.chain(({ pagination }) => listMetagraphs(os)(pagination)),
     fold(
       (reason) => T.of(errorResponse(reason)),
       (value) => T.of(successResponse(StatusCodes.OK)(value))

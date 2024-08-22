@@ -72,8 +72,8 @@ export type Result<T> = {
 
 export type PaginatedResult<T> = {
   data: T[];
-  meta?: {
-    next: string;
+  meta: {
+    next: string | null;
   };
 };
 
@@ -81,36 +81,112 @@ export const getClient = (): Client => {
   return new Client({ node: process.env.OPENSEARCH_NODE });
 };
 
-const getResultWithNextString = <T>(
-  data: T[],
-  sortOptions: SortOptions<T>
-): TaskEither<ApplicationError, PaginatedResult<T>> => {
-  if (data.length === 0)
-    return left(new ApplicationError("Not found", [], StatusCodes.NOT_FOUND));
+const getResultWithNextString =
+  <T>(sortOptions: SortOptions<T>) =>
+  (
+    getData: (sortOptions: SortOptions<T>) => TaskEither<ApplicationError, T[]>
+  ): TaskEither<ApplicationError, PaginatedResult<T>> => {
+    // NOTE: We exceed the limit by 1 additional element to determine if next page is empty
+    const plusOneSize = sortOptions.size
+      ? sortOptions.size + 1
+      : maxSizeLimit + 1;
 
-  if (data.length < (sortOptions.size || maxSizeLimit)) return right({ data });
-
-  const element = data[data.length - 1];
-
-  const getValue = <T>(option: SortOption<T> | SortOptionSince<T>) =>
-    option.sortField.split(".").reduce((acc, n) => acc[n], element);
-
-  return right<ApplicationError, PaginatedResult<T>>({
-    data,
-    meta: {
-      next: toNextString<T>({
-        size: sortOptions.size,
-        options: sortOptions.options.map((option) => {
-          return { ...option, searchSince: getValue(option) };
-        }),
+    return pipe(
+      getData({
+        ...sortOptions,
+        size: plusOneSize,
       }),
-    },
-  });
-};
+      chain((plusOneData) => {
+        if (plusOneData.length === 0)
+          return left(
+            new ApplicationError("Not found", [], StatusCodes.NOT_FOUND)
+          );
+
+        if (plusOneData.length < plusOneSize) {
+          return right({ data: plusOneData, meta: { next: null } });
+        }
+
+        const data = plusOneData.slice(0, -1);
+        const element = data[data.length - 1];
+
+        const getValue = <T>(option: SortOption<T> | SortOptionSince<T>) =>
+          option.sortField.split(".").reduce((acc, n) => acc[n], element);
+
+        return right<ApplicationError, PaginatedResult<T>>({
+          data,
+          meta: {
+            next: toNextString<T>({
+              size: sortOptions.size,
+              options: sortOptions.options.map((option) => ({
+                ...option,
+                searchSince: getValue(option),
+              })),
+            }),
+          },
+        });
+      })
+    );
+  };
+
+const getAggregationResultWithNextString =
+  <T, S, A>(sortOptions: SortOptions<S>) =>
+  (
+    getDataWithAfterKey: (
+      sortOptions: SortOptions<S>
+    ) => TaskEither<ApplicationError, [T[], A]>
+  ): TaskEither<ApplicationError, PaginatedResult<T>> => {
+    // NOTE: We exceed the limit by 1 additional element to determine if next page is empty
+    const plusOneSize = sortOptions.size
+      ? sortOptions.size + 1
+      : maxSizeLimit + 1;
+
+    return pipe(
+      getDataWithAfterKey({
+        ...sortOptions,
+        size: plusOneSize,
+      }),
+      chain(([plusOneData, after_key]) => {
+        if (plusOneData.length === 0)
+          return left(
+            new ApplicationError("Not found", [], StatusCodes.NOT_FOUND)
+          );
+
+        if (plusOneData.length < plusOneSize) {
+          return right({ data: plusOneData, meta: { next: null } });
+        }
+
+        const data = plusOneData.slice(0, -1);
+
+        return right<ApplicationError, PaginatedResult<T>>({
+          data,
+          meta: {
+            next: toNextString<S>({
+              size: sortOptions.size,
+              options: sortOptions.options
+                .filter((option) => after_key[option.sortField] !== undefined)
+                .map((option) => ({
+                  ...option,
+                  searchSince: after_key[option.sortField],
+                })),
+            }),
+          },
+        });
+      })
+    );
+  };
 
 const getSortOptions = <T, R>(pagination: Pagination<T>) => ({
-  withDefault: (def: SortOptions<R>): SortOptions<R> =>
-    "next" in pagination ? fromNextString<R>(pagination.next) : def,
+  withDefault: (def: SortOptions<R>): SortOptions<R> => {
+    if ("next" in pagination) {
+      const sortOptionsFromNext = fromNextString<R>(pagination.next);
+      return {
+        ...sortOptionsFromNext,
+        size: pagination.size ?? sortOptionsFromNext.size,
+      };
+    } else {
+      return def;
+    }
+  },
 });
 
 export function getFromPath<O, K extends string>(obj: O, path: K): Get<O, K>;
@@ -149,34 +225,32 @@ export const findCollectionByTerm =
     sortOptions: SortOptions<OSC>,
     index: OSIndex,
     currencyIdentifier: string | null
-  ) => {
+  ): TaskEither<ApplicationError, PaginatedResult<OSC>> => {
     const stringifyTerm = (term: OSC[keyof OSC]) => {
       return term !== null && term !== undefined && typeof term !== "object"
         ? (String(term) as OSC[keyof OSC])
         : ("" as OSC[keyof OSC]);
     };
 
-    const query =
-      fields.length === 1
-        ? getByFieldQuery<OSC, keyof OSC>(
-            index,
-            fields[0],
-            stringifyTerm(term),
-            sortOptions,
-            currencyIdentifier
-          )
-        : getMultiQuery<OSC, keyof OSC>(
-            index,
-            fields,
-            stringifyTerm(term),
-            sortOptions,
-            currencyIdentifier
-          );
-
-    return pipe(
-      findAll<OSC>(os.search(query), currencyIdentifier),
-      chain((a) => getResultWithNextString<OSC>(a, sortOptions))
-    );
+    return getResultWithNextString<OSC>(sortOptions)((sort) => {
+      const query =
+        fields.length === 1
+          ? getByFieldQuery<OSC, keyof OSC>(
+              index,
+              fields[0],
+              stringifyTerm(term),
+              sort,
+              currencyIdentifier
+            )
+          : getMultiQuery<OSC, keyof OSC>(
+              index,
+              fields,
+              stringifyTerm(term),
+              sort,
+              currencyIdentifier
+            );
+      return findAll<OSC>(os.search(query), currencyIdentifier);
+    });
   };
 
 export const findSnapshotRewards =
@@ -196,68 +270,31 @@ export const findSnapshotRewards =
 export const listMetagraphs =
   (os: Client) =>
   (
-    limit?: number,
-    next?: string
+    pagination: Pagination<Metagraph>
   ): TaskEither<ApplicationError, PaginatedResult<Metagraph>> => {
-    const query = {
-      size: 0,
-      aggs: {
-        metagraphs: {
-          composite: {
-            sources: [
-              {
-                identifier: {
-                  terms: {
-                    field: "identifier" as Paths<
-                      CurrencyData<OpenSearchCurrencySnapshotV1>
-                    >,
-                  },
-                },
-              },
-            ],
-            size: limit,
-            ...(next ? { after: { identifier: next } } : {}),
-          },
-          aggs: {
-            latestSnapshot: {
-              top_hits: {
-                sort: [
-                  {
-                    "data.ordinal": {
-                      order: SortOrder.Desc,
-                    },
-                  } as {
-                    [K in Paths<CurrencyData<OpenSearchCurrencySnapshotV1>>]: {
-                      order: SortOrder;
-                    };
-                  } & { [key: string]: never },
-                ],
-                _source: {
-                  includes: [
-                    "identifier",
-                    "data.hash",
-                    "data.ownerAddress",
-                    "data.stakingAddress",
-                    "data.fee",
-                  ] as Paths<CurrencyData<OpenSearchCurrencySnapshotV1>>[],
-                },
-                size: 1,
-              },
-            },
-          },
-        },
-      },
-    };
-
-    type LastMetagraphSnapshot = Pick<
+    const { size, ...options } = pagination;
+    const sortOptions = getSortOptions<
       CurrencyData<OpenSearchCurrencySnapshotV1>,
-      "identifier"
-    > & {
-      data: Pick<
-        CurrencyData<OpenSearchCurrencySnapshotV1>["data"],
+      Metagraph
+    >(pagination).withDefault({
+      size,
+      options: [
+        {
+          ...options,
+          searchDirection: SearchDirection.Before,
+          sortField: "identifier" as Paths<
+            CurrencyData<OpenSearchCurrencySnapshotV1>
+          >,
+        },
+      ],
+    });
+
+    type LastMetagraphSnapshot = CurrencyData<
+      Pick<
+        OpenSearchCurrencySnapshotV1,
         "hash" | "ownerAddress" | "stakingAddress"
-      >;
-    };
+      >
+    >;
 
     type MetagraphBucket = {
       latestSnapshot: {
@@ -276,49 +313,111 @@ export const listMetagraphs =
       buckets: MetagraphBucket[];
     };
 
-    const afterKeyToMetaNext = (
-      after_key: MetagraphsAggregation["after_key"]
-    ): PaginatedResult<Metagraph>["meta"] => {
-      const nextIdentifier = after_key?.identifier;
-      return nextIdentifier ? { next: nextIdentifier } : undefined;
-    };
+    return getAggregationResultWithNextString<
+      Metagraph,
+      LastMetagraphSnapshot,
+      MetagraphsAggregation["after_key"]
+    >(sortOptions)((sort) => {
+      const after = sortOptions.options
+        .filter(isSearchSinceOption)
+        .map<SortOptionSince<LastMetagraphSnapshot>>(
+          (opt) => opt as SortOptionSince<LastMetagraphSnapshot>
+        )
+        .reduce(
+          (acc, curr) => ({
+            ...acc,
+            [curr.sortField]: curr.searchSince,
+          }),
+          {}
+        );
 
-    return pipe(
-      tryCatch<ApplicationError, MetagraphsAggregation>(
-        () =>
-          os
-            .search({
-              index: OSIndex.CurrencySnapshots,
-              body: query,
-            })
-            .then((r) => r.body.aggregations.metagraphs),
-        (err) =>
-          new ApplicationError(
-            "OpenSearch error",
-            [err as string],
-            StatusCodes.SERVER_ERROR
-          )
-      ),
-      chain(({ after_key, buckets }) => {
-        const data = buckets
-          .map(({ latestSnapshot }) => latestSnapshot.hits.hits)
-          .map(([hit]) => hit._source)
-          .map(
-            ({ identifier, data: { hash, stakingAddress, ownerAddress } }) => ({
-              id: identifier,
-              lastSnapshotHash: hash,
-              stakingAddress: stakingAddress ?? null,
-              ownerAddress: ownerAddress ?? null,
-            })
-          );
+      const query = {
+        size: 0,
+        aggs: {
+          metagraphs: {
+            composite: {
+              sources: [
+                {
+                  identifier: {
+                    terms: {
+                      field: "identifier" as Paths<
+                        CurrencyData<OpenSearchCurrencySnapshotV1>
+                      >,
+                    },
+                  },
+                },
+              ],
+              size: sort.size,
+              ...(Object.keys(after).length > 0 ? { after } : {}),
+            },
+            aggs: {
+              latestSnapshot: {
+                top_hits: {
+                  sort: [
+                    {
+                      "data.ordinal": {
+                        order: SortOrder.Desc,
+                      },
+                    } as {
+                      [K in Paths<
+                        CurrencyData<OpenSearchCurrencySnapshotV1>
+                      >]: {
+                        order: SortOrder;
+                      };
+                    } & { [key: string]: never },
+                  ],
+                  _source: {
+                    includes: [
+                      "identifier",
+                      "data.hash",
+                      "data.ownerAddress",
+                      "data.stakingAddress",
+                    ] as Paths<CurrencyData<OpenSearchCurrencySnapshotV1>>[],
+                  },
+                  size: 1,
+                },
+              },
+            },
+          },
+        },
+      };
 
-        const meta = afterKeyToMetaNext(after_key);
+      return pipe(
+        tryCatch<ApplicationError, MetagraphsAggregation>(
+          () =>
+            os
+              .search({
+                index: OSIndex.CurrencySnapshots,
+                body: query,
+              })
+              .then((r) => r.body.aggregations.metagraphs),
+          (err) =>
+            new ApplicationError(
+              "OpenSearch error",
+              [err as string],
+              StatusCodes.SERVER_ERROR
+            )
+        ),
+        map(({ buckets, after_key }) => {
+          const data = buckets
+            .map(({ latestSnapshot }) => latestSnapshot.hits.hits)
+            .map(([hit]) => hit._source)
+            .map(
+              ({
+                identifier,
+                data: { hash, stakingAddress, ownerAddress },
+              }) => ({
+                id: identifier,
+                lastSnapshotHash: hash,
+                stakingAddress: stakingAddress ?? null,
+                ownerAddress: ownerAddress ?? null,
+              })
+            );
 
-        return data.length === 0
-          ? left(new ApplicationError("Not found", [], StatusCodes.NOT_FOUND))
-          : right({ data, meta });
-      })
-    );
+          return [data, after_key];
+        })
+      );
+    });
   };
 
 export const listSnapshots =
@@ -341,18 +440,17 @@ export const listSnapshots =
       ],
     });
 
-    return pipe(
+    return getResultWithNextString(sortOptions)((sort) =>
       findAll<OSS>(
         os.search(
           getAll<OSS>(
             currencyIdentifier ? OSIndex.CurrencySnapshots : OSIndex.Snapshots,
-            sortOptions,
+            sort,
             currencyIdentifier
           )
         ),
         currencyIdentifier
-      ),
-      chain((a) => getResultWithNextString(a, sortOptions))
+      )
     );
   };
 
@@ -383,51 +481,52 @@ export const findCurrencySnapshotsByOwnerAddress =
       ],
     });
 
-    const query = {
-      index: OSIndex.CurrencySnapshots,
-      body: {
-        ...getSearchSince<CurrencyData<OpenSearchCurrencySnapshotV1>>(
-          sortOptions
-        ),
-        sort: sortOptions.options.map((s) => ({
-          [s.sortField]:
-            s.searchDirection === SearchDirection.After
-              ? SortOrder.Asc
-              : SortOrder.Desc,
-        })),
-        size: sortOptions.size || maxSizeLimit,
-        _source: {
-          excludes: ["data.rewards"] as Paths<
-            CurrencyData<OpenSearchCurrencySnapshotV1>
-          >[],
-        },
-        query: {
-          bool: {
-            must: {
-              term: { ["data.ownerAddress"]: ownerAddress } as Record<
-                Paths<CurrencyData<OpenSearchCurrencySnapshotV1>>,
-                string
-              >,
+    return pipe(
+      getResultWithNextString<
+        CurrencyData<WithoutRewards<OpenSearchCurrencySnapshotV1>>
+      >(sortOptions)((sort) => {
+        const query = {
+          index: OSIndex.CurrencySnapshots,
+          body: {
+            ...getSearchSince<CurrencyData<OpenSearchCurrencySnapshotV1>>(sort),
+            sort: sort.options.map((s) => ({
+              [s.sortField]:
+                s.searchDirection === SearchDirection.After
+                  ? SortOrder.Asc
+                  : SortOrder.Desc,
+            })),
+            size: sort.size || maxSizeLimit,
+            _source: {
+              excludes: ["data.rewards"] as Paths<
+                CurrencyData<OpenSearchCurrencySnapshotV1>
+              >[],
+            },
+            query: {
+              bool: {
+                must: {
+                  term: { ["data.ownerAddress"]: ownerAddress } as Record<
+                    Paths<CurrencyData<OpenSearchCurrencySnapshotV1>>,
+                    string
+                  >,
+                },
+              },
             },
           },
-        },
-      },
-    };
+        };
 
-    return pipe(
-      tryCatch<
-        OpenSearchError,
-        CurrencyData<WithoutRewards<OpenSearchCurrencySnapshot>>[]
-      >(
-        () =>
-          os.search(query).then((r) => r.body.hits.hits.map((h) => h._source)),
-        (err) => new OpenSearchError(err as string)
-      ),
-      chain((data) =>
-        getResultWithNextString<
-          CurrencyData<WithoutRewards<OpenSearchCurrencySnapshotV1>>
-        >(data, sortOptions)
-      ),
+        return pipe(
+          tryCatch<
+            OpenSearchError,
+            CurrencyData<WithoutRewards<OpenSearchCurrencySnapshot>>[]
+          >(
+            () =>
+              os
+                .search(query)
+                .then((r) => r.body.hits.hits.map((h) => h._source)),
+            (err) => new OpenSearchError(err as string)
+          )
+        );
+      }),
       map(({ data, ...rest }) => ({
         ...rest,
         data: data.map(({ identifier, data }) => ({
@@ -493,21 +592,18 @@ export const listTransactions =
         SortOptions<OpenSearchTransaction>,
         PaginatedResult<OpenSearchTransaction>
       >((sortOptions) =>
-        pipe(
+        getResultWithNextString<OpenSearchTransaction>(sortOptions)((sort) =>
           findAll<OpenSearchTransaction>(
             os.search(
               getAll<OpenSearchTransaction>(
                 currencyIdentifier
                   ? OSIndex.CurrencyTransactions
                   : OSIndex.Transactions,
-                sortOptions,
+                sort,
                 currencyIdentifier
               )
             ),
             currencyIdentifier
-          ),
-          chain((a) =>
-            getResultWithNextString<OpenSearchTransaction>(a, sortOptions)
           )
         )
       )
@@ -591,7 +687,7 @@ export const findTransactionsBySnapshot =
           ),
           orElse((e: ApplicationError) =>
             e.statusCode === StatusCodes.NOT_FOUND
-              ? right({ data: [] })
+              ? right({ data: [], meta: { next: null } })
               : left(e)
           )
         )
@@ -633,7 +729,7 @@ export const findCurrencyFeeTransactionsBySnapshot =
           }),
           orElse((e: ApplicationError) =>
             e.statusCode === StatusCodes.NOT_FOUND
-              ? right({ data: [] })
+              ? right({ data: [], meta: { next: null } })
               : left(e)
           )
         );
@@ -936,3 +1032,6 @@ const isOrdinal = (term: string | number): term is number =>
 const isLatest = (
   termValue: string | number | "latest"
 ): termValue is "latest" => termValue === "latest";
+
+const isSearchSinceOption = <T>(option: any): option is SortOptionSince<T> =>
+  "searchSince" in option && option.searchSince !== undefined;
