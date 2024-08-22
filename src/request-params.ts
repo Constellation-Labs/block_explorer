@@ -6,7 +6,7 @@ import * as O from "fp-ts/Option";
 import * as R from "fp-ts/Record";
 import * as TE from "fp-ts/TaskEither";
 import { TaskEither } from "fp-ts/TaskEither";
-import { SearchDirection, SortOptions } from "./query";
+import { maxSizeLimit, SearchDirection, SortOptions } from "./query";
 
 export type Pagination<T> =
   | {
@@ -66,14 +66,36 @@ export const extractPagination = <T>(
     );
   }
 
-  if (params?.limit !== undefined && isNaN(limit)) {
-    return TE.left(
-      new ApplicationError(
-        "limit must be a number",
-        [],
-        StatusCodes.BAD_REQUEST
-      )
-    );
+  if (params?.limit !== undefined) {
+    if (isNaN(limit)) {
+      return TE.left(
+        new ApplicationError(
+          "limit must be a number",
+          [],
+          StatusCodes.BAD_REQUEST
+        )
+      );
+    }
+
+    if (limit < 1) {
+      return TE.left(
+        new ApplicationError(
+          "limit must be a positive number",
+          [],
+          StatusCodes.BAD_REQUEST
+        )
+      );
+    }
+
+    if (limit > maxSizeLimit) {
+      return TE.left(
+        new ApplicationError(
+          `limit must be lower or equal ${maxSizeLimit}`,
+          [],
+          StatusCodes.BAD_REQUEST
+        )
+      );
+    }
   }
 
   if (next && searchAfter && searchBefore) {
@@ -89,6 +111,7 @@ export const extractPagination = <T>(
   if (next) {
     return TE.right({
       next,
+      size: params.limit !== undefined ? limit : undefined,
     });
   }
 
