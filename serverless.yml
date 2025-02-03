@@ -19,6 +19,7 @@ provider:
     cors: true
   vpc: ${self:custom.env.vpc}
   versionFunctions: false
+  timeout: 10
 
 functions:
   globalSnapshots:
