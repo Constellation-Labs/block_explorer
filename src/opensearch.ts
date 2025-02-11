@@ -51,7 +51,7 @@ enum OSIndex {
   CurrencyBlocks = "currency-blocks",
   CurrencyTransactions = "currency-transactions",
   CurrencyFeeTransactions = "currency-fee-transactions",
-  CurrencyBalances = "currency-balances",
+  CurrencyBalances = "currency-balances-*",
 }
 
 export type Result<T> = {
