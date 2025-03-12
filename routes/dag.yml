@@ -1,0 +1,67 @@
+  globalSnapshots:
+    handler: src/handlers/dagHandler.handleGlobalSnapshots
+    events:
+      - httpApi:
+          path: /global-snapshots
+          method: GET
+  globalSnapshot:
+    handler: src/handlers/dagHandler.handleGlobalSnapshot
+    events:
+      - httpApi:
+          path: /global-snapshots/{term}
+          method: GET
+  globalSnapshotRewards:
+    handler: src/handlers/dagHandler.handleGlobalSnapshotRewards
+    events:
+      - httpApi:
+          path: /global-snapshots/{term}/rewards
+          method: GET
+  globalSnapshotTransactions:
+    handler: src/handlers/dagHandler.handleGlobalSnapshotTransactions
+    events:
+      - httpApi:
+          path: /global-snapshots/{term}/transactions
+          method: GET
+  block:
+    handler: src/handlers/dagHandler.handleDagBlock
+    events:
+      - httpApi:
+          path: /blocks/{hash}
+          method: GET
+  transactions:
+    handler: src/handlers/dagHandler.handleDagTransactions
+    events:
+      - httpApi:
+          path: /transactions
+          method: GET
+  transaction:
+    handler: src/handlers/dagHandler.handleDagTransaction
+    events:
+      - httpApi:
+          path: /transactions/{hash}
+          method: GET
+  transactionsByAddress:
+    handler: src/handlers/dagHandler.handleDagTransactionsByAddress
+    events:
+      - httpApi:
+          path: /addresses/{address}/transactions
+          method: GET
+  transactionsBySource:
+    handler: src/handlers/dagHandler.handleDagTransactionsBySource
+    events:
+      - httpApi:
+          path: /addresses/{address}/transactions/sent
+          method: GET
+  transactionsByDestination:
+    handler: src/handlers/dagHandler.handleDagTransactionsByDestination
+    events:
+      - httpApi:
+          path: /addresses/{address}/transactions/received
+          method: GET
+  balanceByAddress:
+    handler: src/handlers/dagHandler.handleDagBalanceByAddress
+    events:
+      - httpApi:
+          path: /addresses/{address}/balance
+          method: GET
+
