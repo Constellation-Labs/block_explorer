@@ -1,4 +1,4 @@
-service: api
+service: api-v2
 
 custom:
   stage: ${opt:stage, 'local'}
