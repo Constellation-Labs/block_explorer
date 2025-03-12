@@ -21,6 +21,24 @@ const safeNumber = (value, defaultValue) => {
   return (isFinite(num) && num > 0) ? num : defaultValue;
 };
 
+export const toCreatedAtCursor = (row) => ({ created_at: new Date(row.created_at) });
+const fromCreatedAtCursor = (row) => ({
+  created_at: row.created_at.toISOString()
+});
+
+export const toOrdinalCursor = (row) => ({ ordinal: BigInt('0x' + row.ordinal) });
+export const fromOrdinalCursor = (row) => ({ ordinal: row.ordinal.toString(16) });
+
+export const toCreatedAtOrdinalCursor = (row) => ({
+  ...toCreatedAtCursor(row),
+  ...toOrdinalCursor(row)
+});
+export const fromCreatedAtOrdinalCursor = (row) => ({
+  ...fromCreatedAtCursor(row),
+  ...fromOrdinalCursor(row)
+});
+
+
 const buildPageQuery = <T>(pagination: Pagination, nextToCursor) => {
   const pageSize = safeNumber(pagination.size, maxSizeLimit);
   const incrementedSize = pageSize + 1;
