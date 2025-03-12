@@ -3,7 +3,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import {
   extractHashOrdinal,
   extractPagination,
-} from './request-params';
+} from '../request-params';
 import {
   balanceResponse,
   handleError,
@@ -19,8 +19,8 @@ import {
   notFoundResponse,
   respond,
   rewardsResponse
-} from './response';
-import { fromCreatedAtOrdinalCursor, paginatedQuery, toCreatedAtOrdinalCursor } from './pagination';
+} from '../response';
+import { fromCreatedAtOrdinalCursor, paginatedQuery, toCreatedAtOrdinalCursor } from '../pagination';
 import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();

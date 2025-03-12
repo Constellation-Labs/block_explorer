@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { extractHashOrdinal, extractPagination } from './request-params';
-import { paginatedQuery, fromCreatedAtOrdinalCursor, toCreatedAtOrdinalCursor } from './pagination';
-import { respond, handleError, dagTransactionResponse } from './response';
+import { extractHashOrdinal, extractPagination } from '../request-params';
+import { paginatedQuery, fromCreatedAtOrdinalCursor, toCreatedAtOrdinalCursor } from '../pagination';
+import { respond, handleError, dagTransactionResponse } from '../response';
 
 const prisma = new PrismaClient();
 
@@ -56,7 +56,7 @@ const dagActionsTables =  [
 
 export const actionsResponse = (ts) => ts.map(actionResponse);;
 
-export const actions = async (
+export const dagActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   return await paginatedQuery(
@@ -64,7 +64,7 @@ export const actions = async (
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
     { 
-      where: { table_name: { in: [...dagActionsTables, ...metagraphActionsTables] } }, 
+      where: { table_name: { in: dagActionsTables } }, 
       orderBy: { created_at: 'desc' } 
     },
     prisma.abstract_transactions_view.findMany,
@@ -116,7 +116,7 @@ export const globalSnapshotActions = async (
   }
 };
 
-export const addressActions = async (
+export const dagAddressActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {

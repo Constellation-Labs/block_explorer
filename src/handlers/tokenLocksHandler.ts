@@ -1,12 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { extractHashOrdinal, extractPagination } from './request-params';
-import { paginatedQuery, fromCreatedAtOrdinalCursor, toCreatedAtOrdinalCursor } from './pagination';
-import { respond, handleError } from './response';
+import { extractHashOrdinal, extractPagination } from '../request-params';
+import { paginatedQuery, fromCreatedAtOrdinalCursor, toCreatedAtOrdinalCursor } from '../pagination';
+import { respond, handleError, notFoundResponse } from '../response';
 
 const prisma = new PrismaClient();
 
-export const handleAllowSpends = async (
+export const handleTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   return await paginatedQuery(
@@ -14,12 +14,12 @@ export const handleAllowSpends = async (
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
     { orderBy: { created_at: 'desc' } },
-    prisma.dag_allow_spends.findMany,
+    prisma.dag_token_locks.findMany,
     respond
   );
 };
 
-export const handleGlobalSnapshotAllowSpends = async (
+export const handleGlobalSnapshotTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -31,7 +31,7 @@ export const handleGlobalSnapshotAllowSpends = async (
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
       { where: { global_snapshot: filter }, orderBy: { created_at: 'desc' } },
-      prisma.dag_allow_spends.findMany,
+      prisma.dag_token_locks.findMany,
       respond
     );
   } catch (error) {
@@ -39,7 +39,7 @@ export const handleGlobalSnapshotAllowSpends = async (
   }
 };
 
-export const handleAddressAllowSpends = async (
+export const handleAddressTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -50,7 +50,7 @@ export const handleAddressAllowSpends = async (
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
       { where: { address }, orderBy: { created_at: 'desc' } },
-      prisma.dag_allow_spends.findMany,
+      prisma.dag_token_locks.findMany,
       respond
     );
   } catch (error) {
@@ -58,38 +58,32 @@ export const handleAddressAllowSpends = async (
   }
 };
 
-export const handleCurrencyAllowSpends = async (
+export const handleTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  try {
-    const { metagraph_id } = event.pathParameters || {};
-
-    return await paginatedQuery(
-      extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
-      { where: { metagraph_id }, orderBy: { created_at: 'desc' } },
-      prisma.metagraph_allow_spends.findMany,
-      respond
-    );
-  } catch (error) {
-    return handleError(error);
-  }
+  return await paginatedQuery(
+    extractPagination(event),
+    toCreatedAtOrdinalCursor,
+    fromCreatedAtOrdinalCursor,
+    { orderBy: { created_at: 'desc' } },
+    prisma.dag_token_unlocks.findMany,
+    respond
+  );
 };
 
-export const handleCurrencySnapshotAllowSpends = async (
+export const handleGlobalSnapshotTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { metagraph_id, hash_or_ordinal } = event.pathParameters || {};
+    const { hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
     return await paginatedQuery(
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { metagraph_id, snapshot: filter }, orderBy: { created_at: 'desc' } },
-      prisma.metagraph_allow_spends.findMany,
+      { where: { global_snapshot: filter }, orderBy: { created_at: 'desc' } },
+      prisma.dag_token_unlocks.findMany,
       respond
     );
   } catch (error) {
@@ -97,18 +91,18 @@ export const handleCurrencySnapshotAllowSpends = async (
   }
 };
 
-export const handleCurrencyAddressAllowSpends = async (
+export const handleAddressTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { metagraph_id, address } = event.pathParameters || {};
+    const { address } = event.pathParameters || {};
 
     return await paginatedQuery(
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { metagraph_id, address }, orderBy: { created_at: 'desc' } },
-      prisma.metagraph_allow_spends.findMany,
+      { where: { address }, orderBy: { created_at: 'desc' } },
+      prisma.dag_token_unlocks.findMany,
       respond
     );
   } catch (error) {

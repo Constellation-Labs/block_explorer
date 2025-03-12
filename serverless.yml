@@ -14,6 +14,7 @@ provider:
   stage: ${self:custom.stage}
   environment:
     SLS_DEBUG: '*'
+    DATABASE_URL: ${self:custom.env.db_url}
   httpApi:
     cors: true
   vpc: ${self:custom.env.vpc}
@@ -23,7 +24,7 @@ provider:
 functions:
  - ${file(./routes/dag.yml)}
  - ${file(./routes/metagraph.yml)}
- - ${file(./routes/allow-spends.yml)}
+ #- ${file(./routes/allow-spends.yml)}
  - ${file(./routes/actions.yml)}
   
 plugins:
