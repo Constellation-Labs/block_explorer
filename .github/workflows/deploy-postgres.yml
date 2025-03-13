@@ -37,7 +37,7 @@ jobs:
       - name: Serverless deploy
         uses: serverless/github-action@v3
         with:
-          args: deploy --stage ${{ inputs.environment }}20 --region us-west-1
+          args: deploy --stage ${{ inputs.environment }} --region us-west-1
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
