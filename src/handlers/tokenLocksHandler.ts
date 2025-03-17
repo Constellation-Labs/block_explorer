@@ -1,25 +1,41 @@
-import { PrismaClient } from '@prisma/client';
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { extractHashOrdinal, extractPagination } from '../request-params';
-import { paginatedQuery, fromCreatedAtOrdinalCursor, toCreatedAtOrdinalCursor } from '../pagination';
-import { respond, handleError, notFoundResponse } from '../response';
+import { PrismaClient } from "@prisma/client";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { extractHashOrdinal, extractPagination } from "../request-params";
+import {
+  paginatedQuery,
+  fromCreatedAtOrdinalCursor,
+  toCreatedAtOrdinalCursor,
+} from "../pagination";
+import { respond, handleError, notFoundResponse } from "../response";
 
 const prisma = new PrismaClient();
 
-export const handleTokenLocks = async (
+const tokenLockResponse = (transaction) => ({
+  type: transaction.table_name,
+  currencyId: transaction.currencyId,
+  hash: transaction.hash,
+  amount: transaction.amount,
+  source: transaction.source_addr,
+  destination: transaction.destination_addr,
+  unlockEpoch: transaction.unlock_epoch,
+  parentHash: transaction.lock_reference_hash,
+  timestamp: transaction.created_at,
+});
+
+export const tokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   return await paginatedQuery(
     extractPagination(event),
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
-    { orderBy: { created_at: 'desc' } },
+    { orderBy: { created_at: "desc" } },
     prisma.dag_token_locks.findMany,
     respond
   );
 };
 
-export const handleGlobalSnapshotTokenLocks = async (
+export const globalSnapshotTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -30,7 +46,7 @@ export const handleGlobalSnapshotTokenLocks = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { global_snapshot: filter }, orderBy: { created_at: 'desc' } },
+      { where: { global_snapshot: filter }, orderBy: { created_at: "desc" } },
       prisma.dag_token_locks.findMany,
       respond
     );
@@ -39,7 +55,7 @@ export const handleGlobalSnapshotTokenLocks = async (
   }
 };
 
-export const handleAddressTokenLocks = async (
+export const addressTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -49,7 +65,7 @@ export const handleAddressTokenLocks = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { address }, orderBy: { created_at: 'desc' } },
+      { where: { address }, orderBy: { created_at: "desc" } },
       prisma.dag_token_locks.findMany,
       respond
     );
@@ -58,20 +74,20 @@ export const handleAddressTokenLocks = async (
   }
 };
 
-export const handleTokenUnlocks = async (
+export const tokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   return await paginatedQuery(
     extractPagination(event),
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
-    { orderBy: { created_at: 'desc' } },
+    { orderBy: { created_at: "desc" } },
     prisma.dag_token_unlocks.findMany,
     respond
   );
 };
 
-export const handleGlobalSnapshotTokenUnlocks = async (
+export const globalSnapshotTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -82,7 +98,7 @@ export const handleGlobalSnapshotTokenUnlocks = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { global_snapshot: filter }, orderBy: { created_at: 'desc' } },
+      { where: { global_snapshot: filter }, orderBy: { created_at: "desc" } },
       prisma.dag_token_unlocks.findMany,
       respond
     );
@@ -91,7 +107,7 @@ export const handleGlobalSnapshotTokenUnlocks = async (
   }
 };
 
-export const handleAddressTokenUnlocks = async (
+export const addressTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -101,7 +117,7 @@ export const handleAddressTokenUnlocks = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { address }, orderBy: { created_at: 'desc' } },
+      { where: { address }, orderBy: { created_at: "desc" } },
       prisma.dag_token_unlocks.findMany,
       respond
     );

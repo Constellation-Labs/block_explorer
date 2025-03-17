@@ -1,82 +1,82 @@
 tokenLocks:
-  handler: src/handlers/tokenLocskHandler.tokenLocks
+  handler: src/handlers/tokenLocksHandler.tokenLocks
   events:
     - httpApi:
         path: /token-locks
         method: GET
 
 globalSnapshotTokenLocks:
-  handler: src/handlers/tokenLocskHandler.globalSnapshotTokenLocks
+  handler: src/handlers/tokenLocksHandler.globalSnapshotTokenLocks
   events:
     - httpApi:
         path: /global-snapshots/{hash_or_ordinal}/token-locks
         method: GET
 
 addressTokenLocks:
-  handler: src/handlers/tokenLocskHandler.addressTokenLocks
+  handler: src/handlers/tokenLocksHandler.addressTokenLocks
   events:
     - httpApi:
         path: /addresses/{address}/token-locks
         method: GET
 
 tokenUnlocks:
-  handler: src/handlers/tokenLocskHandler.tokenUnlocks
+  handler: src/handlers/tokenLocksHandler.tokenUnlocks
   events:
     - httpApi:
         path: /token-unlocks
         method: GET
 
 globalSnapshotTokenUnlocks:
-  handler: src/handlers/tokenLocskHandler.globalSnapshotTokenUnlocks
+  handler: src/handlers/tokenLocksHandler.globalSnapshotTokenUnlocks
   events:
     - httpApi:
         path: /global-snapshots/{hash_or_ordinal}/token-unlocks
         method: GET
 
 addressTokenUnlocks:
-  handler: src/handlers/tokenLocskHandler.addressTokenUnlocks
+  handler: src/handlers/tokenLocksHandler.addressTokenUnlocks
   events:
     - httpApi:
         path: /addresses/{address}/token-unlocks
         method: GET
 
 currencyTokenLocks:
-  handler: src/handlers/tokenLocskHandler.currencyTokenLocks
+  handler: src/handlers/tokenLocksHandler.currencyTokenLocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/token-locks
         method: GET
 
 currencySnapshotTokenLocks:
-  handler: src/handlers/tokenLocskHandler.currencySnapshotTokenLocks
+  handler: src/handlers/tokenLocksHandler.currencySnapshotTokenLocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/token-locks
         method: GET
 
 currencyAddressTokenLocks:
-  handler: src/handlers/tokenLocskHandler.currencyAddressTokenLocks
+  handler: src/handlers/tokenLocksHandler.currencyAddressTokenLocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/addresses/{address}/token-locks
         method: GET
 
 currencySnapshotTokenUnlocks:
-  handler: src/handlers/tokenLocskHandler.currencySnapshotTokenUnlocks
+  handler: src/handlers/tokenLocksHandler.currencySnapshotTokenUnlocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/token-unlocks
         method: GET
 
 currencyTokenUnlocks:
-  handler: src/handlers/tokenLocskHandler.currencyTokenUnlocks
+  handler: src/handlers/tokenLocksHandler.currencyTokenUnlocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/token-unlocks
         method: GET
 
 currencyAddressTokenUnlocks:
-  handler: src/handlers/tokenLocskHandler.currencyAddressTokenUnlocks
+  handler: src/handlers/tokenLocksHandler.currencyAddressTokenUnlocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/addresses/{address}/token-unlocks

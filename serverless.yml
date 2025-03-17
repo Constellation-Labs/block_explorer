@@ -24,7 +24,8 @@ provider:
 functions:
  - ${file(./routes/dag.yml)}
  - ${file(./routes/metagraph.yml)}
- #- ${file(./routes/allow-spends.yml)}
+ - ${file(./routes/token-locks.yml)}
+ - ${file(./routes/allow-spends.yml)}
  - ${file(./routes/actions.yml)}
   
 plugins:
