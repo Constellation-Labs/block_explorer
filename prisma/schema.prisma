@@ -1,8 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
-
 
 datasource db {
   provider = "postgresql"
@@ -200,8 +199,8 @@ model dag_token_locks {
   addresses                  addresses                    @relation(fields: [source_addr], references: [address], onDelete: NoAction, onUpdate: NoAction, map: "dag_token_locks_source_addr_fk")
   dag_token_unlock           dag_token_unlocks?
   abstract_transactions_view abstract_transactions_view[]
-  global_snapshots           global_snapshots?            @relation(fields: [global_snapshotsHash], references: [hash])
-  global_snapshotsHash       String?                      @db.VarChar
+  global_snapshot            global_snapshots?            @relation(fields: [global_snapshot_hash], references: [hash])
+  global_snapshot_hash       String?
 
   @@unique([hash], map: "dag_token_locks_unique")
 }
@@ -211,11 +210,11 @@ model dag_token_unlocks {
   lock_reference_ordinal     BigInt
   lock_reference_hash        String                       @db.VarChar
   amount                     BigInt
-  address                    String                       @db.VarChar
+  source_addr                String                       @db.VarChar
   created_at                 DateTime                     @default(now()) @db.Timestamp(6)
   updated_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  dag_token_lock             dag_token_locks              @relation(fields: [lock_reference_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction, map: "dag_token_unlocks_token_locks_fk")
-  addresses                  addresses                    @relation(fields: [address], references: [address], onDelete: NoAction, onUpdate: NoAction, map: "ddag_token_unlocks_address_fk")
+  token_lock                 dag_token_locks              @relation(fields: [lock_reference_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction, map: "dag_token_unlocks_token_locks_fk")
+  addresses                  addresses                    @relation(fields: [source_addr], references: [address], onDelete: NoAction, onUpdate: NoAction, map: "ddag_token_unlocks_address_fk")
   abstract_transactions_view abstract_transactions_view[]
 
   @@id([hash], map: "dag_token_unlocks_pk")
@@ -474,7 +473,7 @@ model metagraph_token_unlocks {
   updated_at                 DateTime                     @default(now()) @db.Timestamp(6)
   addresses                  addresses                    @relation(fields: [address], references: [address], onDelete: NoAction, onUpdate: NoAction, map: "address_fk")
   metagraphs                 metagraphs                   @relation(fields: [metagraph_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "metagraph_id_fk")
-  metagraph_token_lock       metagraph_token_locks        @relation(fields: [lock_reference_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction, map: "metagraph_token_unlocks_token_locks_fk")
+  token_lock                 metagraph_token_locks        @relation(fields: [lock_reference_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction, map: "metagraph_token_unlocks_token_locks_fk")
   abstract_transactions_view abstract_transactions_view[]
 
   @@id([hash], map: "metagraph_token_unlocks_pk")

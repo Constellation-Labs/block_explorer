@@ -6,12 +6,11 @@ import {
   fromCreatedAtOrdinalCursor,
   toCreatedAtOrdinalCursor,
 } from "../pagination";
-import { respond, handleError, notFoundResponse } from "../response";
+import { handleError } from "../response";
 
 const prisma = new PrismaClient();
 
 const tokenLockResponse = (transaction) => ({
-  type: transaction.table_name,
   currencyId: transaction.currencyId,
   hash: transaction.hash,
   amount: transaction.amount,
@@ -22,16 +21,31 @@ const tokenLockResponse = (transaction) => ({
   timestamp: transaction.created_at,
 });
 
+const tokenLockResponses = (txs) => (txs.map(tokenLockResponse))
+
+const tokenUnlockResponse = (transaction) => ({
+  currencyId: transaction.currencyId,
+  hash: transaction.hash,
+  amount: transaction.amount,
+  source: transaction.source_addr,
+  timestamp: transaction.created_at,
+  lockOrdinal: transaction.lock_reference_ordinal
+});
+
+
+const tokenUnlockResponses = (txs) => (txs.map(tokenUnlockResponse))
+
 export const tokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  return await paginatedQuery(
+  
+  return paginatedQuery(
     extractPagination(event),
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
     { orderBy: { created_at: "desc" } },
     prisma.dag_token_locks.findMany,
-    respond
+    tokenLockResponses
   );
 };
 
@@ -42,13 +56,13 @@ export const globalSnapshotTokenLocks = async (
     const { hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
-    return await paginatedQuery(
+    return paginatedQuery(
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
       { where: { global_snapshot: filter }, orderBy: { created_at: "desc" } },
       prisma.dag_token_locks.findMany,
-      respond
+      tokenLockResponses
     );
   } catch (error) {
     return handleError(error);
@@ -61,13 +75,13 @@ export const addressTokenLocks = async (
   try {
     const { address } = event.pathParameters || {};
 
-    return await paginatedQuery(
+    return paginatedQuery(
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { address }, orderBy: { created_at: "desc" } },
+      { where: { source_addr: address }, orderBy: { created_at: "desc" } },
       prisma.dag_token_locks.findMany,
-      respond
+      tokenLockResponses
     );
   } catch (error) {
     return handleError(error);
@@ -77,13 +91,13 @@ export const addressTokenLocks = async (
 export const tokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  return await paginatedQuery(
+  return paginatedQuery(
     extractPagination(event),
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
     { orderBy: { created_at: "desc" } },
     prisma.dag_token_unlocks.findMany,
-    respond
+    tokenUnlockResponses
   );
 };
 
@@ -94,13 +108,13 @@ export const globalSnapshotTokenUnlocks = async (
     const { hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
-    return await paginatedQuery(
+    return paginatedQuery(
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { global_snapshot: filter }, orderBy: { created_at: "desc" } },
+      { where: { token_lock: {global_snapshot: filter} }, orderBy: { created_at: "desc" } },
       prisma.dag_token_unlocks.findMany,
-      respond
+      tokenUnlockResponses
     );
   } catch (error) {
     return handleError(error);
@@ -113,13 +127,13 @@ export const addressTokenUnlocks = async (
   try {
     const { address } = event.pathParameters || {};
 
-    return await paginatedQuery(
+    return paginatedQuery(
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { address }, orderBy: { created_at: "desc" } },
+      { where: { source_addr: address }, orderBy: { created_at: "desc" } },
       prisma.dag_token_unlocks.findMany,
-      respond
+      tokenUnlockResponses
     );
   } catch (error) {
     return handleError(error);
