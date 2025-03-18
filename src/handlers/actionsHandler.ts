@@ -3,8 +3,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { extractHashOrdinal, extractPagination } from "../request-params";
 import {
   paginatedQuery,
-  fromCreatedAtOrdinalCursor,
-  toCreatedAtOrdinalCursor,
+  hashCursor,
 } from "../pagination";
 import { respond, handleError, dagTransactionResponse } from "../response";
 
@@ -71,11 +70,11 @@ export const dagActions = async (
 
   return await paginatedQuery(
     extractPagination(event),
-    toCreatedAtOrdinalCursor,
-    fromCreatedAtOrdinalCursor,
+    hashCursor,
+    hashCursor,
     {
       where: { table_name: { in: selectedTables } },
-      orderBy: { created_at: "desc" },
+      orderBy: [{ created_at: "desc"}, {hash: "desc" }],
     },
     prisma.abstract_transactions_view.findMany,
     actionsResponse
@@ -119,14 +118,14 @@ export const globalSnapshotActions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           ...filterByGlobalSnapshot(filter),
           table_name: { in: selectedTables },
         },
-        orderBy: { created_at: "desc" },
+        orderBy: { created_at: "desc", hash: "asc" },
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse
@@ -146,11 +145,11 @@ export const dagAddressActions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: { source_addr: address, table_name: { in: selectedTables } },
-        orderBy: { created_at: "desc" },
+        orderBy: { created_at: "desc", hash: "asc" },
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse
@@ -208,14 +207,14 @@ export const currencyActions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           ...metagraphIdCond(metagraph_id),
           table_name: { in: selectedTables },
         },
-        orderBy: { created_at: "desc" },
+        orderBy: { created_at: "desc", hash: "asc" },
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse
@@ -235,15 +234,15 @@ export const currencySnapshotActions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           ...metagraphIdCond(metagraph_id),
           ...filterByMetagraphSnapshot(hash_or_ordinal),
           table_name: { in: selectedTables },
         },
-        orderBy: { created_at: "desc" },
+        orderBy: { created_at: "desc", hash: "asc" },
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse
@@ -263,15 +262,15 @@ export const currencyAddressActions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           ...metagraphIdCond(metagraph_id),
           source_addr: address,
           table_name: { in: selectedTables },
         },
-        orderBy: { created_at: "desc" },
+        orderBy: { created_at: "desc", hash: "asc" },
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse

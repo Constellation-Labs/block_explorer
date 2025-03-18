@@ -139,3 +139,111 @@ export const addressTokenUnlocks = async (
     return handleError(error);
   }
 };
+
+export const metagraphTokenLocks = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  
+  const { identifier: metagraph_id} = event.pathParameters || {};
+
+  return paginatedQuery(
+    extractPagination(event),
+    toCreatedAtOrdinalCursor,
+    fromCreatedAtOrdinalCursor,
+    { where: { metagraph_id }, orderBy: { created_at: "desc" } },
+    prisma.metagraph_token_locks.findMany,
+    tokenLockResponses
+  );
+};
+
+export const metagraphSnapshotTokenLocks = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { identifier: metagraph_id, hash_or_ordinal } = event.pathParameters || {};
+    const filter = extractHashOrdinal(hash_or_ordinal);
+
+    return paginatedQuery(
+      extractPagination(event),
+      toCreatedAtOrdinalCursor,
+      fromCreatedAtOrdinalCursor,
+      { where: { metagraph_id, metagraph_snapshot: filter }, orderBy: { created_at: "desc" } },
+      prisma.metagraph_token_locks.findMany,
+      tokenLockResponses
+    );
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const metagraphAddressTokenLocks = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { identifier: metagraph_id, address } = event.pathParameters || {};
+
+    return paginatedQuery(
+      extractPagination(event),
+      toCreatedAtOrdinalCursor,
+      fromCreatedAtOrdinalCursor,
+      { where: { metagraph_id, source_addr: address }, orderBy: { created_at: "desc" } },
+      prisma.metagraph_token_locks.findMany,
+      tokenLockResponses
+    );
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const metagraphTokenUnlocks = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  const { identifier: metagraph_id } = event.pathParameters || {};
+  return paginatedQuery(
+    extractPagination(event),
+    toCreatedAtOrdinalCursor,
+    fromCreatedAtOrdinalCursor,
+    { where: { metagraph_id}, orderBy: { created_at: "desc" } },
+    prisma.metagraph_token_unlocks.findMany,
+    tokenUnlockResponses
+  );
+};
+
+export const metagraphSnapshotTokenUnlocks = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { identifier: metagraph_id, hash_or_ordinal } = event.pathParameters || {};
+    const filter = extractHashOrdinal(hash_or_ordinal);
+
+    return paginatedQuery(
+      extractPagination(event),
+      toCreatedAtOrdinalCursor,
+      fromCreatedAtOrdinalCursor,
+      { where: { metagraph_id, token_lock: {metagraph_snapshot: filter} }, orderBy: { created_at: "desc" } },
+      prisma.metagraph_token_unlocks.findMany,
+      tokenUnlockResponses
+    );
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const metagraphAddressTokenUnlocks = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { identifier: metagraph_id, address } = event.pathParameters || {};
+
+    return paginatedQuery(
+      extractPagination(event),
+      toCreatedAtOrdinalCursor,
+      fromCreatedAtOrdinalCursor,
+      { where: { metagraph_id, source_addr: address }, orderBy: { created_at: "desc" } },
+      prisma.metagraph_token_unlocks.findMany,
+      tokenUnlockResponses
+    );
+  } catch (error) {
+    return handleError(error);
+  }
+};

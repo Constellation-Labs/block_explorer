@@ -22,7 +22,7 @@ const safeNumber = (value, defaultValue) => {
 };
 
 export const toCreatedAtCursor = (row) => ({ created_at: new Date(row.created_at) });
-const fromCreatedAtCursor = (row) => ({
+export const fromCreatedAtCursor = (row) => ({
   created_at: row.created_at.toISOString()
 });
 
@@ -38,6 +38,7 @@ export const fromCreatedAtOrdinalCursor = (row) => ({
   ...fromOrdinalCursor(row)
 });
 
+export const hashCursor = (row) => ({ hash: row.hash });
 
 const buildPageQuery = <T>(pagination: Pagination, nextToCursor) => {
   const pageSize = safeNumber(pagination.size, maxSizeLimit);
@@ -84,7 +85,6 @@ export const paginatedQuery = async (
       ...baseQuery,
       ...(pagination ? pageQueryParams : {})
     };
-
     const rawResults = await findMany(pagedQuery);
 
     const pageSize = pageQueryParams.take
