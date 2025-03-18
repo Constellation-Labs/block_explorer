@@ -1,13 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { extractHashOrdinal, extractPagination } from "../request-params";
-import {
-  paginatedQuery,
-  hashCursor,
-} from "../pagination";
-import { respond, handleError, dagTransactionResponse } from "../response";
+import { paginatedQuery, hashCursor } from "../pagination";
+import { handleError } from "../response";
 
 const prisma = new PrismaClient();
+// const prisma = new PrismaClient({
+//   log: ['query', 'info', 'warn', 'error'],
+//})
 
 const transactionTypeMap: Record<string, string> = {
   AllowSpend: "allow_spends",
@@ -46,7 +46,8 @@ const currencyId = (transaction) =>
   transaction.metagraph_token_unlock?.metagraph_id ??
   transaction.metagraph_allow_spend?.metagraph_id ??
   transaction.metagraph_spend_transaction?.metagraph_id ??
-  transaction.metagraph_fee_transaction?.metagraph_id;
+  transaction.metagraph_fee_transaction?.metagraph_id ??
+  null;
 
 const actionResponse = (transaction) => ({
   type: getTransactionType(transaction.table_name),
@@ -56,12 +57,29 @@ const actionResponse = (transaction) => ({
   source: transaction.source_addr,
   destination: transaction.destination_addr,
   unlockEpoch:
-    transaction.last_valid_epoch_progress ?? transaction.unlock_epoch,
-  parentHash: transaction.lock_reference_hash ?? transaction.allow_spend_ref,
+    transaction.dag_allow_spend?.last_valid_epoch_progress ??
+    transaction.dag_token_lock?.unlock_epoch,
+  parentHash:
+    transaction.dag_spend_transaction?.allow_spend_ref ??
+    transaction.dag_token_unlock?.lock_reference_hash,
   timestamp: transaction.created_at,
 });
 
 export const actionsResponse = (ts) => ts.map(actionResponse);
+
+const dagInclude = {
+  dag_token_lock: { select: { unlock_epoch: true } },
+  dag_allow_spend: { select: { last_valid_epoch_progress: true } },
+  dag_spend_transaction: { select: { allow_spend_ref: true } },
+  dag_token_unlock: { select: { lock_reference_hash: true } },
+};
+
+const metagraphInclude = {
+  metagraph_token_lock: { select: { unlock_epoch: true } },
+  metagraph_allow_spend: { select: { last_valid_epoch_progress: true } },
+  metagraph_spend_transaction: { select: { allow_spend_ref: true } },
+  metagraph_token_unlock: { select: { lock_reference_hash: true } },
+};
 
 export const dagActions = async (
   event: APIGatewayProxyEvent
@@ -74,7 +92,8 @@ export const dagActions = async (
     hashCursor,
     {
       where: { table_name: { in: selectedTables } },
-      orderBy: [{ created_at: "desc"}, {hash: "desc" }],
+      include: dagInclude,
+      orderBy: [{ created_at: "desc" }, { hash: "desc" }],
     },
     prisma.abstract_transactions_view.findMany,
     actionsResponse
@@ -82,10 +101,10 @@ export const dagActions = async (
 };
 
 const tokenLockGlobalSnapshotCond = (filter) => ({
-  dag_token_lock: { dag_token_lock_block: { global_snapshot: filter } },
+  dag_token_lock: { global_snapshot: filter },
 });
 const tokenUnlockGlobalSnapshotCond = (filter) => ({
-  dag_token_unlock: tokenLockGlobalSnapshotCond(filter),
+  dag_token_unlock: { token_lock: { global_snapshot: filter } },
 });
 const allowSpendGlobalSnapshotCond = (filter) => ({
   dag_allow_spend: {
@@ -111,8 +130,8 @@ export const globalSnapshotActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { hash_or_ordinal } = event.pathParameters || {};
-    const filter = extractHashOrdinal(hash_or_ordinal);
+    const { term } = event.pathParameters || {};
+    const filter = extractHashOrdinal(term);
 
     const selectedTables = tableFilter(event).map(dagTable);
 
@@ -125,7 +144,8 @@ export const globalSnapshotActions = async (
           ...filterByGlobalSnapshot(filter),
           table_name: { in: selectedTables },
         },
-        orderBy: { created_at: "desc", hash: "asc" },
+        include: dagInclude,
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse
@@ -149,7 +169,8 @@ export const dagAddressActions = async (
       hashCursor,
       {
         where: { source_addr: address, table_name: { in: selectedTables } },
-        orderBy: { created_at: "desc", hash: "asc" },
+        include: dagInclude,
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse
@@ -175,7 +196,11 @@ const tokenLockMetagraphSnapshotCond = (filter) => ({
   },
 });
 const tokenUnlockMetagraphSnapshotCond = (filter) => ({
-  metagraph_token_unlock: tokenLockMetagraphSnapshotCond(filter),
+  metagraph_token_unlock: {
+    token_lock: {
+      metagraph_token_lock_block: { metagraph_snapshot: filter },
+    },
+  },
 });
 const allowSpendMetagraphSnapshotCond = (filter) => ({
   metagraph_allow_spend: {
@@ -214,7 +239,8 @@ export const currencyActions = async (
           ...metagraphIdCond(metagraph_id),
           table_name: { in: selectedTables },
         },
-        orderBy: { created_at: "desc", hash: "asc" },
+        include: metagraphInclude,
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse
@@ -228,7 +254,8 @@ export const currencySnapshotActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { metagraph_id, hash_or_ordinal } = event.pathParameters || {};
+    const { metagraph_id, term } = event.pathParameters || {};
+    const filter = extractHashOrdinal(term);
 
     const selectedTables = tableFilter(event).map(metagraphTable);
 
@@ -239,10 +266,11 @@ export const currencySnapshotActions = async (
       {
         where: {
           ...metagraphIdCond(metagraph_id),
-          ...filterByMetagraphSnapshot(hash_or_ordinal),
+          ...filterByMetagraphSnapshot(filter),
           table_name: { in: selectedTables },
         },
-        orderBy: { created_at: "desc", hash: "asc" },
+        include: metagraphInclude,
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse
@@ -270,7 +298,8 @@ export const currencyAddressActions = async (
           source_addr: address,
           table_name: { in: selectedTables },
         },
-        orderBy: { created_at: "desc", hash: "asc" },
+        include: metagraphInclude,
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.abstract_transactions_view.findMany,
       actionsResponse
