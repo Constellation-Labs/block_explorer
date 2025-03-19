@@ -3,12 +3,15 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { extractHashOrdinal, extractPagination } from '../request-params';
 import { paginatedQuery, fromCreatedAtOrdinalCursor, toCreatedAtOrdinalCursor } from '../pagination';
 import { respond, handleError } from '../response';
+import { getPrisma } from '../prismaClient';
 
-const prisma = new PrismaClient();
 
 export const handleAllowSpends = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+
+  const prisma = await getPrisma();
+  
   return await paginatedQuery(
     extractPagination(event),
     toCreatedAtOrdinalCursor,
@@ -23,6 +26,9 @@ export const handleGlobalSnapshotAllowSpends = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+
+    const prisma = await getPrisma();
+
     const { hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
@@ -43,6 +49,8 @@ export const handleAddressAllowSpends = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
+
     const { address } = event.pathParameters || {};
 
     return await paginatedQuery(
@@ -62,6 +70,7 @@ export const handleCurrencyAllowSpends = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { metagraph_id } = event.pathParameters || {};
 
     return await paginatedQuery(
@@ -81,6 +90,7 @@ export const handleCurrencySnapshotAllowSpends = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { metagraph_id, hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
@@ -101,6 +111,8 @@ export const handleCurrencyAddressAllowSpends = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
+    
     const { metagraph_id, address } = event.pathParameters || {};
 
     return await paginatedQuery(

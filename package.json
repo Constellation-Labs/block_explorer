@@ -4,6 +4,7 @@
   "description": "",
   "main": "src/handler.ts",
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.758.0",
     "@opensearch-project/opensearch": "^1.2.0",
     "@prisma/client": "^6.2.1",
     "aws-lambda": "^1.0.7",

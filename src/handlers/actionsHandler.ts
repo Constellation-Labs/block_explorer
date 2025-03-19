@@ -1,13 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { extractHashOrdinal, extractPagination } from "../request-params";
 import { paginatedQuery, hashCursor } from "../pagination";
 import { handleError } from "../response";
-
-const prisma = new PrismaClient();
-// const prisma = new PrismaClient({
-//   log: ['query', 'info', 'warn', 'error'],
-//})
+import { getPrisma } from "../prismaClient";
 
 const transactionTypeMap: Record<string, string> = {
   AllowSpend: "allow_spends",
@@ -84,6 +79,9 @@ const metagraphInclude = {
 export const dagActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+
+  const prisma = await getPrisma();
+  
   const selectedTables = tableFilter(event).map(dagTable);
 
   return await paginatedQuery(
@@ -130,6 +128,8 @@ export const globalSnapshotActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
+
     const { term } = event.pathParameters || {};
     const filter = extractHashOrdinal(term);
 
@@ -159,6 +159,9 @@ export const dagAddressActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+
+    const prisma = await getPrisma();
+    
     const { address } = event.pathParameters || {};
 
     const selectedTables = tableFilter(event).map(dagTable);
@@ -226,6 +229,9 @@ export const currencyActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+
+    const prisma = await getPrisma();
+
     const { metagraph_id } = event.pathParameters || {};
 
     const selectedTables = tableFilter(event).map(metagraphTable);
@@ -254,6 +260,9 @@ export const currencySnapshotActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+
+    const prisma = await getPrisma();
+
     const { metagraph_id, term } = event.pathParameters || {};
     const filter = extractHashOrdinal(term);
 
@@ -284,6 +293,9 @@ export const currencyAddressActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+
+    const prisma = await getPrisma();
+
     const { metagraph_id, address } = event.pathParameters || {};
 
     const selectedTables = tableFilter(event).map(metagraphTable);

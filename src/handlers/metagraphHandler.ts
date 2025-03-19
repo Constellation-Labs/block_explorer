@@ -22,10 +22,10 @@ import {
 } from '../response';
 import { fromCreatedAtOrdinalCursor, paginatedQuery, toCreatedAtOrdinalCursor } from '../pagination';
 import { toNumber, isFinite } from "lodash";
-
-const prisma = new PrismaClient();
+import { getPrisma } from '../prismaClient';
 
 const latestMetagraphSnapshot = async () => {
+  const prisma = await getPrisma();
   return prisma.metagraph_snapshots.findFirst({
     select: { hash: true },
     orderBy: { ordinal: 'desc'}
@@ -42,6 +42,7 @@ const metagraphSnapshotWhere = async (term) => {
   }
 
 const metagraphSnapshotExists = async (metagraph_id, term) => {
+  const prisma = await getPrisma();
   const filter = extractHashOrdinal(term);
 
   let where;
@@ -61,6 +62,7 @@ export const handleCurrencySnapshots = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier } = event.pathParameters || {};
 
     const toCursor = (row) => ({
@@ -96,6 +98,7 @@ export const handleCurrencySnapshotsByOwnerAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { address } = event.pathParameters || {};
 
     const toCursor = (row) => ({
@@ -131,6 +134,7 @@ export const handleCurrencySnapshot = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, term } = event.pathParameters || {};
 
     const snapshot = await prisma.metagraph_snapshots.findFirst({
@@ -149,6 +153,7 @@ export const handleCurrencySnapshotRewards = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, term } = event.pathParameters || {};
     
     if (term != "latest" && !(await metagraphSnapshotExists(metagraph_id, term))){
@@ -186,6 +191,7 @@ const metagraphTransactionsQuery = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const query = {
       ...baseQuery,
       include: {
@@ -220,6 +226,7 @@ export const handleCurrencySnapshotTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, term } = event.pathParameters || {};
     
     if (term != "latest" && !(await metagraphSnapshotExists(metagraph_id, term)))
@@ -246,6 +253,7 @@ export const handleCurrencyBlock = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, hash } = event.pathParameters || {};
 
     const block = await prisma.metagraph_blocks.findUnique({
@@ -267,6 +275,7 @@ export const handleCurrencyTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id } = event.pathParameters || {};
 
     const where = { where: { metagraph_blocks: { metagraph_id } } };
@@ -281,6 +290,7 @@ export const handleCurrencyTransaction = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, hash } = event.pathParameters || {};
 
     const transaction = await prisma.metagraph_transactions.findUnique({
@@ -354,6 +364,7 @@ export const handleCurrencyBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, address, ordinal } = event.pathParameters || {};
 
     const ordinalNbr = toNumber(ordinal);
@@ -378,6 +389,7 @@ export const handleCurrencyFeeTransaction = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, hash } = event.pathParameters || {};
 
     const transaction = await prisma.metagraph_fee_transactions.findUnique({
@@ -401,6 +413,7 @@ const metagraphFeeTransactionsQuery = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const query = {
       ...baseQuery,
       include: {
@@ -505,6 +518,7 @@ export const metagraphs = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const cursor = (row) => ({ id: row.id });
 
     return await paginatedQuery(

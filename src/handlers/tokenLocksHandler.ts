@@ -7,8 +7,7 @@ import {
   toCreatedAtOrdinalCursor,
 } from "../pagination";
 import { handleError } from "../response";
-
-const prisma = new PrismaClient();
+import { getPrisma } from "../prismaClient";
 
 const tokenLockResponse = (transaction) => ({
   currencyId: transaction.currencyId,
@@ -38,7 +37,7 @@ const tokenUnlockResponses = (txs) => (txs.map(tokenUnlockResponse))
 export const tokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  
+  const prisma = await getPrisma();
   return paginatedQuery(
     extractPagination(event),
     toCreatedAtOrdinalCursor,
@@ -53,6 +52,7 @@ export const globalSnapshotTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
@@ -73,6 +73,7 @@ export const addressTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { address } = event.pathParameters || {};
 
     return paginatedQuery(
@@ -91,6 +92,7 @@ export const addressTokenLocks = async (
 export const tokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  const prisma = await getPrisma();
   return paginatedQuery(
     extractPagination(event),
     toCreatedAtOrdinalCursor,
@@ -105,6 +107,7 @@ export const globalSnapshotTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
@@ -125,6 +128,7 @@ export const addressTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { address } = event.pathParameters || {};
 
     return paginatedQuery(
@@ -143,7 +147,7 @@ export const addressTokenUnlocks = async (
 export const metagraphTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  
+  const prisma = await getPrisma();
   const { identifier: metagraph_id} = event.pathParameters || {};
 
   return paginatedQuery(
@@ -160,6 +164,7 @@ export const metagraphSnapshotTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
@@ -180,6 +185,7 @@ export const metagraphAddressTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, address } = event.pathParameters || {};
 
     return paginatedQuery(
@@ -198,6 +204,7 @@ export const metagraphAddressTokenLocks = async (
 export const metagraphTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  const prisma = await getPrisma();
   const { identifier: metagraph_id } = event.pathParameters || {};
   return paginatedQuery(
     extractPagination(event),
@@ -213,6 +220,7 @@ export const metagraphSnapshotTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
@@ -233,6 +241,7 @@ export const metagraphAddressTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { identifier: metagraph_id, address } = event.pathParameters || {};
 
     return paginatedQuery(

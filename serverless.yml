@@ -15,12 +15,21 @@ provider:
   environment:
     SLS_DEBUG: '*'
     DATABASE_URL: ${self:custom.env.db_url}
+    REGION: ${self:provider.region}
+    SECRET_NAME: ${self:custom.env.secret_name}
   httpApi:
     cors: true
   vpc: ${self:custom.env.vpc}
   versionFunctions: false
   timeout: 10
-
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource: arn:aws:secretsmanager:us-west-1:150340915792:secret:${self:custom.env.secret_name}
+  
 functions:
  - ${file(./routes/dag.yml)}
  - ${file(./routes/metagraph.yml)}
@@ -31,4 +40,3 @@ functions:
 plugins:
   - serverless-plugin-typescript
   - serverless-offline
-

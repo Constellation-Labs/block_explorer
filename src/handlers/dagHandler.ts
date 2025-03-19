@@ -18,10 +18,10 @@ import {
 } from '../response';
 import { fromCreatedAtOrdinalCursor, paginatedQuery, toCreatedAtOrdinalCursor } from '../pagination';
 import { toNumber, isFinite } from "lodash";
-
-const prisma = new PrismaClient();
+import { getPrisma } from '../prismaClient';
 
 const globalSnapshotExists = async (term) => {
+  const prisma = await getPrisma();
   return prisma.global_snapshots.findUnique({
     where: extractHashOrdinal(term) , 
     select: { hash: true },
@@ -29,6 +29,7 @@ const globalSnapshotExists = async (term) => {
 };
 
 const latestGlobalSnapshot = async () => {
+  const prisma = await getPrisma();
   return prisma.global_snapshots.findFirst({
     select: { hash: true },
     orderBy: { ordinal: 'desc'}
@@ -48,6 +49,8 @@ const globalSnapshotWhere = async (term) => {
 export const handleGlobalSnapshots = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  const prisma = await getPrisma();
+
   return await paginatedQuery(
     extractPagination(event),
     toCreatedAtOrdinalCursor,
@@ -65,6 +68,7 @@ export const handleGlobalSnapshot = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { term } = event.pathParameters || {};
 
     let snapshot;
@@ -93,6 +97,7 @@ export const handleGlobalSnapshotRewards = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { term } = event.pathParameters || {};
 
     if (term != "latest" && !await globalSnapshotExists(term)) { 
@@ -130,6 +135,7 @@ export const handleGlobalSnapshotTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { term } = event.pathParameters || {};
 
     if (term != "latest" && !await globalSnapshotExists(term)) { 
@@ -167,6 +173,7 @@ export const handleDagBlock = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { hash } = event.pathParameters || {};
     
     const block = await prisma.dag_blocks.findUnique({
@@ -187,6 +194,7 @@ const dagTtransactionsQuery = async (
   where,
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  const prisma = await getPrisma();
   try {
     const query = {
       ...where,
@@ -233,6 +241,7 @@ export const handleDagTransaction = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { hash } = event.pathParameters || {};
 
     const transaction = await prisma.dag_transactions.findUnique({
@@ -300,6 +309,7 @@ export const handleDagBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const prisma = await getPrisma();
     const { address, ordinal } = event.pathParameters || {};
 
     const ordinalNbr = toNumber(ordinal);
