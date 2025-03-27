@@ -1,9 +1,9 @@
-import { APIGatewayProxyResult } from 'aws-lambda';
-import { toNextString } from './request-params';
+import { APIGatewayProxyResult } from "aws-lambda";
+import { toNextString } from "./request-params";
 
 const DEFAULT_HEADERS = {
-  'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*'
+  "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*",
 };
 
 export type Result<T> = {
@@ -27,18 +27,18 @@ const commonSnapshotResponse = (snapshot, blocksProperty) => ({
   subHeight: snapshot.subheight,
   lastSnapshotHash: snapshot.last_snapshot_hash,
   blocks: snapshot[blocksProperty].map((b) => b.hash),
-  timestamp: snapshot.created_at
+  timestamp: snapshot.created_at,
 });
 
 export const globalSnapshotResponse = (snapshot) => ({
-  ...commonSnapshotResponse(snapshot, 'dag_blocks')
+  ...commonSnapshotResponse(snapshot, "dag_blocks"),
 });
 
 export const rewardsResponse = (rs) => rs.map(rewardResponse);
 
 export const rewardResponse = (reward) => ({
   destination: reward.destination_addr,
-  amount: reward.amount
+  amount: reward.amount,
 });
 
 export const dagTransactionsResponse = (ts) => ts.map(dagTransactionResponse);
@@ -54,67 +54,67 @@ const transactionResponse = (transaction, snapshot) => ({
   fee: transaction.fee,
   parent: {
     hash: transaction.parent_hash,
-    ordinal: transaction.parent_ordinal
+    ordinal: transaction.parent_ordinal,
   },
   salt: transaction.salt,
   blockHash: transaction.block_hash,
   snapshotHash: snapshot.hash,
   snapshotOrdinal: snapshot.ordinal,
-  timestamp: transaction.created_at
+  timestamp: transaction.created_at,
 });
 
 const blockResponse = (block) => ({
   hash: block.hash,
   height: block.height,
   parents: block.super.block_parents.map(blockParentResponse),
-  timestamp: block.created_at
+  timestamp: block.created_at,
 });
 
 export const dagBlockResponse = (block) => ({
   ...blockResponse(block),
   transactions: block.dag_transactions.map((tx) => tx.hash),
   snapshotHash: block.global_snapshots.hash,
-  snapshotOrdinal: block.global_snapshots.ordinal
+  snapshotOrdinal: block.global_snapshots.ordinal,
 });
 
 export const blockParentResponse = (block_parent) => ({
   hash: block_parent.parent_proof_hash,
-  height: block_parent.parent_height
+  height: block_parent.parent_height,
 });
 
 export const balanceResponse = (balance) => ({
   ordinal: balance.snapshot_ordinal,
   balance: balance.balance,
-  address: balance.address
+  address: balance.address,
 });
 
 export const metagraphSnapshotsResponse = (ss) =>
   ss.map(metagraphSnapshotResponse);
 export const metagraphSnapshotResponse = (snapshot) => ({
-  ...commonSnapshotResponse(snapshot, 'metagraph_blocks')
+  ...commonSnapshotResponse(snapshot, "metagraph_blocks"),
 });
 
 export const metagraphBlockResponse = (block) => ({
   ...blockResponse(block),
   transactions: block.metagraph_transactions.map((tx) => tx.hash),
-  snapshotHash: block.metagraph_snapshots.hash,
-  snapshotOrdinal: block.metagraph_snapshots.ordinal
+  snapshotHash: block.metagraph_snapshot.hash,
+  snapshotOrdinal: block.metagraph_snapshot.ordinal,
 });
 
 export const metagraphTransactionsResponse = (ts) =>
   ts.map(metagraphTransactionResponse);
 export const metagraphTransactionResponse = (t) =>
-  transactionResponse(t, t.metagraph_blocks.metagraph_snapshots);
+  transactionResponse(t, t.metagraph_blocks.metagraph_snapshot);
 
 export const metagraphFeeTransactionsResponse = (ts) =>
   ts.map(metagraphTransactionResponse);
 export const metagraphFeeTransactionResponse = (t) =>
-  transactionResponse(t, t.metagraph_snapshots);
+  transactionResponse(t, t.metagraph_snapshot);
 
 export const metagraphsResponse = (mgs) => mgs.map(metagraphResponse);
 export const metagraphResponse = (mg) => ({
   id: mg.id,
-  timestamp: mg.created_at
+  timestamp: mg.created_at,
 });
 
 export const respond = (data, transform, next?) => {
@@ -131,30 +131,30 @@ export const successResponse = (data: any): APIGatewayProxyResult => ({
   statusCode: 200,
   headers: DEFAULT_HEADERS,
   body: JSON.stringify(data, (_, v) =>
-    typeof v === 'bigint'
+    typeof v === "bigint"
       ? v > Number.MAX_SAFE_INTEGER
         ? v.toString()
         : Number(v)
       : v
-  )
+  ),
 });
 
 export const notFoundResponse = (): APIGatewayProxyResult => ({
   statusCode: 404,
-  body: JSON.stringify({ message: 'Not found' })
+  body: JSON.stringify({ message: "Not found" }),
 });
 
 export const missingParameterResponse = (
   param: string
 ): APIGatewayProxyResult => ({
   statusCode: 400,
-  body: JSON.stringify({ message: `Missing parameter: ${param}` })
+  body: JSON.stringify({ message: `Missing parameter: ${param}` }),
 });
 
 export const handleError = (error: any): APIGatewayProxyResult => {
   console.error(error);
   return {
     statusCode: 500,
-    body: JSON.stringify({ message: 'Internal Server Error' })
+    body: JSON.stringify({ message: "Internal Server Error" }),
   };
 };

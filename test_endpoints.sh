@@ -14,22 +14,20 @@ curl http://localhost:3001/global-snapshots/390792/transactions #ok
 curl http://localhost:3001/global-snapshots/latest/transactions # ok
 
 # Blocks
-curl http://localhost:3001/blocks/9641acffb4a5276d013e49676fcea51e231c5c9737b5866f8df07de04145e374 #ok
+curl http://localhost:3001/blocks/848ac19da2eb07f9dab32e7948c00b618a518157c8e6e1f12ade249a9928e026 #ok
 
 # Transactions
 curl http://localhost:3001/transactions #ok 
-curl http://localhost:3001/transactions/d8b1f2dec3030dd4e9b17e63871cc4bdb2ecb1f4d8bda079c75fdfac3a685c79 #ok 
-curl http://localhost:3001/addresses/DAG1x6erYwDLvt3zXxZvdHaZcNVhWfFFVC1Qunjd/transactions #ok 
-curl http://localhost:3001/addresses/DAG1x6erYwDLvt3zXxZvdHaZcNVhWfFFVC1Qunjd/transactions/sent #ok 
-curl http://localhost:3001/addresses/DAG0WtbjHQu5LsZ57DcxX7kuA5DyyvG5QYG2uu9X/transactions/received #ok 
+curl http://localhost:3001/transactions/09d1c22b0cf46c50ab8dd171c0a9ba4452f9d4355045f332eb424cd3ca5c821a #ok 
+curl http://localhost:3001/addresses/DAG56BtU1j5uCMb5f1QxZ5oxfBhpUeYucRGygfEa/transactions #ok 
+curl http://localhost:3001/addresses/DAG56BtU1j5uCMb5f1QxZ5oxfBhpUeYucRGygfEa/transactions/sent #ok 
+curl http://localhost:3001/addresses/DAG45ZLcgmQeRHY3oV2ZJACrFUjEZwqeXKSfZc75/transactions/received #ok 
 
 # Address Balance
-curl http://localhost:3001/addresses/DAG4J3i4K87evc71ti3aEcSKx8AUR5GhPy3EysiM/balance #ok
+curl http://localhost:3001/addresses/DAG8rB813m3yq8CQX92rgtc7ThBNHFngctr3uonG/balance #ok
  
 # Currency Snapshots
 curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/snapshots #ok
-
-# curl http://localhost:3001/addresses/{address}/snapshots
 
 curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/snapshots/1c0b793cd83af5d761d71b887f068b078daf2bdab2f7f9e5fedf09c8f63dd6b8 #ok 
 curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/snapshots/22 #ok 
@@ -56,11 +54,12 @@ curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/add
 curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/addresses/DAG2fMnbEmsWhgYGhvdREVELyESKUqGNTEWf4B61/balance    #ok 
 
 # Currency Fee Transactions
-# curl http://localhost:3001/currency/{identifier}/fee-transactions/{hash}
-# curl http://localhost:3001/currency/{identifier}/snapshots/{term}/fee-transactions
-# curl http://localhost:3001/currency/{identifier}/addresses/{address}/fee-transactions
-# curl http://localhost:3001/currency/{identifier}/addresses/{address}/fee-transactions/sent
-# curl http://localhost:3001/currency/{identifier}/addresses/{address}/fee-transactions/received
+curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/fee-transactions/MTGRPHFEEtXId00001
+curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/snapshots/74dff07f4ff96e2dc7cea2420389515e6ccbb49f2dd0115ecfa38e4e55cd666d/fee-transactions
+curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/addresses/DAG5T61H6RNLR4wLueNNZo8JR7fDKuGQSZoGTVki/fee-transactions
+curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/addresses/DAG6foKfPYqKMEyLccPi9jJEZNw2RsUFWEHB4NrA/fee-transactions
+curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/addresses/DAG5T61H6RNLR4wLueNNZo8JR7fDKuGQSZoGTVki/fee-transactions/sent
+curl http://localhost:3001/currency/DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C/addresses/DAG6foKfPYqKMEyLccPi9jJEZNw2RsUFWEHB4NrA/fee-transactions/received
 
 # Metagraphs
 curl http://localhost:3001/currency  #ok 

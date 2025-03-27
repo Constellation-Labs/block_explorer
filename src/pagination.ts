@@ -1,43 +1,49 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { handleError, respond } from "./response";
-import { Pagination } from './request-params';
+import { Pagination } from "./request-params";
 import { toNumber, isFinite } from "lodash";
 
 export const maxSizeLimit = 100;
 
 export enum SortOrder {
-  Desc = 'desc',
-  Asc = 'asc'
+  Desc = "desc",
+  Asc = "asc",
 }
 
 export enum SearchDirection {
-  After = 'search_after',
-  Before = 'search_before'
+  After = "search_after",
+  Before = "search_before",
 }
-
 
 const safeNumber = (value, defaultValue) => {
   const num = toNumber(value);
-  return (isFinite(num) && num > 0) ? num : defaultValue;
+  return isFinite(num) && num > 0 ? num : defaultValue;
 };
 
-export const toCreatedAtCursor = (row) => ({ created_at: new Date(row.created_at) });
-const fromCreatedAtCursor = (row) => ({
-  created_at: row.created_at.toISOString()
+export const toCreatedAtCursor = (row) => ({
+  created_at: new Date(row.created_at),
+});
+export const fromCreatedAtCursor = (row) => ({
+  created_at: row.created_at.toISOString(),
 });
 
-export const toOrdinalCursor = (row) => ({ ordinal: BigInt('0x' + row.ordinal) });
-export const fromOrdinalCursor = (row) => ({ ordinal: row.ordinal.toString(16) });
+export const toOrdinalCursor = (row) => ({
+  ordinal: BigInt("0x" + row.ordinal),
+});
+export const fromOrdinalCursor = (row) => ({
+  ordinal: row.ordinal.toString(16),
+});
 
 export const toCreatedAtOrdinalCursor = (row) => ({
   ...toCreatedAtCursor(row),
-  ...toOrdinalCursor(row)
+  ...toOrdinalCursor(row),
 });
 export const fromCreatedAtOrdinalCursor = (row) => ({
   ...fromCreatedAtCursor(row),
-  ...fromOrdinalCursor(row)
+  ...fromOrdinalCursor(row),
 });
 
+export const hashCursor = (row) => ({ hash: row.hash });
 
 const buildPageQuery = <T>(pagination: Pagination, nextToCursor) => {
   const pageSize = safeNumber(pagination.size, maxSizeLimit);
@@ -45,8 +51,10 @@ const buildPageQuery = <T>(pagination: Pagination, nextToCursor) => {
 
   if (
     pagination &&
-    'searchSince' in pagination && pagination.searchSince &&
-    'searchDirection' in pagination && pagination.searchDirection
+    "searchSince" in pagination &&
+    pagination.searchSince &&
+    "searchDirection" in pagination &&
+    pagination.searchDirection
   ) {
     const page =
       pagination.searchDirection === SearchDirection.Before
@@ -54,17 +62,17 @@ const buildPageQuery = <T>(pagination: Pagination, nextToCursor) => {
         : incrementedSize;
     return {
       take: page,
-      cursor: pagination.searchSince
+      cursor: pagination.searchSince,
     };
-  } 
+  }
 
-  if (pagination && 'next' in pagination) {
+  if (pagination && "next" in pagination) {
     return { take: incrementedSize, cursor: nextToCursor(pagination.next) };
   }
 
   if (pagination && pagination.size) {
     return { take: incrementedSize };
-  } 
+  }
 
   return { take: incrementedSize };
 };
@@ -82,9 +90,8 @@ export const paginatedQuery = async (
 
     const pagedQuery = {
       ...baseQuery,
-      ...(pagination ? pageQueryParams : {})
+      ...(pagination ? pageQueryParams : {}),
     };
-
     const rawResults = await findMany(pagedQuery);
 
     const pageSize = pageQueryParams.take
