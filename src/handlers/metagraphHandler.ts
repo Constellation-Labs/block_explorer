@@ -1,9 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import {
-  extractHashOrdinal,
-  extractPagination,
-} from '../request-params';
+import { PrismaClient } from "@prisma/client";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { extractHashOrdinal, extractPagination } from "../request-params";
 import {
   balanceResponse,
   handleError,
@@ -18,9 +15,13 @@ import {
   missingParameterResponse,
   notFoundResponse,
   respond,
-  rewardsResponse
-} from '../response';
-import { fromCreatedAtOrdinalCursor, paginatedQuery, toCreatedAtOrdinalCursor } from '../pagination';
+  rewardsResponse,
+} from "../response";
+import {
+  fromCreatedAtOrdinalCursor,
+  paginatedQuery,
+  toCreatedAtOrdinalCursor,
+} from "../pagination";
 import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
@@ -28,36 +29,36 @@ const prisma = new PrismaClient();
 const latestMetagraphSnapshot = async () => {
   return prisma.metagraph_snapshots.findFirst({
     select: { hash: true },
-    orderBy: { ordinal: 'desc'}
-  })
+    orderBy: { ordinal: "desc" },
+  });
 };
 
 const metagraphSnapshotWhere = async (term) => {
-    if (term == 'latest'){
-      const latestSnapshotHash = await latestMetagraphSnapshot()
-      return { hash: latestSnapshotHash}
-    } else {
-      return extractHashOrdinal(term)
-    }
+  if (term == "latest") {
+    const latestSnapshotHash = await latestMetagraphSnapshot();
+    return { hash: latestSnapshotHash };
+  } else {
+    return extractHashOrdinal(term);
   }
+};
 
 const metagraphSnapshotExists = async (metagraph_id, term) => {
   const filter = extractHashOrdinal(term);
 
   let where;
   if ("ordinal" in filter) {
-    where = {metagraph_id_ordinal: { metagraph_id, ordinal: filter.ordinal } };
+    where = { metagraph_id_ordinal: { metagraph_id, ordinal: filter.ordinal } };
   } else {
-    where = { metagraph_id_hash: { metagraph_id, hash: filter.hash }};
+    where = { metagraph_id_hash: { metagraph_id, hash: filter.hash } };
   }
 
   return prisma.metagraph_snapshots.findUnique({
     where,
     select: { hash: true },
   });
-};  
+};
 
-export const handleCurrencySnapshots = async (
+export const currencySnapshots = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -66,23 +67,23 @@ export const handleCurrencySnapshots = async (
     const toCursor = (row) => ({
       ...toCreatedAtOrdinalCursor(row),
       metagraph_id: row.metagraph_id,
-      hash: row.hash
+      hash: row.hash,
     });
 
     const fromCursor = (row) => ({
       ...fromCreatedAtOrdinalCursor(row),
       metagraph_id: row.metagraph_id,
-      hash: row.hash
+      hash: row.hash,
     });
 
     return await paginatedQuery(
-    extractPagination(event),
+      extractPagination(event),
       toCursor,
       fromCursor,
       {
         where: { metagraph_id: identifier },
         include: { metagraph_blocks: true },
-        orderBy: { ordinal: 'desc' }
+        orderBy: { ordinal: "desc" },
       },
       prisma.metagraph_snapshots.findMany,
       metagraphSnapshotsResponse
@@ -92,7 +93,7 @@ export const handleCurrencySnapshots = async (
   }
 };
 
-export const handleCurrencySnapshotsByOwnerAddress = async (
+export const currencySnapshotsByOwnerAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -101,23 +102,23 @@ export const handleCurrencySnapshotsByOwnerAddress = async (
     const toCursor = (row) => ({
       ...toCreatedAtOrdinalCursor(row),
       metagraph_id: row.metagraph_id,
-      hash: row.hash
+      hash: row.hash,
     });
 
     const fromCursor = (row) => ({
       ...fromCreatedAtOrdinalCursor(row),
       metagraph_id: row.metagraph_id,
-      hash: row.hash
+      hash: row.hash,
     });
 
     return await paginatedQuery(
-    extractPagination(event),
+      extractPagination(event),
       toCursor,
       fromCursor,
       {
         where: { owner_address: address },
         include: { metagraph_blocks: true },
-        orderBy: { ordinal: 'desc' }
+        orderBy: { ordinal: "desc" },
       },
       prisma.metagraph_snapshots.findMany,
       metagraphSnapshotsResponse
@@ -127,7 +128,7 @@ export const handleCurrencySnapshotsByOwnerAddress = async (
   }
 };
 
-export const handleCurrencySnapshot = async (
+export const currencySnapshot = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -136,7 +137,7 @@ export const handleCurrencySnapshot = async (
     const snapshot = await prisma.metagraph_snapshots.findFirst({
       where: { metagraph_id: metagraph_id, ...metagraphSnapshotWhere(term) },
       include: { metagraph_blocks: true },
-      orderBy: { ordinal: 'desc' }
+      orderBy: { ordinal: "desc" },
     });
 
     return respond(snapshot, metagraphSnapshotResponse);
@@ -145,33 +146,40 @@ export const handleCurrencySnapshot = async (
   }
 };
 
-export const handleCurrencySnapshotRewards = async (
+export const currencySnapshotRewards = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
-    
-    if (term != "latest" && !(await metagraphSnapshotExists(metagraph_id, term))){
+
+    if (
+      term != "latest" &&
+      !(await metagraphSnapshotExists(metagraph_id, term))
+    ) {
       return notFoundResponse();
     }
 
     const cursor = (row) => ({
       metagraph_id: row.metagraph_id,
-      hash: row.hash
+      hash: row.hash,
     });
 
     return await paginatedQuery(
-    extractPagination(event),
+      extractPagination(event),
       cursor,
       cursor,
       {
         where: {
-          metagraph_snapshots: {
+          metagraph_snapshot: {
             metagraph_id,
-            ...metagraphSnapshotWhere(term)
-          }
+            ...metagraphSnapshotWhere(term),
+          },
         },
-        orderBy: [{ metagraph_id: 'asc'}, {metagraph_snapshot_hash: 'asc'}, {destination_addr: 'asc' }]
+        orderBy: [
+          { metagraph_id: "asc" },
+          { metagraph_snapshot_hash: "asc" },
+          { destination_addr: "asc" },
+        ],
       },
       prisma.metagraph_reward_transactions.findMany,
       rewardsResponse
@@ -191,20 +199,20 @@ const metagraphTransactionsQuery = async (
       include: {
         metagraph_blocks: {
           include: {
-            metagraph_snapshots: { select: { hash: true, ordinal: true } }
-          }
-        }
+            metagraph_snapshot: { select: { hash: true, ordinal: true } },
+          },
+        },
       },
-      orderBy: { ordinal: 'desc' }
+      orderBy: { ordinal: "desc" },
     };
 
     const cursor = (row) => ({
       metagraph_id: row.metagraph_id,
-      hash: row.hash
+      hash: row.hash,
     });
 
     return await paginatedQuery(
-    extractPagination(event),
+      extractPagination(event),
       cursor,
       cursor,
       query,
@@ -216,24 +224,27 @@ const metagraphTransactionsQuery = async (
   }
 };
 
-export const handleCurrencySnapshotTransactions = async (
+export const currencySnapshotTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
-    
-    if (term != "latest" && !(await metagraphSnapshotExists(metagraph_id, term)))
+
+    if (
+      term != "latest" &&
+      !(await metagraphSnapshotExists(metagraph_id, term))
+    )
       return notFoundResponse();
 
     const where = {
       where: {
         metagraph_blocks: {
-          metagraph_snapshots: {
+          metagraph_snapshot: {
             metagraph_id: metagraph_id,
-            ...metagraphSnapshotWhere(term)
-          }
-        }
-      }
+            ...metagraphSnapshotWhere(term),
+          },
+        },
+      },
     };
 
     return metagraphTransactionsQuery(where, event);
@@ -242,7 +253,7 @@ export const handleCurrencySnapshotTransactions = async (
   }
 };
 
-export const handleCurrencyBlock = async (
+export const currencyBlock = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -252,9 +263,9 @@ export const handleCurrencyBlock = async (
       where: { metagraph_id, hash },
       include: {
         metagraph_transactions: { select: { hash: true } },
-        metagraph_snapshots: true,
-        super: { include: { block_parents: true } }
-      }
+        metagraph_snapshot: true,
+        super: { include: { block_parents: true } },
+      },
     });
 
     return respond(block, metagraphBlockResponse);
@@ -263,7 +274,7 @@ export const handleCurrencyBlock = async (
   }
 };
 
-export const handleCurrencyTransactions = async (
+export const currencyTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -277,25 +288,26 @@ export const handleCurrencyTransactions = async (
   }
 };
 
-export const handleCurrencyTransaction = async (
+export const currencyTransaction = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, hash } = event.pathParameters || {};
 
     const transaction = await prisma.metagraph_transactions.findUnique({
-      where: {  metagraph_id_hash: {
-                  metagraph_id: metagraph_id!,
-                  hash: hash!
-                }
-         },
+      where: {
+        metagraph_id_hash: {
+          metagraph_id: metagraph_id!,
+          hash: hash!,
+        },
+      },
       include: {
         metagraph_blocks: {
           include: {
-            metagraph_snapshots: { select: { hash: true, ordinal: true } }
-          }
-        }
-      }
+            metagraph_snapshot: { select: { hash: true, ordinal: true } },
+          },
+        },
+      },
     });
 
     return respond(transaction, metagraphTransactionResponse);
@@ -304,16 +316,17 @@ export const handleCurrencyTransaction = async (
   }
 };
 
-export const handleCurrencyTransactionsByAddress = async (
+export const currencyTransactionsByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, address } = event.pathParameters || {};
 
     const where = {
-      where: { metagraph_id, 
-        OR: [{ source_addr: address }, { destination_addr: address }]
-      }
+      where: {
+        metagraph_id,
+        OR: [{ source_addr: address }, { destination_addr: address }],
+      },
     };
 
     return metagraphTransactionsQuery(where, event);
@@ -322,12 +335,12 @@ export const handleCurrencyTransactionsByAddress = async (
   }
 };
 
-export const handleCurrencyTransactionsBySource = async (
+export const currencyTransactionsBySource = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, address } = event.pathParameters || {};
-    
+
     const where = { where: { metagraph_id, source_addr: address } };
 
     return metagraphTransactionsQuery(where, event);
@@ -336,12 +349,12 @@ export const handleCurrencyTransactionsBySource = async (
   }
 };
 
-export const handleCurrencyTransactionsByDestination = async (
+export const currencyTransactionsByDestination = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, address } = event.pathParameters || {};
-    
+
     const where = { where: { metagraph_id, destination_addr: address } };
 
     return metagraphTransactionsQuery(where, event);
@@ -350,22 +363,28 @@ export const handleCurrencyTransactionsByDestination = async (
   }
 };
 
-export const handleCurrencyBalanceByAddress = async (
+export const currencyBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address, ordinal } = event.pathParameters || {};
+    const {
+      identifier: metagraph_id,
+      address,
+      ordinal,
+    } = event.pathParameters || {};
 
     const ordinalNbr = toNumber(ordinal);
-    const ordinalCondition = (isFinite(ordinalNbr)? {metagraph_snapshot_ordinal: { lte: ordinalNbr}}: {})
+    const ordinalCondition = isFinite(ordinalNbr)
+      ? { metagraph_snapshot_ordinal: { lte: ordinalNbr } }
+      : {};
 
     const balance = await prisma.metagraph_balance_changes.findFirst({
       where: {
         metagraph_id,
         address,
-        ...ordinalCondition
+        ...ordinalCondition,
       },
-      orderBy: { metagraph_snapshot_ordinal: 'desc' }
+      orderBy: { metagraph_snapshot_ordinal: "desc" },
     });
 
     return respond(balance, balanceResponse);
@@ -374,20 +393,20 @@ export const handleCurrencyBalanceByAddress = async (
   }
 };
 
-export const handleCurrencyFeeTransaction = async (
+export const currencyFeeTransaction = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, hash } = event.pathParameters || {};
 
     const transaction = await prisma.metagraph_fee_transactions.findUnique({
-      where: { 
-          metagraph_id: metagraph_id!,
-          hash: hash!
+      where: {
+        metagraph_id: metagraph_id!,
+        hash: hash!,
       },
       include: {
-        metagraph_snapshots: { select: { hash: true, ordinal: true } }
-      }
+        metagraph_snapshot: { select: { hash: true, ordinal: true } },
+      },
     });
 
     return respond(transaction, metagraphFeeTransactionResponse);
@@ -404,18 +423,18 @@ const metagraphFeeTransactionsQuery = async (
     const query = {
       ...baseQuery,
       include: {
-        metagraph_snapshots: { select: { hash: true, ordinal: true } }
+        metagraph_snapshot: { select: { hash: true, ordinal: true } },
       },
-      orderBy: { ordinal: 'desc' }
+      orderBy: { hash: "asc" },
     };
 
     const cursor = (row) => ({
       metagraph_id: row.metagraph_id,
-      hash: row.hash
+      hash: row.hash,
     });
 
     return await paginatedQuery(
-    extractPagination(event),
+      extractPagination(event),
       cursor,
       cursor,
       query,
@@ -427,17 +446,19 @@ const metagraphFeeTransactionsQuery = async (
   }
 };
 
-export const handleCurrencySnapshotFeeTransactions = async (
+export const currencySnapshotFeeTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
     if (!metagraph_id || !term)
-      return missingParameterResponse('identifier or term');
+      return missingParameterResponse("identifier or term");
 
     const where = {
-      metagraph_id: metagraph_id,
-      ordinal: BigInt(term),
+      where: {
+        metagraph_id: metagraph_id,
+        ...metagraphSnapshotWhere(term),
+      },
     };
 
     return metagraphFeeTransactionsQuery(where, event);
@@ -446,17 +467,19 @@ export const handleCurrencySnapshotFeeTransactions = async (
   }
 };
 
-export const handleCurrencyFeeTransactionsByAddress = async (
+export const currencyFeeTransactionsByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, address } = event.pathParameters || {};
     if (!metagraph_id || !address)
-      return missingParameterResponse('identifier or address');
+      return missingParameterResponse("identifier or address");
 
     const where = {
-      metagraph_id: metagraph_id,
-      OR: [{ source_addr: address }, { destination_addr: address }]
+      where: {
+        metagraph_id: metagraph_id,
+        OR: [{ source_addr: address }, { destination_addr: address }],
+      },
     };
 
     return metagraphFeeTransactionsQuery(where, event);
@@ -465,17 +488,19 @@ export const handleCurrencyFeeTransactionsByAddress = async (
   }
 };
 
-export const handleCurrencyFeeTransactionsBySource = async (
+export const currencyFeeTransactionsBySource = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, address } = event.pathParameters || {};
     if (!metagraph_id || !address)
-      return missingParameterResponse('identifier or address');
+      return missingParameterResponse("identifier or address");
 
     const where = {
-      metagraph_id: metagraph_id,
-      source_addr: address
+      where: {
+        metagraph_id: metagraph_id,
+        source_addr: address,
+      },
     };
     return metagraphFeeTransactionsQuery(where, event);
   } catch (error) {
@@ -483,17 +508,19 @@ export const handleCurrencyFeeTransactionsBySource = async (
   }
 };
 
-export const handleCurrencyFeeTransactionsByDestination = async (
+export const currencyFeeTransactionsByDestination = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { identifier: metagraph_id, address } = event.pathParameters || {};
     if (!metagraph_id || !address)
-      return missingParameterResponse('identifier or address');
+      return missingParameterResponse("identifier or address");
 
     const where = {
-      metagraph_id: metagraph_id,
-      destination_addr: address
+      where: {
+        metagraph_id: metagraph_id,
+        destination_addr: address,
+      },
     };
     return metagraphFeeTransactionsQuery(where, event);
   } catch (error) {
@@ -508,7 +535,7 @@ export const metagraphs = async (
     const cursor = (row) => ({ id: row.id });
 
     return await paginatedQuery(
-    extractPagination(event),
+      extractPagination(event),
       cursor,
       cursor,
       {},

@@ -1,108 +1,108 @@
-  currencySnapshots:
-    handler: src/handlers/metagraphHandler.handleCurrencySnapshots
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots
-          method: GET
-  currencySnapshotsByOwnerAddress:
-    handler: src/handlers/metagraphHandler.handleCurrencySnapshotsByOwnerAddress
-    events:
-      - httpApi:
-          path: /addresses/{address}/snapshots
-          method: GET
-  currencySnapshot:
-    handler: src/handlers/metagraphHandler.handleCurrencySnapshot
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots/{term}
-          method: GET
-  currencySnapshotRewards:
-    handler: src/handlers/metagraphHandler.handleCurrencySnapshotRewards
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots/{term}/rewards
-          method: GET
-  currencySnapshotTransactions:
-    handler: src/handlers/metagraphHandler.handleCurrencySnapshotTransactions
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots/{term}/transactions
-          method: GET
-  currencyBlock:
-    handler: src/handlers/metagraphHandler.handleCurrencyBlock
-    events:
-      - httpApi:
-          path: /currency/{identifier}/blocks/{hash}
-          method: GET
-  currencyTransactions:
-    handler: src/handlers/metagraphHandler.handleCurrencyTransactions
-    events:
-      - httpApi:
-          path: /currency/{identifier}/transactions
-          method: GET
-  currencyTransaction:
-    handler: src/handlers/metagraphHandler.handleCurrencyTransaction
-    events:
-      - httpApi:
-          path: /currency/{identifier}/transactions/{hash}
-          method: GET
-  currencyTransactionsByAddress:
-    handler: src/handlers/metagraphHandler.handleCurrencyTransactionsByAddress
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/transactions
-          method: GET
-  currencyTransactionsBySource:
-    handler: src/handlers/metagraphHandler.handleCurrencyTransactionsBySource
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/transactions/sent
-          method: GET
-  currencyTransactionsByDestination:
-    handler: src/handlers/metagraphHandler.handleCurrencyTransactionsByDestination
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/transactions/received
-          method: GET
-  currencyBalanceByAddress:
-    handler: src/handlers/metagraphHandler.handleCurrencyBalanceByAddress
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/balance
-          method: GET
-  currencyFeeTransaction:
-    handler: src/handlers/metagraphHandler.handleCurrencyFeeTransaction
-    events:
-      - httpApi:
-          path: /currency/{identifier}/fee-transactions/{hash}
-          method: GET
-  currencySnapshotFeeTransactions:
-    handler: src/handlers/metagraphHandler.handleCurrencySnapshotFeeTransactions
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots/{term}/fee-transactions
-          method: GET
-  currencyFeeTransactionsByAddress:
-    handler: src/handlers/metagraphHandler.handleCurrencyFeeTransactionsByAddress
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/fee-transactions
-          method: GET
-  currencyFeeTransactionsBySource:
-    handler: src/handlers/metagraphHandler.handleCurrencyFeeTransactionsBySource
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/fee-transactions/sent
-          method: GET
-  currencyFeeTransactionsByDestination:
-    handler: src/handlers/metagraphHandler.handleCurrencyFeeTransactionsByDestination
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/fee-transactions/received
-          method: GET
-  metagraphs:
-    handler: src/handlers/metagraphHandler.metagraphs
-    events:
-      - httpApi:
-          path: /currency
-          method: GET
+currencySnapshots:
+  handler: src/handlers/metagraphHandler.currencySnapshots
+  events:
+    - httpApi:
+        path: /currency/{identifier}/snapshots
+        method: GET
+currencySnapshotsByOwnerAddress:
+  handler: src/handlers/metagraphHandler.currencySnapshotsByOwnerAddress
+  events:
+    - httpApi:
+        path: /addresses/{address}/snapshots
+        method: GET
+currencySnapshot:
+  handler: src/handlers/metagraphHandler.currencySnapshot
+  events:
+    - httpApi:
+        path: /currency/{identifier}/snapshots/{term}
+        method: GET
+currencySnapshotRewards:
+  handler: src/handlers/metagraphHandler.currencySnapshotRewards
+  events:
+    - httpApi:
+        path: /currency/{identifier}/snapshots/{term}/rewards
+        method: GET
+currencySnapshotTransactions:
+  handler: src/handlers/metagraphHandler.currencySnapshotTransactions
+  events:
+    - httpApi:
+        path: /currency/{identifier}/snapshots/{term}/transactions
+        method: GET
+currencyBlock:
+  handler: src/handlers/metagraphHandler.currencyBlock
+  events:
+    - httpApi:
+        path: /currency/{identifier}/blocks/{hash}
+        method: GET
+currencyTransactions:
+  handler: src/handlers/metagraphHandler.currencyTransactions
+  events:
+    - httpApi:
+        path: /currency/{identifier}/transactions
+        method: GET
+currencyTransaction:
+  handler: src/handlers/metagraphHandler.currencyTransaction
+  events:
+    - httpApi:
+        path: /currency/{identifier}/transactions/{hash}
+        method: GET
+currencyTransactionsByAddress:
+  handler: src/handlers/metagraphHandler.currencyTransactionsByAddress
+  events:
+    - httpApi:
+        path: /currency/{identifier}/addresses/{address}/transactions
+        method: GET
+currencyTransactionsBySource:
+  handler: src/handlers/metagraphHandler.currencyTransactionsBySource
+  events:
+    - httpApi:
+        path: /currency/{identifier}/addresses/{address}/transactions/sent
+        method: GET
+currencyTransactionsByDestination:
+  handler: src/handlers/metagraphHandler.currencyTransactionsByDestination
+  events:
+    - httpApi:
+        path: /currency/{identifier}/addresses/{address}/transactions/received
+        method: GET
+currencyBalanceByAddress:
+  handler: src/handlers/metagraphHandler.currencyBalanceByAddress
+  events:
+    - httpApi:
+        path: /currency/{identifier}/addresses/{address}/balance
+        method: GET
+currencyFeeTransaction:
+  handler: src/handlers/metagraphHandler.currencyFeeTransaction
+  events:
+    - httpApi:
+        path: /currency/{identifier}/fee-transactions/{hash}
+        method: GET
+currencySnapshotFeeTransactions:
+  handler: src/handlers/metagraphHandler.currencySnapshotFeeTransactions
+  events:
+    - httpApi:
+        path: /currency/{identifier}/snapshots/{term}/fee-transactions
+        method: GET
+currencyFeeTransactionsByAddress:
+  handler: src/handlers/metagraphHandler.currencyFeeTransactionsByAddress
+  events:
+    - httpApi:
+        path: /currency/{identifier}/addresses/{address}/fee-transactions
+        method: GET
+currencyFeeTransactionsBySource:
+  handler: src/handlers/metagraphHandler.currencyFeeTransactionsBySource
+  events:
+    - httpApi:
+        path: /currency/{identifier}/addresses/{address}/fee-transactions/sent
+        method: GET
+currencyFeeTransactionsByDestination:
+  handler: src/handlers/metagraphHandler.currencyFeeTransactionsByDestination
+  events:
+    - httpApi:
+        path: /currency/{identifier}/addresses/{address}/fee-transactions/received
+        method: GET
+metagraphs:
+  handler: src/handlers/metagraphHandler.metagraphs
+  events:
+    - httpApi:
+        path: /currency
+        method: GET

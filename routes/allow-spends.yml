@@ -103,18 +103,18 @@ currencyAddressSpendTransactions:
         path: /currency/{metagraph_id}/addresses/{address}/spend-transactions
         method: GET
 
-currencySnapshotAllowSpendExpirations:
-  handler: src/handlers/allowSpendsHandler.currencySnapshotAllowSpendExpirations
-  events:
-    - httpApi:
-        path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/allow-spend-expirations
-        method: GET
-
 currencyAllowSpendExpirations:
   handler: src/handlers/allowSpendsHandler.currencyAllowSpendExpirations
   events:
     - httpApi:
         path: /currency/{metagraph_id}/allow-spend-expirations
+        method: GET
+
+currencySnapshotAllowSpendExpirations:
+  handler: src/handlers/allowSpendsHandler.currencySnapshotAllowSpendExpirations
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/allow-spend-expirations
         method: GET
 
 currencyAddressAllowSpendExpirations:

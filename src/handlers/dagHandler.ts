@@ -1,9 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import {
-  extractHashOrdinal,
-  extractPagination,
-} from '../request-params';
+import { PrismaClient } from "@prisma/client";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { extractHashOrdinal, extractPagination } from "../request-params";
 import {
   balanceResponse,
   dagBlockResponse,
@@ -14,38 +11,41 @@ import {
   handleError,
   notFoundResponse,
   respond,
-  rewardsResponse
-} from '../response';
-import { fromCreatedAtOrdinalCursor, paginatedQuery, toCreatedAtOrdinalCursor } from '../pagination';
+  rewardsResponse,
+} from "../response";
+import {
+  fromCreatedAtOrdinalCursor,
+  paginatedQuery,
+  toCreatedAtOrdinalCursor,
+} from "../pagination";
 import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
 
 const globalSnapshotExists = async (term) => {
   return prisma.global_snapshots.findUnique({
-    where: extractHashOrdinal(term) , 
+    where: extractHashOrdinal(term),
     select: { hash: true },
-  })
+  });
 };
 
 const latestGlobalSnapshot = async () => {
   return prisma.global_snapshots.findFirst({
     select: { hash: true },
-    orderBy: { ordinal: 'desc'}
-  })
+    orderBy: { ordinal: "desc" },
+  });
 };
 
-
 const globalSnapshotWhere = async (term) => {
-    if (term == 'latest'){
-      const latestSnapshotHash = await latestGlobalSnapshot()
-      return { hash: latestSnapshotHash}
-    } else {
-      return extractHashOrdinal(term)
-    }
+  if (term == "latest") {
+    const latestSnapshotHash = await latestGlobalSnapshot();
+    return { hash: latestSnapshotHash };
+  } else {
+    return extractHashOrdinal(term);
   }
+};
 
-export const handleGlobalSnapshots = async (
+export const globalSnapshots = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   return await paginatedQuery(
@@ -54,33 +54,32 @@ export const handleGlobalSnapshots = async (
     fromCreatedAtOrdinalCursor,
     {
       include: { dag_blocks: true },
-      orderBy: { ordinal: 'desc' }
+      orderBy: { ordinal: "desc" },
     },
     prisma.global_snapshots.findMany,
     globalSnapshotsResponse
   );
 };
 
-export const handleGlobalSnapshot = async (
+export const globalSnapshot = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { term } = event.pathParameters || {};
 
     let snapshot;
-    if (term == 'latest'){
+    if (term == "latest") {
       snapshot = await prisma.global_snapshots.findFirst({
-        include: { dag_blocks: true }, 
-        orderBy: { ordinal: 'desc' }
-      }); 
-
+        include: { dag_blocks: true },
+        orderBy: { ordinal: "desc" },
+      });
     } else {
-      const filter =  extractHashOrdinal(term)
+      const filter = extractHashOrdinal(term);
 
       snapshot = await prisma.global_snapshots.findUnique({
         where: filter,
-        include: { dag_blocks: true }
-      });  
+        include: { dag_blocks: true },
+      });
     }
 
     return respond(snapshot, globalSnapshotResponse);
@@ -89,25 +88,25 @@ export const handleGlobalSnapshot = async (
   }
 };
 
-export const handleGlobalSnapshotRewards = async (
+export const globalSnapshotRewards = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { term } = event.pathParameters || {};
 
-    if (term != "latest" && !await globalSnapshotExists(term)) { 
+    if (term != "latest" && !(await globalSnapshotExists(term))) {
       return notFoundResponse();
     }
 
     const toCursor = (row) => ({
       global_snapshot_hash_destination_addr: {
         global_snapshot_hash: row.global_snapshot_hash,
-        destination_addr: row.destination_addr
-      }
+        destination_addr: row.destination_addr,
+      },
     });
     const fromCursor = (row) => ({
       global_snapshot_hash: row.global_snapshot_hash,
-      destination_addr: row.destination_addr
+      destination_addr: row.destination_addr,
     });
 
     return await paginatedQuery(
@@ -116,7 +115,7 @@ export const handleGlobalSnapshotRewards = async (
       fromCursor,
       {
         where: { global_snapshots: { ...globalSnapshotWhere(term) } },
-        orderBy: [{ global_snapshot_hash: 'asc' }, { destination_addr: 'asc' }]
+        orderBy: [{ destination_addr: "asc" }],
       },
       prisma.dag_reward_transactions.findMany,
       rewardsResponse
@@ -126,32 +125,32 @@ export const handleGlobalSnapshotRewards = async (
   }
 };
 
-export const handleGlobalSnapshotTransactions = async (
+export const globalSnapshotTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { term } = event.pathParameters || {};
 
-    if (term != "latest" && !await globalSnapshotExists(term)) { 
+    if (term != "latest" && !(await globalSnapshotExists(term))) {
       return notFoundResponse();
     }
 
     const query = {
       where: {
-        dag_blocks: { global_snapshots: { ...globalSnapshotWhere(term) } }
+        dag_blocks: { global_snapshots: { ...globalSnapshotWhere(term) } },
       },
       include: {
         dag_blocks: {
           select: {
-            global_snapshots: { select: { hash: true, ordinal: true } }
-          }
-        }
+            global_snapshots: { select: { hash: true, ordinal: true } },
+          },
+        },
       },
-      orderBy: { ordinal: 'desc' }
+      orderBy: { ordinal: "desc" },
     };
 
     return await paginatedQuery(
-    extractPagination(event),
+      extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
       query,
@@ -163,19 +162,19 @@ export const handleGlobalSnapshotTransactions = async (
   }
 };
 
-export const handleDagBlock = async (
+export const dagBlock = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { hash } = event.pathParameters || {};
-    
+
     const block = await prisma.dag_blocks.findUnique({
       where: { hash },
       include: {
         dag_transactions: { select: { hash: true } },
         global_snapshots: true,
-        super: { include: { block_parents: true } }
-      }
+        super: { include: { block_parents: true } },
+      },
     });
     return respond(block, dagBlockResponse);
   } catch (error) {
@@ -193,25 +192,25 @@ const dagTtransactionsQuery = async (
       include: {
         dag_blocks: {
           include: {
-            global_snapshots: { select: { hash: true, ordinal: true } }
-          }
-        }
+            global_snapshots: { select: { hash: true, ordinal: true } },
+          },
+        },
       },
-      orderBy: { ordinal: 'desc' }
+      orderBy: { ordinal: "desc" },
     };
 
     const toCursor = (row) => ({
       ...toCreatedAtOrdinalCursor(row),
-      hash: row.hash
+      hash: row.hash,
     });
 
     const fromCursor = (row) => ({
       ...fromCreatedAtOrdinalCursor(row),
-      hash: row.hash
+      hash: row.hash,
     });
 
     return await paginatedQuery(
-    extractPagination(event),
+      extractPagination(event),
       toCursor,
       fromCursor,
       query,
@@ -223,13 +222,13 @@ const dagTtransactionsQuery = async (
   }
 };
 
-export const handleDagTransactions = async (
+export const dagTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   return dagTtransactionsQuery({}, event);
 };
 
-export const handleDagTransaction = async (
+export const dagTransaction = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -240,10 +239,10 @@ export const handleDagTransaction = async (
       include: {
         dag_blocks: {
           include: {
-            global_snapshots: { select: { hash: true, ordinal: true } }
-          }
-        }
-      }
+            global_snapshots: { select: { hash: true, ordinal: true } },
+          },
+        },
+      },
     });
 
     return respond(transaction, dagTransactionResponse);
@@ -252,14 +251,14 @@ export const handleDagTransaction = async (
   }
 };
 
-export const handleDagTransactionsByAddress = async (
+export const dagTransactionsByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { address } = event.pathParameters || {};
 
     const where = {
-      where: { OR: [{ source_addr: address }, { destination_addr: address }] }
+      where: { OR: [{ source_addr: address }, { destination_addr: address }] },
     };
 
     return dagTtransactionsQuery(where, event);
@@ -268,7 +267,7 @@ export const handleDagTransactionsByAddress = async (
   }
 };
 
-export const handleDagTransactionsBySource = async (
+export const dagTransactionsBySource = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -282,7 +281,7 @@ export const handleDagTransactionsBySource = async (
   }
 };
 
-export const handleDagTransactionsByDestination = async (
+export const dagTransactionsByDestination = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
@@ -296,18 +295,20 @@ export const handleDagTransactionsByDestination = async (
   }
 };
 
-export const handleDagBalanceByAddress = async (
+export const dagBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { address, ordinal } = event.pathParameters || {};
 
     const ordinalNbr = toNumber(ordinal);
-    const ordinalCondition = (isFinite(ordinalNbr)? { snapshot_ordinal: {lte: ordinalNbr}}: {})
+    const ordinalCondition = isFinite(ordinalNbr)
+      ? { snapshot_ordinal: { lte: ordinalNbr } }
+      : {};
 
     const balances = await prisma.dag_balance_changes.findFirst({
       where: { address, ...ordinalCondition },
-      orderBy: { snapshot_ordinal: 'desc' }
+      orderBy: { snapshot_ordinal: "desc" },
     });
 
     return respond(balances, balanceResponse);
@@ -315,4 +316,3 @@ export const handleDagBalanceByAddress = async (
     return handleError(error);
   }
 };
-
