@@ -29,7 +29,6 @@ const tokenUnlockResponse = (transaction) => ({
   amount: transaction.amount,
   source: transaction.source_addr,
   timestamp: transaction.created_at,
-  lockOrdinal: transaction.lock_reference_ordinal,
 });
 
 const tokenUnlockResponses = (txs) => txs.map(tokenUnlockResponse);
@@ -60,9 +59,7 @@ export const globalSnapshotTokenLocks = async (
       fromCreatedAtOrdinalCursor,
       {
         where: {
-          dag_token_lock_block: {
             global_snapshot: filter,
-          },
         },
         orderBy: { created_at: "desc" },
       },
@@ -120,9 +117,7 @@ export const globalSnapshotTokenUnlocks = async (
       {
         where: {
           dag_token_lock: {
-            dag_token_lock_block: {
               global_snapshot: filter,
-            },
           },
         },
         orderBy: { created_at: "desc" },
@@ -184,7 +179,7 @@ export const metagraphSnapshotTokenLocks = async (
       {
         where: {
           metagraph_id,
-          metagraph_token_lock_block: { metagraph_snapshot: filter },
+          metagraph_snapshot: filter,
         },
         orderBy: { created_at: "desc" },
       },
@@ -248,7 +243,7 @@ export const metagraphSnapshotTokenUnlocks = async (
         where: {
           metagraph_id,
           token_lock: {
-            metagraph_token_lock_block: { metagraph_snapshot: filter },
+            metagraph_snapshot: filter,
           },
         },
         orderBy: { created_at: "desc" },

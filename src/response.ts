@@ -44,7 +44,7 @@ export const rewardResponse = (reward) => ({
 export const dagTransactionsResponse = (ts) => ts.map(dagTransactionResponse);
 
 export const dagTransactionResponse = (t) =>
-  transactionResponse(t, t.dag_blocks.global_snapshots);
+  transactionResponse(t, t.dag_blocks.global_snapshot);
 
 const transactionResponse = (transaction, snapshot) => ({
   hash: transaction.hash,
@@ -73,8 +73,8 @@ const blockResponse = (block) => ({
 export const dagBlockResponse = (block) => ({
   ...blockResponse(block),
   transactions: block.dag_transactions.map((tx) => tx.hash),
-  snapshotHash: block.global_snapshots.hash,
-  snapshotOrdinal: block.global_snapshots.ordinal,
+  snapshotHash: block.global_snapshot.hash,
+  snapshotOrdinal: block.global_snapshot.ordinal,
 });
 
 export const blockParentResponse = (block_parent) => ({

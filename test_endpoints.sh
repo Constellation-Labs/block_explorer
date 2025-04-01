@@ -2,12 +2,12 @@
 
 # Global Snapshots
 curl http://localhost:3001/global-snapshots  #ok 
-curl http://localhost:3001/global-snapshots/695097c844c520c40577f168b85b994558024b44fd64c245154625c89fda024f  #ok 
-curl http://localhost:3001/global-snapshots/155849  #ok 
+curl http://localhost:3001/global-snapshots/c54b8f21c967af9c956f7f2ebd81a20550a71357d805574c557e5128ec4f26c0  #ok 
+curl http://localhost:3001/global-snapshots/2528938  #ok 
 curl http://localhost:3001/global-snapshots/latest 
 
-curl http://localhost:3001/global-snapshots/155849/rewards #ok 
-curl http://localhost:3001/global-snapshots/695097c844c520c40577f168b85b994558024b44fd64c245154625c89fda024f/rewards #ok 
+curl http://localhost:3001/global-snapshots/2528938/rewards #ok 
+curl http://localhost:3001/global-snapshots/c54b8f21c967af9c956f7f2ebd81a20550a71357d805574c557e5128ec4f26c0/rewards #ok 
 curl http://localhost:3001/global-snapshots/latest/rewards # ok 
 
 curl http://localhost:3001/global-snapshots/390792/transactions #ok

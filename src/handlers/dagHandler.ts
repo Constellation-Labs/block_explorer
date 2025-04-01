@@ -114,7 +114,7 @@ export const globalSnapshotRewards = async (
       toCursor,
       fromCursor,
       {
-        where: { global_snapshots: { ...globalSnapshotWhere(term) } },
+        where: { global_snapshot: { ...globalSnapshotWhere(term) } },
         orderBy: [{ destination_addr: "asc" }],
       },
       prisma.dag_reward_transactions.findMany,
@@ -137,12 +137,12 @@ export const globalSnapshotTransactions = async (
 
     const query = {
       where: {
-        dag_blocks: { global_snapshots: { ...globalSnapshotWhere(term) } },
+        dag_blocks: { global_snapshot: { ...globalSnapshotWhere(term) } },
       },
       include: {
         dag_blocks: {
           select: {
-            global_snapshots: { select: { hash: true, ordinal: true } },
+            global_snapshot: { select: { hash: true, ordinal: true } },
           },
         },
       },
@@ -172,7 +172,7 @@ export const dagBlock = async (
       where: { hash },
       include: {
         dag_transactions: { select: { hash: true } },
-        global_snapshots: true,
+        global_snapshot: true,
         super: { include: { block_parents: true } },
       },
     });
@@ -192,7 +192,7 @@ const dagTtransactionsQuery = async (
       include: {
         dag_blocks: {
           include: {
-            global_snapshots: { select: { hash: true, ordinal: true } },
+            global_snapshot: { select: { hash: true, ordinal: true } },
           },
         },
       },
@@ -239,7 +239,7 @@ export const dagTransaction = async (
       include: {
         dag_blocks: {
           include: {
-            global_snapshots: { select: { hash: true, ordinal: true } },
+            global_snapshot: { select: { hash: true, ordinal: true } },
           },
         },
       },
