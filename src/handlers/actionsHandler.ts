@@ -103,25 +103,19 @@ export const dagActions = async (
 
 const tokenLockGlobalSnapshotCond = (filter) => ({
   dag_token_lock: {
-    dag_token_lock_block: {
       global_snapshot: filter,
-    },
   },
 });
 const tokenUnlockGlobalSnapshotCond = (filter) => ({
   dag_token_unlock: {
     dag_token_lock: {
-      dag_token_lock_block: {
         global_snapshot: filter,
-      },
     },
   },
 });
 const allowSpendGlobalSnapshotCond = (filter) => ({
   dag_allow_spend: {
-    dag_allow_spend_block: {
       global_snapshot: filter,
-    },
   },
 });
 const spendTxGlobalSnapshotCond = (filter) => ({
@@ -220,21 +214,19 @@ const metagraphIdCond = (metagraph_id) => ({
 
 const tokenLockMetagraphSnapshotCond = (filter) => ({
   metagraph_token_lock: {
-    metagraph_token_lock_block: { metagraph_snapshot: filter },
+    metagraph_snapshot: filter,
   },
 });
 const tokenUnlockMetagraphSnapshotCond = (filter) => ({
   metagraph_token_unlock: {
     token_lock: {
-      metagraph_token_lock_block: { metagraph_snapshot: filter },
+      metagraph_snapshot: filter,
     },
   },
 });
 const allowSpendMetagraphSnapshotCond = (filter) => ({
   metagraph_allow_spend: {
-    metagraph_allow_spend_block: {
       metagraph_snapshot: filter,
-    },
   },
 });
 const spendTxMetagraphSnapshotCond = (filter) => ({

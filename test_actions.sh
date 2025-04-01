@@ -2,11 +2,11 @@
 curl  http://localhost:3001/actions  #OK
 echo -e "\n"
 # Get global snapshot actions for a specific term
-curl  http://localhost:3001/global-snapshots/618a6f6bedba2c8a84ca3513f1cf0f6fe9eafb6f7872eecf2e222216351708b6/actions
+curl  http://localhost:3001/global-snapshots/80f93d4ef86dd1bf69648b5070e27d545d23ae578925198cc45dc17e02128312/actions
 #OK
 echo -e "\n"
 # Get address actions for a specific address
-curl  http://localhost:3001/addresses/DAG04Qob76gZG7D5qZu9oeZvr8WFxs53Md383q4x/actions #OK
+curl  http://localhost:3001/addresses/DAG77zerQ2BUVhtVgkmseihkEfLXieBBm57vqA4J/actions #OK
 echo -e "\n"
 # Get currency actions for a specific metagraph ID
 curl  http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/actions #OK

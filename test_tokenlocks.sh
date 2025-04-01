@@ -7,11 +7,11 @@ curl http://localhost:3001/token-locks -H "Content-Type: application/json"
 echo -e "\n"
 
 echo "Testing globalSnapshotTokenLocks endpoint..."
-curl http://localhost:3001/global-snapshots/3cdde2bc02d9ad3da07fe52686a51db448129d9adf3167747be77e31f951c428/token-locks -H "Content-Type: application/json"
+curl http://localhost:3001/global-snapshots/c3071648a319313afdecad217f196558a7893dde2bc78ee56fbb0d0a5b73700b/token-locks -H "Content-Type: application/json"
 echo -e "\n"
 
 echo "Testing addressTokenLocks endpoint..."
-curl http://localhost:3001/addresses/DAG5T61H6RNLR4wLueNNZo8JR7fDKuGQSZoGTVki/token-locks -H "Content-Type: application/json"
+curl http://localhost:3001/addresses/DAG5sz69nNwGF8ypn1yukFpg2pVJpdx5mnf1PJVc/token-locks -H "Content-Type: application/json"
 echo -e "\n"
 
 echo "Testing tokenUnlocks endpoint..."
@@ -19,11 +19,11 @@ curl http://localhost:3001/token-unlocks -H"Content-Type: application/json"
 echo -e "\n"
 
 echo "Testing globalSnapshotTokenUnlocks endpoint..."
-curl http://localhost:3001/global-snapshots/3cdde2bc02d9ad3da07fe52686a51db448129d9adf3167747be77e31f951c428/token-unlocks -H"Content-Type: application/json"
+curl http://localhost:3001/global-snapshots/f5524dc1bff16b587732dc0dd36e6eb0e96fb067f9e0ec93b1cb9b55e8c2f526/token-unlocks -H"Content-Type: application/json"
 echo -e "\n"
 
 echo "Testing addressTokenUnlocks endpoint..."
-curl http://localhost:3001/addresses/DAG4AqNNL2E7TWBUvQRxSPhraS2Lnr5xPM6xtVbs/token-unlocks -H"Content-Type: application/json"
+curl http://localhost:3001/addresses/DAG77zerQ2BUVhtVgkmseihkEfLXieBBm57vqA4J/token-unlocks -H"Content-Type: application/json"
 echo -e "\n"
 
 echo "Testing currencyTokenLocks endpoint..."

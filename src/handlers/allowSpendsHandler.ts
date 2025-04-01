@@ -18,9 +18,8 @@ const allowSpendResponse = (transaction) => ({
   source: transaction.source_addr,
   destination: transaction.destination_addr,
   lastValidEpochProgress: transaction.last_valid_epoch_progress,
-  round: transaction.round_id,
   fee: transaction.fee,
-  snapshot: transaction.snapshot_hash,
+  snapshotHash: transaction.snapshot_hash,
   timestamp: transaction.created_at,
 });
 
@@ -33,7 +32,7 @@ const spendTransactionResponse = (transaction) => ({
   source: transaction.source_addr,
   destination: transaction.destination_addr,
   allowSpendRef: transaction.allow_spend_ref,
-  snapshot: transaction.snapshot_hash,
+  snapshotHash: transaction.snapshot_hash,
   timestamp: transaction.created_at,
 });
 
@@ -45,7 +44,7 @@ const spendExpiredResponse = (transaction) => ({
   amount: transaction.amount,
   source: transaction.source_addr,
   allowSpendRef: transaction.allow_spend_ref,
-  snapshot: transaction.snapshot_hash,
+  snapshotHash: transaction.snapshot_hash,
   timestamp: transaction.created_at,
 });
 
@@ -76,7 +75,7 @@ export const globalSnapshotAllowSpends = async (
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
       {
-        where: { dag_allow_spend_block: { global_snapshot: filter } },
+        where: { global_snapshot: filter },
         orderBy: { created_at: "desc" },
       },
       prisma.dag_allow_spends.findMany,
@@ -141,9 +140,7 @@ export const globalSnapshotSpendTransactions = async (
       fromCreatedAtOrdinalCursor,
       {
         where: {
-          dag_allow_spend: {
-            dag_allow_spend_block: { global_snapshot: filter },
-          },
+          dag_allow_spend: { global_snapshot: filter },
         },
         orderBy: { created_at: "desc" },
       },
@@ -209,9 +206,7 @@ export const globalSnapshotAllowSpendExpirations = async (
       fromCreatedAtOrdinalCursor,
       {
         where: {
-          dag_allow_spend: {
-            dag_allow_spend_block: { global_snapshot: filter },
-          },
+          dag_allow_spend: { global_snapshot: filter },
         },
         orderBy: { created_at: "desc" },
       },
