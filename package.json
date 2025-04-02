@@ -4,7 +4,6 @@
   "description": "",
   "main": "src/handler.ts",
   "dependencies": {
-    "@opensearch-project/opensearch": "^1.2.0",
     "@prisma/client": "^6.2.1",
     "aws-lambda": "^1.0.7",
     "date-fns": "^2.30.0",
@@ -28,8 +27,13 @@
     "typescript": "^5.8.2"
   },
   "scripts": {
-    "test": "jest",
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose down",
+    "test": "npx prisma db push --force-reset && jest --no-silent",
     "test:tsc": "tsc --noEmit"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
+  }
 }
