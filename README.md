@@ -3,42 +3,97 @@
 ![build](https://img.shields.io/github/actions/workflow/status/Constellation-Labs/block_explorer/release.yml?label=build)
 ![version](https://img.shields.io/github/v/release/Constellation-Labs/block_explorer?sort=semver)
 
-Block Explorer exposes API functions to retrieve on-chain data from a tessellation opensearch database cluster.
+The Block Explorer provides API functions to retrieve on-chain data from a Constellation Network indexer. The service uses PostgreSQL for data storage and retrieval and the Serverless framework for API deployment.
 
-## Build and Run
+## Table of Contents
 
-### Prerequisites
+- [Block Explorer](#block-explorer)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start](#quick-start)
+  - [Development](#development)
+    - [Database Setup](#database-setup)
+    - [API Development](#api-development)
+  - [Testing](#testing)
+  - [API Documentation](#api-documentation)
 
-1. [TypeScript](https://www.typescriptlang.org/id/download)
-2. [Serverless Framework](https://www.serverless.com/framework/docs/getting-started/)
-3. [Docker Desktop](https://www.docker.com/get-started/) with [Kubernetes](https://docs.docker.com/desktop/kubernetes/) enabled
+## Prerequisites
 
-### Setup local development cluster
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [TypeScript](https://www.typescriptlang.org/download)
+- [Docker](https://www.docker.com/get-started/)
+- [Serverless Framework](https://www.serverless.com/framework/docs/getting-started/)
 
-An [opensearch](https://aws.amazon.com/what-is/opensearch/) instance is used to store and query the on-chain data.
+## Quick Start
 
-Follow the instructions from the [snapshot streaming](https://github.com/Constellation-Labs/snapshot-streaming) repository which sets up your local tessellation development cluster along with an opensearch instance (hosted on port `4510`).
+1. Clone the repository
+   ```bash
+   git clone https://github.com/Constellation-Labs/block_explorer.git
+   cd block_explorer
+   ```
 
-### Run
+2. Install dependencies
+   ```bash
+   npm install
+   ```
 
-Install the npm packages from the project directory:
+3. Start the PostgreSQL database
+   ```bash
+   npm run db:start
+   ```
 
+4. Run the API locally
+   ```bash
+   serverless offline
+   ```
+
+## Development
+
+### Database Setup
+
+The project uses PostgreSQL for data storage. A Docker Compose configuration is provided for easy setup:
+
+```bash
+# Start the PostgreSQL container
+npm run db:start
+
+# To stop the container when finished
+npm run db:stop
 ```
-npm install
-```
 
-Start the serverless offline host to test the APIs locally:
+The database configuration is stored in `.env` and can be customized as needed.
 
-```
+### API Development
+
+Start the serverless offline host to test API endpoints locally:
+
+```bash
 serverless offline
 ```
 
-The output of this command shows an overview of the function URL's that can be called locally.
+This will display a list of available endpoints that can be called locally.
 
-## Unit Tests
+## Testing
 
-Run the unit tests locally:
+Run tests with the following commands:
 
-```
+```bash
+# Start the database if not already running
+npm run db:start
+
+# Run tests (this will reset and seed the database automatically)
 npm run test
 ```
+
+The test suite uses Jest and automatically resets the database schema before each test run.
+
+## API Documentation
+
+API endpoints are defined in the `routes/` directory with their handlers in `src/handlers/`.
+
+Available endpoints include:
+- DAG operations
+- Metagraph information
+- Token locks
+- Actions
+- Allow spends
