@@ -54,8 +54,8 @@ const transactionResponse = (transaction, snapshot) => ({
   destination: transaction.destination_addr,
   fee: transaction.fee,
   parent: {
-    hash: transaction.parent_hash,
-    ordinal: transaction.parent_ordinal,
+    hash: transaction.parent_hash ?? null,
+    ordinal: transaction.parent_ordinal ?? null,
   },
   salt: transaction.salt,
   blockHash: transaction.block_hash,

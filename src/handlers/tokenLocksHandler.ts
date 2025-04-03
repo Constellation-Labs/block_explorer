@@ -15,9 +15,8 @@ const tokenLockResponse = (transaction) => ({
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,
-  destination: transaction.destination_addr,
-  unlockEpoch: transaction.unlock_epoch,
-  parentHash: transaction.parent_hash,
+  unlockEpoch: transaction.unlock_epoch ?? null,
+  parentHash: transaction.parent_hash ?? null,
   timestamp: transaction.created_at,
 });
 
