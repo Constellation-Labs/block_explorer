@@ -29,7 +29,7 @@ const commonTokenUnlockResponse = (transaction) => ({
   amount: transaction.amount,
   source: transaction.source_addr,
   tokenLockRef: transaction.lock_reference_hash,
-  imestamp: transaction.created_at,
+  timestamp: transaction.created_at,
 });
 
 const dagTokenUnlockResponse = (transaction) => ({
