@@ -184,8 +184,8 @@ model dag_spend_transactions {
   created_at                 DateTime                    @default(now()) @db.Timestamp(6)
   updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
   destination_addr           String?                     @db.VarChar
-  allow_spend_ref            String?                     @db.VarChar
-  snapshot_hash              String?                     @db.VarChar
+  allow_spend_ref            String                      @db.VarChar
+  snapshot_hash              String                      @db.VarChar
   dag_allow_spend            dag_allow_spends?           @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_spend_transactions_dag_allow_spends_fk")
   addresses                  addresses?                  @relation(fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_spend_transactions_destination_addr_fk")
   abstract_transactions_view abstract_transactions_view?
@@ -210,6 +210,7 @@ model dag_token_locks {
   unlock_epoch               BigInt?
   round_id                   String                      @db.Uuid
   snapshot_hash              String                      @db.VarChar
+  parent_hash                String?                     @db.VarChar
   addresses                  addresses                   @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_locks_source_addr_fk")
   dag_token_unlocks          dag_token_unlocks?
   abstract_transactions_view abstract_transactions_view?
@@ -270,8 +271,8 @@ model global_snapshots {
   height                   BigInt
   subheight                Int
   last_snapshot_hash       String                    @db.VarChar
-  metagraph_snapshot_count BigInt?
-  epoch_progress           BigInt?
+  metagraph_snapshot_count BigInt
+  epoch_progress           BigInt
   version                  String                    @db.VarChar
   created_at               DateTime                  @default(now()) @db.Timestamp(6)
   updated_at               DateTime                  @default(now()) @db.Timestamp(6)
@@ -470,6 +471,7 @@ model metagraph_token_locks {
   unlock_epoch               BigInt?
   round_id                   String                      @db.Uuid
   snapshot_hash              String                      @db.VarChar
+  parent_hash                String?                     @db.VarChar
   metagraph                  metagraphs                  @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
   addresses                  addresses                   @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_locks_source_addr_fk")
   abstract_transactions_view abstract_transactions_view?
@@ -512,7 +514,7 @@ model metagraph_transactions {
   fee                                                          BigInt
   salt                                                         BigInt
   parent_ordinal                                               BigInt
-  parent_hash                                                  String           @db.VarChar
+  parent_hash                                                  String?          @db.VarChar
   ordinal                                                      BigInt
   block_hash                                                   String           @db.VarChar
   metagraphs                                                   metagraphs       @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
@@ -546,10 +548,10 @@ model dag_expired_spend_transactions {
   amount                     BigInt
   created_at                 DateTime                    @default(now()) @db.Timestamp(6)
   updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
-  allow_spend_ref            String?                     @db.VarChar
-  snapshot_hash              String?                     @db.VarChar
+  allow_spend_ref            String                      @db.VarChar
+  snapshot_hash              String                      @db.VarChar
   abstract_transactions_view abstract_transactions_view?
-  dag_allow_spend            dag_allow_spends?           @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_expired_spend_transactions_dag_allow_spends_fk")
+  dag_allow_spend            dag_allow_spends            @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_expired_spend_transactions_dag_allow_spends_fk")
 }
 
 model metagraph_expired_spend_transactions {
@@ -559,8 +561,8 @@ model metagraph_expired_spend_transactions {
   created_at                 DateTime                    @default(now()) @db.Timestamp(6)
   updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
   metagraph_id               String                      @db.VarChar
-  allow_spend_ref            String?                     @db.VarChar
-  snapshot_hash              String?                     @db.VarChar
+  allow_spend_ref            String                      @db.VarChar
+  snapshot_hash              String                      @db.VarChar
   abstract_transactions_view abstract_transactions_view?
-  metagraph_allow_spend      metagraph_allow_spends?     @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_expired_spend_transactions_metagraph_allow_spends_fk")
+  metagraph_allow_spend      metagraph_allow_spends      @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_expired_spend_transactions_metagraph_allow_spends_fk")
 }
