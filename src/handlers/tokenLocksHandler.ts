@@ -10,17 +10,33 @@ import { handleError } from "../response";
 
 const prisma = new PrismaClient();
 
-const tokenLockResponse = (transaction) => ({
+const commonTokenLockResponse = (transaction) => ({
   currencyId: transaction.currencyId,
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,
   unlockEpoch: transaction.unlock_epoch ?? null,
   parentHash: transaction.parent_hash ?? null,
+  ordinal: transaction.ordinal,
   timestamp: transaction.created_at,
 });
 
-const tokenLockResponses = (txs) => txs.map(tokenLockResponse);
+const dagTokenLockResponse = (transaction) => ({
+  ...commonTokenLockResponse(transaction),
+  unlockedAtOrdinal:
+    transaction.dag_token_unlock?.global_snapshot.ordinal ?? null,
+});
+
+const dagTokenLockResponses = (txs) => txs.map(dagTokenLockResponse);
+
+const metagraphTokenLockResponse = (transaction) => ({
+  ...commonTokenLockResponse(transaction),
+  unlockedAtOrdinal:
+    transaction.metagraph_token_unlock?.metagraph_snapshot.ordinal ?? null,
+});
+
+const metagraphTokenLockResponses = (txs) =>
+  txs.map(metagraphTokenLockResponse);
 
 const commonTokenUnlockResponse = (transaction) => ({
   currencyId: transaction.currencyId,
@@ -46,6 +62,30 @@ const metagraphTokenUnlockResponse = (transaction) => ({
 const metagraphTokenUnlockResponses = (txs) =>
   txs.map(metagraphTokenUnlockResponse);
 
+const includeDagGlobalSnapshotOrdinal = {
+  global_snapshot: {
+    select: { ordinal: true },
+  },
+};
+
+const includeDagUnlockOrdinal = {
+  dag_token_unlock: {
+    include: includeDagGlobalSnapshotOrdinal,
+  },
+};
+
+const includeMetagraphSnapshotOrdinal = {
+  metagraph_snapshot: {
+    select: { ordinal: true },
+  },
+};
+
+const includeMetagraphUnlockOrdinal = {
+  metagraph_token_unlock: {
+    include: includeMetagraphSnapshotOrdinal,
+  },
+};
+
 export const tokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -53,9 +93,12 @@ export const tokenLocks = async (
     extractPagination(event),
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
-    { orderBy: { created_at: "desc" } },
+    {
+      include: includeDagUnlockOrdinal,
+      orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
+    },
     prisma.dag_token_locks.findMany,
-    tokenLockResponses
+    dagTokenLockResponses
   );
 };
 
@@ -74,10 +117,11 @@ export const globalSnapshotTokenLocks = async (
         where: {
           global_snapshot: filter,
         },
-        orderBy: { created_at: "desc" },
+        include: includeDagUnlockOrdinal,
+        orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
       },
       prisma.dag_token_locks.findMany,
-      tokenLockResponses
+      dagTokenLockResponses
     );
   } catch (error) {
     return handleError(error);
@@ -94,9 +138,13 @@ export const addressTokenLocks = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { source_addr: address }, orderBy: { created_at: "desc" } },
+      {
+        where: { source_addr: address },
+        include: includeDagUnlockOrdinal,
+        orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
+      },
       prisma.dag_token_locks.findMany,
-      tokenLockResponses
+      dagTokenLockResponses
     );
   } catch (error) {
     return handleError(error);
@@ -111,8 +159,8 @@ export const tokenUnlocks = async (
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
     {
-      include: { global_snapshot: { select: { ordinal: true } } },
-      orderBy: { created_at: "desc" },
+      include: includeDagGlobalSnapshotOrdinal,
+      orderBy: [{ global_snapshot: {ordinal: "desc"} }, { created_at: "desc" }],
     },
     prisma.dag_token_unlocks.findMany,
     dagTokenUnlockResponses
@@ -134,8 +182,8 @@ export const globalSnapshotTokenUnlocks = async (
         where: {
           global_snapshot: filter,
         },
-        include: { global_snapshot: { select: { ordinal: true } } },
-        orderBy: { created_at: "desc" },
+        include: includeDagGlobalSnapshotOrdinal,
+        orderBy: [{ global_snapshot: {ordinal: "desc"} }, { created_at: "desc" }],
       },
       prisma.dag_token_unlocks.findMany,
       dagTokenUnlockResponses
@@ -157,8 +205,8 @@ export const addressTokenUnlocks = async (
       fromCreatedAtOrdinalCursor,
       {
         where: { source_addr: address },
-        include: { global_snapshot: { select: { ordinal: true } } },
-        orderBy: { created_at: "desc" },
+        include: includeDagGlobalSnapshotOrdinal,
+        orderBy: [{ global_snapshot: {ordinal: "desc"} }, { created_at: "desc" }],
       },
       prisma.dag_token_unlocks.findMany,
       dagTokenUnlockResponses
@@ -177,9 +225,13 @@ export const metagraphTokenLocks = async (
     extractPagination(event),
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
-    { where: { metagraph_id }, orderBy: { created_at: "desc" } },
+    {
+      where: { metagraph_id },
+      include: includeMetagraphUnlockOrdinal,
+      orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
+    },
     prisma.metagraph_token_locks.findMany,
-    tokenLockResponses
+    metagraphTokenLockResponses
   );
 };
 
@@ -200,10 +252,11 @@ export const metagraphSnapshotTokenLocks = async (
           metagraph_id,
           metagraph_snapshot: filter,
         },
-        orderBy: { created_at: "desc" },
+        include: includeMetagraphUnlockOrdinal,
+        orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
       },
       prisma.metagraph_token_locks.findMany,
-      tokenLockResponses
+      metagraphTokenLockResponses
     );
   } catch (error) {
     return handleError(error);
@@ -222,10 +275,11 @@ export const metagraphAddressTokenLocks = async (
       fromCreatedAtOrdinalCursor,
       {
         where: { metagraph_id, source_addr: address },
-        orderBy: { created_at: "desc" },
+        include: includeMetagraphUnlockOrdinal,
+        orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
       },
       prisma.metagraph_token_locks.findMany,
-      tokenLockResponses
+      metagraphTokenLockResponses
     );
   } catch (error) {
     return handleError(error);
@@ -242,8 +296,11 @@ export const metagraphTokenUnlocks = async (
     fromCreatedAtOrdinalCursor,
     {
       where: { metagraph_id },
-      include: { metagraph_snapshot: { select: { ordinal: true } } },
-      orderBy: { created_at: "desc" },
+      include: includeMetagraphSnapshotOrdinal,
+      orderBy: [
+        { metagraph_snapshot: { ordinal: "desc" } },
+        { created_at: "desc" },
+      ],
     },
     prisma.metagraph_token_unlocks.findMany,
     metagraphTokenUnlockResponses
@@ -267,8 +324,11 @@ export const metagraphSnapshotTokenUnlocks = async (
           metagraph_id,
           metagraph_snapshot: filter,
         },
-        include: { metagraph_snapshot: { select: { ordinal: true } } },
-        orderBy: { created_at: "desc" },
+        include: includeMetagraphSnapshotOrdinal,
+        orderBy: [
+          { metagraph_snapshot: { ordinal: "desc" } },
+          { created_at: "desc" },
+        ],
       },
       prisma.metagraph_token_unlocks.findMany,
       metagraphTokenUnlockResponses
@@ -290,8 +350,11 @@ export const metagraphAddressTokenUnlocks = async (
       fromCreatedAtOrdinalCursor,
       {
         where: { metagraph_id, source_addr: address },
-        include: { metagraph_snapshot: { select: { ordinal: true } } },
-        orderBy: { created_at: "desc" },
+        include: includeMetagraphSnapshotOrdinal,
+        orderBy: [
+          { metagraph_snapshot: { ordinal: "desc" } },
+          { created_at: "desc" },
+        ],
       },
       prisma.metagraph_token_unlocks.findMany,
       metagraphTokenUnlockResponses
