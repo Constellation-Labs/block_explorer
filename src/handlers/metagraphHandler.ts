@@ -363,9 +363,11 @@ export const currencyTransactionsByDestination = async (
   }
 };
 
-const balanceOrZeroFn = async (balance, address) => {
+const balanceOrZeroFn = async (balance, address, ordinal) => {
   if (balance === null) {
-    const snapshot_ordinal = (await latestMetagraphSnapshot())?.ordinal;
+    const snapshot_ordinal = isFinite(ordinal)
+      ? ordinal
+      : (await latestMetagraphSnapshot())?.ordinal;
     return { balance: 0, address, snapshot_ordinal };
   }
   return balance;
@@ -375,13 +377,12 @@ export const currencyBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const {
-      identifier: metagraph_id,
-      address,
-      ordinal,
-    } = event.pathParameters || {};
+    const { identifier: metagraph_id, address } = event.pathParameters || {};
+
+    const { ordinal } = event.queryStringParameters || {};
 
     const ordinalNbr = toNumber(ordinal);
+
     const ordinalCondition = isFinite(ordinalNbr)
       ? { snapshot_ordinal: { lte: ordinalNbr } }
       : {};
@@ -395,7 +396,7 @@ export const currencyBalanceByAddress = async (
       orderBy: { snapshot_ordinal: "desc" },
     });
 
-    const balanceOrZero = await balanceOrZeroFn(balance, address);
+    const balanceOrZero = await balanceOrZeroFn(balance, address, ordinal);
 
     return respond(balanceOrZero, balanceResponse);
   } catch (error) {
