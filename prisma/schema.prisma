@@ -209,12 +209,12 @@ model dag_token_locks {
   ordinal                    BigInt
   unlock_epoch               BigInt?
   round_id                   String                      @db.Uuid
-  global_snapshot_hash       String                      @db.VarChar
+  snapshot_hash              String                      @db.VarChar
   addresses                  addresses                   @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_locks_source_addr_fk")
   dag_token_unlocks          dag_token_unlocks?
   abstract_transactions_view abstract_transactions_view?
   dag_token_lock_blocks      dag_token_lock_blocks?      @relation(fields: [round_id], references: [round_id])
-  global_snapshot            global_snapshots            @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_lock_global_snapshot_fk")
+  global_snapshot            global_snapshots            @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_lock_global_snapshot_fk")
 
   @@unique([ordinal], map: "dag_token_locks_unique")
 }
