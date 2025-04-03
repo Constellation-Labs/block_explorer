@@ -22,11 +22,11 @@ model abstract_blocks {
 
 /// This table has subclasses and requires additional setup for migrations. Visit https://pris.ly/d/table-inheritance for more info.
 model abstract_transactions {
-  hash        String   @id(map: "hash_pkey") @db.VarChar
-  source_addr String   @db.VarChar
-  amount      BigInt
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  hash          String   @id(map: "hash_pkey") @db.VarChar
+  source_addr   String   @db.VarChar
+  amount        BigInt
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+  updated_at    DateTime @default(now()) @db.Timestamp(6)
 }
 
 model abstract_transactions_view {
@@ -89,7 +89,7 @@ model block_parents {
   hash              String          @db.VarChar
   parent_proof_hash String          @db.VarChar
   parent_height     BigInt
-  abstract_blocks   abstract_blocks @relation(fields: [hash], references: [hash], onDelete: NoAction, onUpdate: NoAction, map: "block_parents_block_fk")
+  abstract_blocks   abstract_blocks @relation(fields: [hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "block_parents_block_fk")
 
   @@id([hash, parent_proof_hash])
   @@index([hash])
@@ -105,12 +105,11 @@ model dag_allow_spend_approvers {
 }
 
 model dag_allow_spend_blocks {
-  round_id             String             @unique(map: "dag_allow_spend_blocks_unique") @db.Uuid
-  global_snapshot_hash String             @id @db.VarChar
-  created_at           DateTime           @default(now()) @db.Timestamp(6)
-  updated_at           DateTime           @default(now()) @db.Timestamp(6)
-  global_snapshot      global_snapshots   @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_allow_spend_blocks_global_snapshot_fk")
-  dag_allow_spends     dag_allow_spends[]
+  round_id             String           @unique(map: "dag_allow_spend_blocks_unique") @db.Uuid
+  global_snapshot_hash String           @id @db.VarChar
+  created_at           DateTime         @default(now()) @db.Timestamp(6)
+  updated_at           DateTime         @default(now()) @db.Timestamp(6)
+  global_snapshot      global_snapshots @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_allow_spend_blocks_global_snapshot_fk")
 }
 
 model dag_allow_spends {
@@ -126,14 +125,14 @@ model dag_allow_spends {
   last_valid_epoch_progress                              BigInt
   round_id                                               String                           @db.Uuid
   ordinal                                                BigInt                           @unique(map: "dag_allow_spends_ordinal")
-  snapshot_hash                                          String?                          @db.VarChar
+  snapshot_hash                                          String                           @db.VarChar
   dag_allow_spend_approvers                              dag_allow_spend_approvers[]
-  dag_allow_spend_block                                  dag_allow_spend_blocks           @relation(fields: [round_id], references: [round_id], onDelete: Cascade, onUpdate: NoAction, map: "allow_spends_block_fk")
   addresses_dag_allow_spends_destination_addrToaddresses addresses                        @relation("dag_allow_spends_destination_addrToaddresses", fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_allow_spends_destination_addr_fk")
   addresses_dag_allow_spends_source_addrToaddresses      addresses                        @relation("dag_allow_spends_source_addrToaddresses", fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_allow_spends_source_addr_fk")
   dag_expired_spend_transactions                         dag_expired_spend_transactions[]
   dag_spend_transactions                                 dag_spend_transactions[]
   abstract_transactions_view                             abstract_transactions_view[]
+  global_snapshot                                        global_snapshots                 @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_allow_spend_blocks_global_snapshot_fk")
 
   @@index([round_id])
 }
@@ -146,7 +145,7 @@ model dag_balance_changes {
   updated_at       DateTime         @default(now()) @db.Timestamp(6)
   snapshot_ordinal BigInt
   addresses        addresses        @relation(fields: [address], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_balance_change_address_fk")
-  global_snapshots global_snapshots @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_balance_change_global_snapshot_fk")
+  global_snapshot  global_snapshots @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_balance_change_global_snapshot_fk")
 
   @@id([snapshot_ordinal, address], map: "dag_balance_change_pk")
   @@index([address, created_at], map: "dag_balance_changes_address_idx")
@@ -158,7 +157,7 @@ model dag_blocks {
   created_at       DateTime           @default(now()) @db.Timestamp(6)
   updated_at       DateTime           @default(now()) @db.Timestamp(6)
   snapshot_hash    String             @db.VarChar
-  global_snapshots global_snapshots   @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_block_global_snapshot_fk")
+  global_snapshot  global_snapshots   @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_block_global_snapshot_fk")
   dag_transactions dag_transactions[]
   super            abstract_blocks?
 
@@ -171,7 +170,7 @@ model dag_reward_transactions {
   amount               BigInt
   created_at           DateTime         @default(now()) @db.Timestamp(6)
   updated_at           DateTime         @default(now()) @db.Timestamp(6)
-  global_snapshots     global_snapshots @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_reward_transaction_global_snapshot_fk")
+  global_snapshot      global_snapshots @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_reward_transaction_global_snapshot_fk")
   addresses            addresses        @relation(fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_reward_transactions_destination_addr_fk")
 
   @@id([global_snapshot_hash, destination_addr], map: "dag_reward_transaction_pk")
@@ -179,17 +178,17 @@ model dag_reward_transactions {
 }
 
 model dag_spend_transactions {
-  hash                       String                       @id(map: "dag_spend_transactions_pk") @db.VarChar
-  source_addr                String                       @db.VarChar
+  hash                       String                      @id(map: "dag_spend_transactions_pk") @db.VarChar
+  source_addr                String                      @db.VarChar
   amount                     BigInt
-  created_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  updated_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  destination_addr           String?                      @db.VarChar
-  allow_spend_ref            String?                      @db.VarChar
-  snapshot_hash              String?                      @db.VarChar
-  dag_allow_spend            dag_allow_spends?            @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_spend_transactions_dag_allow_spends_fk")
-  addresses                  addresses?                   @relation(fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_spend_transactions_destination_addr_fk")
-  abstract_transactions_view abstract_transactions_view[]
+  created_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  destination_addr           String?                     @db.VarChar
+  allow_spend_ref            String?                     @db.VarChar
+  snapshot_hash              String?                     @db.VarChar
+  dag_allow_spend            dag_allow_spends?           @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_spend_transactions_dag_allow_spends_fk")
+  addresses                  addresses?                  @relation(fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_spend_transactions_destination_addr_fk")
+  abstract_transactions_view abstract_transactions_view?
 }
 
 model dag_token_lock_blocks {
@@ -202,40 +201,38 @@ model dag_token_lock_blocks {
 }
 
 model dag_token_locks {
-  hash                 String                @id(map: "dag_token_locks_pk") @db.VarChar
-  source_addr          String                @db.VarChar
-  amount               BigInt
-  created_at           DateTime              @default(now()) @db.Timestamp(6)
-  updated_at           DateTime              @default(now()) @db.Timestamp(6)
-  ordinal              BigInt
-  unlock_epoch         BigInt
-  round_id             String                @db.Uuid
-  global_snapshot_hash String                @db.VarChar
-  snapshot_hash        String?               @db.VarChar
-  dag_token_lock_block dag_token_lock_blocks @relation(fields: [round_id], references: [round_id], onDelete: Cascade, onUpdate: NoAction, map: "token_lock_block_fk")
-  addresses            addresses             @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_locks_source_addr_fk")
-  dag_token_unlocks    dag_token_unlocks?
+  hash                       String                      @id(map: "dag_token_locks_pk") @db.VarChar
+  source_addr                String                      @db.VarChar
+  amount                     BigInt
+  created_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  ordinal                    BigInt
+  unlock_epoch               BigInt?
+  round_id                   String                      @db.Uuid
+  snapshot_hash              String                      @db.VarChar
+  addresses                  addresses                   @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_locks_source_addr_fk")
+  dag_token_unlocks          dag_token_unlocks?
+  abstract_transactions_view abstract_transactions_view?
+  dag_token_lock_blocks      dag_token_lock_blocks?      @relation(fields: [round_id], references: [round_id])
+  global_snapshot            global_snapshots            @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_lock_global_snapshot_fk")
 
-  abstract_transactions_view abstract_transactions_view[]
+  @@unique([ordinal], map: "dag_token_locks_unique")
 }
 
 model dag_token_unlocks {
-  hash                   String          @db.VarChar
-  source_addr            String          @db.VarChar
-  amount                 BigInt
-  created_at             DateTime        @default(now()) @db.Timestamp(6)
-  updated_at             DateTime        @default(now()) @db.Timestamp(6)
-  lock_reference_ordinal BigInt
-  lock_reference_hash    String          @db.VarChar
-  snapshot_hash          String?         @db.VarChar
-  dag_token_lock         dag_token_locks @relation(fields: [lock_reference_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_unlocks_token_locks_fk")
+  hash                       String                      @id(map: "dag_token_unlocks_pk") @db.VarChar
+  source_addr                String                      @db.VarChar
+  amount                     BigInt
+  created_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  lock_reference_hash        String                      @db.VarChar
+  dag_token_lock             dag_token_locks             @relation(fields: [lock_reference_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction, map: "dag_token_unlocks_token_locks_fk")
+  addresses                  addresses                   @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "ddag_token_unlocks_address_fk")
+  abstract_transactions_view abstract_transactions_view?
+  snapshot_hash              String                      @db.VarChar
+  global_snapshot            global_snapshots            @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_unlock_global_snapshot_fk")
 
-  addresses                  addresses                    @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "ddag_token_unlocks_address_fk")
-  abstract_transactions_view abstract_transactions_view[]
-
-  @@id([hash], map: "dag_token_unlocks_pk")
   @@unique([lock_reference_hash])
-  @@unique([lock_reference_ordinal])
 }
 
 model dag_transactions {
@@ -251,19 +248,18 @@ model dag_transactions {
   parent_hash                                            String?    @db.VarChar
   ordinal                                                BigInt
   block_hash                                             String     @db.VarChar
-  snapshot_hash                                          String?    @db.VarChar
   dag_blocks                                             dag_blocks @relation(fields: [block_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_transaction_dag_block_fk")
   addresses_dag_transactions_destination_addrToaddresses addresses  @relation("dag_transactions_destination_addrToaddresses", fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_transactions_destination_addr_fk")
   addresses_dag_transactions_source_addrToaddresses      addresses  @relation("dag_transactions_source_addrToaddresses", fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_transactions_source_addr_fk")
 }
 
 model global_snapshot_proofs {
-  id               String           @db.VarChar
-  signature        String           @db.VarChar
-  snapshot_hash    String           @db.VarChar
-  created_at       DateTime         @default(now()) @db.Timestamp(6)
-  updated_at       DateTime         @default(now()) @db.Timestamp(6)
-  global_snapshots global_snapshots @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "proof_global_snapshot_fk")
+  id              String           @db.VarChar
+  signature       String           @db.VarChar
+  snapshot_hash   String           @db.VarChar
+  created_at      DateTime         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime         @default(now()) @db.Timestamp(6)
+  global_snapshot global_snapshots @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "proof_global_snapshot_fk")
 
   @@id([snapshot_hash, id], map: "proof_pk")
 }
@@ -286,6 +282,9 @@ model global_snapshots {
   dag_token_lock_blocks    dag_token_lock_blocks?
   global_snapshot_proofs   global_snapshot_proofs[]
   metagraph_snapshots      metagraph_snapshots[]
+  dag_allow_spends         dag_allow_spends[]
+  dag_token_locks          dag_token_locks[]
+  dag_token_unlocks        dag_token_unlocks[]
 }
 
 model metagraph_allow_spend_approvers {
@@ -321,7 +320,7 @@ model metagraph_allow_spends {
   last_valid_epoch_progress                                    BigInt
   round_id                                                     String                                 @db.Uuid
   ordinal                                                      BigInt                                 @unique(map: "metagraph_allow_spends_ordinal")
-  snapshot_hash                                                String?                                @db.VarChar
+  snapshot_hash                                                String                                 @db.VarChar
   metagraph_allow_spend_approvers                              metagraph_allow_spend_approvers[]
   metagraph_allow_spend_block                                  metagraph_allow_spend_blocks           @relation(fields: [round_id], references: [round_id], onDelete: Cascade, onUpdate: NoAction, map: "allow_spends_block_fk")
   addresses_metagraph_allow_spends_destination_addrToaddresses addresses                              @relation("metagraph_allow_spends_destination_addrToaddresses", fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_allow_spends_destination_addr_fk")
@@ -329,7 +328,8 @@ model metagraph_allow_spends {
   metagraphs                                                   metagraphs                             @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
   metagraph_expired_spend_transactions                         metagraph_expired_spend_transactions[]
   metagraph_spend_transactions                                 metagraph_spend_transactions[]
-  abstract_transactions_view                                   abstract_transactions_view[]
+  abstract_transactions_view                                   abstract_transactions_view?
+  metagraph_snapshot                                           metagraph_snapshots                    @relation(fields: [metagraph_id, snapshot_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_allow_spend_blocks_metagraph_snapshot_fk")
 }
 
 model metagraph_balance_changes {
@@ -339,12 +339,12 @@ model metagraph_balance_changes {
   balance                    BigInt
   created_at                 DateTime            @default(now()) @db.Timestamp(6)
   updated_at                 DateTime            @default(now()) @db.Timestamp(6)
-  metagraph_snapshot_ordinal BigInt
+  snapshot_ordinal           BigInt              @map("metagraph_snapshot_ordinal")
   addresses                  addresses           @relation(fields: [address], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "address_fk")
   metagraph_snapshot         metagraph_snapshots @relation(fields: [metagraph_id, metagraph_snapshot_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_balance_change_metagraph_snapshot_fk")
   metagraphs                 metagraphs          @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
 
-  @@id([metagraph_id, address, metagraph_snapshot_ordinal], map: "metagraph_balance_change_pk")
+  @@id([metagraph_id, address, snapshot_ordinal], map: "metagraph_balance_change_pk")
 }
 
 model metagraph_blocks {
@@ -364,22 +364,21 @@ model metagraph_blocks {
 }
 
 model metagraph_fee_transactions {
-  hash                                                             String                       @db.VarChar
-  source_addr                                                      String                       @db.VarChar
+  hash                                                             String                      @db.VarChar
+  source_addr                                                      String                      @db.VarChar
   amount                                                           BigInt
-  created_at                                                       DateTime                     @default(now()) @db.Timestamp(6)
-  updated_at                                                       DateTime                     @default(now()) @db.Timestamp(6)
-  metagraph_id                                                     String                       @db.VarChar
-  metagraph_snapshot_hash                                          String                       @db.VarChar
-  destination_addr                                                 String                       @db.VarChar
-  data_update_ref                                                  String?                      @db.VarChar
+  created_at                                                       DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                                                       DateTime                    @default(now()) @db.Timestamp(6)
+  metagraph_id                                                     String                      @db.VarChar
+  metagraph_snapshot_hash                                          String                      @db.VarChar
+  destination_addr                                                 String                      @db.VarChar
+  data_update_ref                                                  String?                     @db.VarChar
   metagraph_snapshot_ordinal                                       BigInt?
-  snapshot_hash                                                    String?                      @db.VarChar
-  metagraph_snapshot                                               metagraph_snapshots          @relation(fields: [metagraph_id, metagraph_snapshot_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "fee_transaction_metagraph_snapshot_fk")
-  addresses_metagraph_fee_transactions_destination_addrToaddresses addresses                    @relation("metagraph_fee_transactions_destination_addrToaddresses", fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_fee_transactions_destination_addr_fk")
-  addresses_metagraph_fee_transactions_source_addrToaddresses      addresses                    @relation("metagraph_fee_transactions_source_addrToaddresses", fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_fee_transactions_source_addr_fk")
-  metagraphs                                                       metagraphs                   @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
-  abstract_transactions_view                                       abstract_transactions_view[]
+  metagraph_snapshot                                               metagraph_snapshots         @relation(fields: [metagraph_id, metagraph_snapshot_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "fee_transaction_metagraph_snapshot_fk")
+  addresses_metagraph_fee_transactions_destination_addrToaddresses addresses                   @relation("metagraph_fee_transactions_destination_addrToaddresses", fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_fee_transactions_destination_addr_fk")
+  addresses_metagraph_fee_transactions_source_addrToaddresses      addresses                   @relation("metagraph_fee_transactions_source_addrToaddresses", fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_fee_transactions_source_addr_fk")
+  metagraphs                                                       metagraphs                  @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
+  abstract_transactions_view                                       abstract_transactions_view?
 
   @@id([hash], map: "fee_transaction_pk")
 }
@@ -419,80 +418,83 @@ model metagraph_snapshots {
   metagraph_fee_transactions                               metagraph_fee_transactions[]
   metagraph_reward_transactions                            metagraph_reward_transactions[]
   metagraphs                                               metagraphs                      @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
-  global_snapshots                                         global_snapshots?               @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_snapshots_global_snapshots_fk")
+  global_snapshot                                          global_snapshots?               @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_snapshots_global_snapshots_fk")
   addresses_metagraph_snapshots_owner_addressToaddresses   addresses?                      @relation("metagraph_snapshots_owner_addressToaddresses", fields: [owner_address], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "owner_address_fk")
   addresses_metagraph_snapshots_staking_addressToaddresses addresses?                      @relation("metagraph_snapshots_staking_addressToaddresses", fields: [staking_address], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "staking_address_fk")
   metagraph_token_lock_blocks                              metagraph_token_lock_blocks?
+  metagraph_token_locks                                    metagraph_token_locks[]
+  metagraph_token_unlocks                                  metagraph_token_unlocks[]
+  metagraph_allow_spends                                   metagraph_allow_spends[]
 
   @@id([metagraph_id, hash], map: "metagraph_snapshot_pk")
   @@unique([metagraph_id, ordinal], map: "metagraph_snapshot_unique")
 }
 
 model metagraph_spend_transactions {
-  hash                       String                       @id(map: "metagraph_spend_transactions_pk") @db.VarChar
-  source_addr                String                       @db.VarChar
+  hash                       String                      @id(map: "metagraph_spend_transactions_pk") @db.VarChar
+  source_addr                String                      @db.VarChar
   amount                     BigInt
-  created_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  updated_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  metagraph_id               String                       @db.VarChar
-  destination_addr           String                       @db.VarChar
-  allow_spend_ref            String?                      @db.VarChar
-  snapshot_hash              String?                      @db.VarChar
-  metagraph_allow_spend      metagraph_allow_spends?      @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "mg_spend_transactions_mg_allow_spends_fk")
-  addresses                  addresses                    @relation(fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_spend_transactions_destination_addr_fk")
-  metagraphs                 metagraphs                   @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_spend_transactions_metagraph_id_fk")
-  abstract_transactions_view abstract_transactions_view[]
+  created_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  metagraph_id               String                      @db.VarChar
+  destination_addr           String                      @db.VarChar
+  allow_spend_ref            String?                     @db.VarChar
+  snapshot_hash              String?                     @db.VarChar
+  metagraph_allow_spend      metagraph_allow_spends?     @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "mg_spend_transactions_mg_allow_spends_fk")
+  addresses                  addresses                   @relation(fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_spend_transactions_destination_addr_fk")
+  metagraphs                 metagraphs                  @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_spend_transactions_metagraph_id_fk")
+  abstract_transactions_view abstract_transactions_view?
 }
 
 model metagraph_token_lock_blocks {
-  metagraph_id            String                  @db.VarChar
-  metagraph_snapshot_hash String                  @db.VarChar
-  round_id                String                  @db.Uuid
-  created_at              DateTime                @default(now()) @db.Timestamp(6)
-  updated_at              DateTime                @default(now()) @db.Timestamp(6)
-  metagraphs              metagraphs              @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_lock_blocks_metagraph_id_fk")
-  metagraph_snapshot      metagraph_snapshots     @relation(fields: [metagraph_id, metagraph_snapshot_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_lock_blocks_metagraph_snapshot_fk")
-  metagraph_token_locks   metagraph_token_locks[]
+  metagraph_id            String              @db.VarChar
+  metagraph_snapshot_hash String              @db.VarChar
+  round_id                String              @db.Uuid
+  created_at              DateTime            @default(now()) @db.Timestamp(6)
+  updated_at              DateTime            @default(now()) @db.Timestamp(6)
+  metagraphs              metagraphs          @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_lock_blocks_metagraph_id_fk")
+  metagraph_snapshot      metagraph_snapshots @relation(fields: [metagraph_id, metagraph_snapshot_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_lock_blocks_metagraph_snapshot_fk")
 
   @@id([metagraph_id, metagraph_snapshot_hash])
   @@unique([metagraph_id, round_id], map: "metagraph_token_lock_blocks_unique")
 }
 
 model metagraph_token_locks {
-  hash                       String                       @db.VarChar
-  source_addr                String                       @db.VarChar
+  hash                       String                      @db.VarChar
+  source_addr                String                      @db.VarChar
   amount                     BigInt
-  created_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  updated_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  metagraph_id               String                       @db.VarChar
+  created_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  metagraph_id               String                      @db.VarChar
   ordinal                    BigInt
-  unlock_epoch               BigInt
-  round_id                   String                       @db.Uuid
-  snapshot_hash              String?                      @db.VarChar
-  metagraphs                 metagraphs                   @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
-  metagraph_token_lock_block metagraph_token_lock_blocks  @relation(fields: [metagraph_id, round_id], references: [metagraph_id, round_id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_lock_token_lock_blocks_fk")
-  addresses                  addresses                    @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_locks_source_addr_fk")
-  abstract_transactions_view abstract_transactions_view[]
+  unlock_epoch               BigInt?
+  round_id                   String                      @db.Uuid
+  snapshot_hash              String                      @db.VarChar
+  metagraph                  metagraphs                  @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
+  addresses                  addresses                   @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_locks_source_addr_fk")
+  abstract_transactions_view abstract_transactions_view?
   metagraph_token_unlocks    metagraph_token_unlocks?
+  metagraph_snapshot         metagraph_snapshots         @relation(fields: [metagraph_id, snapshot_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_lock_blocks_metagraph_snapshot_fk")
 
   @@id([hash], map: "metagraph_token_locks_pk")
   @@unique([metagraph_id, ordinal], map: "metagraph_token_locks_unique")
 }
 
 model metagraph_token_unlocks {
-  hash                       String                       @db.VarChar
-  source_addr                String                       @db.VarChar
+  hash                       String                      @db.VarChar
+  source_addr                String                      @db.VarChar
   amount                     BigInt
-  created_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  updated_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  metagraph_id               String                       @db.VarChar
+  created_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  metagraph_id               String                      @db.VarChar
   lock_reference_ordinal     BigInt
-  lock_reference_hash        String                       @db.VarChar
-  snapshot_hash              String?                      @db.VarChar
-  addresses                  addresses                    @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "address_fk")
-  metagraphs                 metagraphs                   @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
-  token_lock                 metagraph_token_locks        @relation(fields: [lock_reference_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction, map: "metagraph_token_unlocks_token_locks_fk")
-  abstract_transactions_view abstract_transactions_view[]
+  lock_reference_hash        String                      @db.VarChar
+  snapshot_hash              String                      @db.VarChar
+  addresses                  addresses                   @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "address_fk")
+  metagraphs                 metagraphs                  @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
+  token_lock                 metagraph_token_locks       @relation(fields: [lock_reference_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction, map: "metagraph_token_unlocks_token_locks_fk")
+  abstract_transactions_view abstract_transactions_view?
+  metagraph_snapshot         metagraph_snapshots         @relation(fields: [metagraph_id, snapshot_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_unlock_blocks_metagraph_snapshot_fk")
 
   @@id([hash], map: "metagraph_token_unlocks_pk")
   @@unique([lock_reference_hash])
@@ -513,7 +515,6 @@ model metagraph_transactions {
   parent_hash                                                  String           @db.VarChar
   ordinal                                                      BigInt
   block_hash                                                   String           @db.VarChar
-  snapshot_hash                                                String?          @db.VarChar
   metagraphs                                                   metagraphs       @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
   metagraph_blocks                                             metagraph_blocks @relation(fields: [metagraph_id, block_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_transaction_metagraph_block_fk")
   addresses_metagraph_transactions_destination_addrToaddresses addresses        @relation("metagraph_transactions_destination_addrToaddresses", fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_transactions_destination_addrfk")
@@ -540,26 +541,26 @@ model metagraphs {
 }
 
 model dag_expired_spend_transactions {
-  hash             String            @id(map: "dag_expired_spend_transactions_pk") @db.VarChar
-  source_addr      String            @db.VarChar
-  amount           BigInt
-  created_at       DateTime          @default(now()) @db.Timestamp(6)
-  updated_at       DateTime          @default(now()) @db.Timestamp(6)
-  allow_spend_ref  String?           @db.VarChar
-  snapshot_hash    String?           @db.VarChar
-  abstract_transactions_view abstract_transactions_view[]
-  dag_allow_spend dag_allow_spends? @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_expired_spend_transactions_dag_allow_spends_fk")
+  hash                       String                      @id(map: "dag_expired_spend_transactions_pk") @db.VarChar
+  source_addr                String                      @db.VarChar
+  amount                     BigInt
+  created_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  allow_spend_ref            String?                     @db.VarChar
+  snapshot_hash              String?                     @db.VarChar
+  abstract_transactions_view abstract_transactions_view?
+  dag_allow_spend            dag_allow_spends?           @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_expired_spend_transactions_dag_allow_spends_fk")
 }
 
 model metagraph_expired_spend_transactions {
-  hash                   String                  @id(map: "metagraph_expired_spend_transactions_pk") @db.VarChar
-  source_addr            String                  @db.VarChar
-  amount                 BigInt
-  created_at             DateTime                @default(now()) @db.Timestamp(6)
-  updated_at             DateTime                @default(now()) @db.Timestamp(6)
-  metagraph_id           String                  @db.VarChar
-  allow_spend_ref        String?                 @db.VarChar
-  snapshot_hash          String?                 @db.VarChar
-  abstract_transactions_view abstract_transactions_view[]
-  metagraph_allow_spend metagraph_allow_spends? @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_expired_spend_transactions_metagraph_allow_spends_fk")
+  hash                       String                      @id(map: "metagraph_expired_spend_transactions_pk") @db.VarChar
+  source_addr                String                      @db.VarChar
+  amount                     BigInt
+  created_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime                    @default(now()) @db.Timestamp(6)
+  metagraph_id               String                      @db.VarChar
+  allow_spend_ref            String?                     @db.VarChar
+  snapshot_hash              String?                     @db.VarChar
+  abstract_transactions_view abstract_transactions_view?
+  metagraph_allow_spend      metagraph_allow_spends?     @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_expired_spend_transactions_metagraph_allow_spends_fk")
 }

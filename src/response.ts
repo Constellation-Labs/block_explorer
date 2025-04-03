@@ -27,6 +27,7 @@ const commonSnapshotResponse = (snapshot, blocksProperty) => ({
   subHeight: snapshot.subheight,
   lastSnapshotHash: snapshot.last_snapshot_hash,
   blocks: snapshot[blocksProperty].map((b) => b.hash),
+  epochProgress: snapshot.epoch_progress,
   timestamp: snapshot.created_at,
 });
 
@@ -44,7 +45,7 @@ export const rewardResponse = (reward) => ({
 export const dagTransactionsResponse = (ts) => ts.map(dagTransactionResponse);
 
 export const dagTransactionResponse = (t) =>
-  transactionResponse(t, t.dag_blocks.global_snapshots);
+  transactionResponse(t, t.dag_blocks.global_snapshot);
 
 const transactionResponse = (transaction, snapshot) => ({
   hash: transaction.hash,
@@ -73,8 +74,8 @@ const blockResponse = (block) => ({
 export const dagBlockResponse = (block) => ({
   ...blockResponse(block),
   transactions: block.dag_transactions.map((tx) => tx.hash),
-  snapshotHash: block.global_snapshots.hash,
-  snapshotOrdinal: block.global_snapshots.ordinal,
+  snapshotHash: block.global_snapshot.hash,
+  snapshotOrdinal: block.global_snapshot.ordinal,
 });
 
 export const blockParentResponse = (block_parent) => ({
@@ -141,20 +142,23 @@ export const successResponse = (data: any): APIGatewayProxyResult => ({
 
 export const notFoundResponse = (): APIGatewayProxyResult => ({
   statusCode: 404,
-  body: JSON.stringify({ message: "Not found" }),
+  body: JSON.stringify({ message: "Not found", errors: [""] }),
 });
 
 export const missingParameterResponse = (
   param: string
 ): APIGatewayProxyResult => ({
   statusCode: 400,
-  body: JSON.stringify({ message: `Missing parameter: ${param}` }),
+  body: JSON.stringify({
+    message: `Missing parameter: ${param}`,
+    errors: [""],
+  }),
 });
 
 export const handleError = (error: any): APIGatewayProxyResult => {
   console.error(error);
   return {
     statusCode: 500,
-    body: JSON.stringify({ message: "Internal Server Error" }),
+    body: JSON.stringify({ message: "Internal Server Error", errors: [error] }),
   };
 };

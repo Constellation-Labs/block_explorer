@@ -28,14 +28,14 @@ const prisma = new PrismaClient();
 
 const latestMetagraphSnapshot = async () => {
   return prisma.metagraph_snapshots.findFirst({
-    select: { hash: true },
+    select: { hash: true, ordinal: true },
     orderBy: { ordinal: "desc" },
   });
 };
 
 const metagraphSnapshotWhere = async (term) => {
   if (term == "latest") {
-    const latestSnapshotHash = await latestMetagraphSnapshot();
+    const latestSnapshotHash = (await latestMetagraphSnapshot())?.hash;
     return { hash: latestSnapshotHash };
   } else {
     return extractHashOrdinal(term);
@@ -363,6 +363,14 @@ export const currencyTransactionsByDestination = async (
   }
 };
 
+const balanceOrZeroFn = async (balance, address) => {
+  if (balance === null) {
+    const snapshot_ordinal = (await latestMetagraphSnapshot())?.ordinal;
+    return { balance: 0, address, snapshot_ordinal };
+  }
+  return balance;
+};
+
 export const currencyBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -375,7 +383,7 @@ export const currencyBalanceByAddress = async (
 
     const ordinalNbr = toNumber(ordinal);
     const ordinalCondition = isFinite(ordinalNbr)
-      ? { metagraph_snapshot_ordinal: { lte: ordinalNbr } }
+      ? { snapshot_ordinal: { lte: ordinalNbr } }
       : {};
 
     const balance = await prisma.metagraph_balance_changes.findFirst({
@@ -384,10 +392,12 @@ export const currencyBalanceByAddress = async (
         address,
         ...ordinalCondition,
       },
-      orderBy: { metagraph_snapshot_ordinal: "desc" },
+      orderBy: { snapshot_ordinal: "desc" },
     });
 
-    return respond(balance, balanceResponse);
+    const balanceOrZero = await balanceOrZeroFn(balance, address);
+
+    return respond(balanceOrZero, balanceResponse);
   } catch (error) {
     return handleError(error);
   }

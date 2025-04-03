@@ -11,7 +11,7 @@ name: Deploy postgress app
 jobs:
   deploy:
     name: Deploy ${{ github.ref_name }} to ${{ inputs.environment }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     environment: ${{ inputs.environment }}
     steps:
       - name: Checkout code
