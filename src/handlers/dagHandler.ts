@@ -295,11 +295,11 @@ export const dagTransactionsByDestination = async (
   }
 };
 
-const lastOrdinal = () => {};
-
-const balanceOrZeroFn = async (balance, address) => {
+const balanceOrZeroFn = async (balance, address, ordinal) => {
   if (balance === null) {
-    const snapshot_ordinal = (await latestGlobalSnapshot())?.ordinal;
+    const snapshot_ordinal = isFinite(ordinal)
+      ? ordinal
+      : (await latestGlobalSnapshot())?.ordinal;
     return { balance: 0, address, snapshot_ordinal };
   }
   return balance;
@@ -309,9 +309,12 @@ export const dagBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { address, ordinal } = event.pathParameters || {};
+    const { address } = event.pathParameters || {};
+
+    const { ordinal } = event.queryStringParameters || {};
 
     const ordinalNbr = toNumber(ordinal);
+
     const ordinalCondition = isFinite(ordinalNbr)
       ? { snapshot_ordinal: { lte: ordinalNbr } }
       : {};
@@ -321,7 +324,7 @@ export const dagBalanceByAddress = async (
       orderBy: { snapshot_ordinal: "desc" },
     });
 
-    const balanceOrZero = await balanceOrZeroFn(balance, address);
+    const balanceOrZero = await balanceOrZeroFn(balance, address, ordinalNbr);
 
     return respond(balanceOrZero, balanceResponse);
   } catch (error) {
