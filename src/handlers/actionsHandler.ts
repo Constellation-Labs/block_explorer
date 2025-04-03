@@ -53,13 +53,13 @@ const actionResponse = (transaction) => ({
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,
-  destination: transaction.destination_addr,
+  destination: transaction.destination_addr ?? null,
   unlockEpoch:
     transaction.dag_allow_spend?.last_valid_epoch_progress ??
-    transaction.dag_token_lock?.unlock_epoch,
+    transaction.dag_token_lock?.unlock_epoch ?? null,
   parentHash:
     transaction.dag_spend_transaction?.allow_spend_ref ??
-    transaction.dag_token_unlock?.lock_reference_hash,
+    transaction.dag_token_unlock?.lock_reference_hash ?? null,
   timestamp: transaction.created_at,
 });
 
