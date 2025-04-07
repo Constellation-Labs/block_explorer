@@ -93,6 +93,10 @@ export const metagraphSnapshotsResponse = (ss) =>
   ss.map(metagraphSnapshotResponse);
 export const metagraphSnapshotResponse = (snapshot) => ({
   ...commonSnapshotResponse(snapshot, "metagraph_blocks"),
+  fee: snapshot.fee,
+  stakingAddress: snapshot.staking_address ?? null,
+  ownerAddress: snapshot.owner_address ?? null,
+  sizeInKb: snapshot.size,
 });
 
 export const metagraphBlockResponse = (block) => ({

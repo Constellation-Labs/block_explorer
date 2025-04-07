@@ -410,6 +410,7 @@ model metagraph_snapshots {
   owner_address                                            String?                         @db.VarChar
   staking_address                                          String?                         @db.VarChar
   epoch_progress                                           BigInt?
+  size                                                     BigInt?
   version                                                  String                          @db.VarChar
   created_at                                               DateTime                        @default(now()) @db.Timestamp(6)
   updated_at                                               DateTime                        @default(now()) @db.Timestamp(6)
