@@ -98,6 +98,8 @@ export const globalSnapshotRewards = async (
       return notFoundResponse();
     }
 
+    const gsWhere = await globalSnapshotWhere(term)
+
     const toCursor = (row) => ({
       global_snapshot_hash_destination_addr: {
         global_snapshot_hash: row.global_snapshot_hash,
@@ -114,7 +116,7 @@ export const globalSnapshotRewards = async (
       toCursor,
       fromCursor,
       {
-        where: { global_snapshot: { ...globalSnapshotWhere(term) } },
+        where: { global_snapshot: { ...gsWhere } },
         orderBy: [{ destination_addr: "asc" }],
       },
       prisma.dag_reward_transactions.findMany,
@@ -135,9 +137,11 @@ export const globalSnapshotTransactions = async (
       return notFoundResponse();
     }
 
+    const gsWhere = await globalSnapshotWhere(term)
+
     const query = {
       where: {
-        dag_blocks: { global_snapshot: { ...globalSnapshotWhere(term) } },
+        dag_blocks: { global_snapshot: { ...gsWhere } },
       },
       include: {
         dag_blocks: {
