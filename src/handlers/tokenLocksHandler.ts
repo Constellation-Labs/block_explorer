@@ -6,7 +6,7 @@ import {
   fromCreatedAtOrdinalCursor,
   toCreatedAtOrdinalCursor,
 } from "../pagination";
-import { handleError } from "../response";
+import { handleError, respond } from "../response";
 
 const prisma = new PrismaClient();
 
@@ -102,6 +102,23 @@ export const tokenLocks = async (
   );
 };
 
+export const tokenLock = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { hash } = event.pathParameters || {};
+
+    const lock = await prisma.dag_token_locks.findUnique({
+      where: { hash },
+      include: includeDagUnlockOrdinal,
+    });
+
+    return respond(lock, dagTokenLockResponse);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 export const globalSnapshotTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -160,11 +177,31 @@ export const tokenUnlocks = async (
     fromCreatedAtOrdinalCursor,
     {
       include: includeDagGlobalSnapshotOrdinal,
-      orderBy: [{ global_snapshot: {ordinal: "desc"} }, { created_at: "desc" }],
+      orderBy: [
+        { global_snapshot: { ordinal: "desc" } },
+        { created_at: "desc" },
+      ],
     },
     prisma.dag_token_unlocks.findMany,
     dagTokenUnlockResponses
   );
+};
+
+export const tokenUnlock = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { hash } = event.pathParameters || {};
+
+    const unlock = await prisma.dag_token_unlocks.findUnique({
+      where: { hash },
+      include: includeDagGlobalSnapshotOrdinal,
+    });
+
+    return respond(unlock, dagTokenUnlockResponse);
+  } catch (error) {
+    return handleError(error);
+  }
 };
 
 export const globalSnapshotTokenUnlocks = async (
@@ -183,7 +220,10 @@ export const globalSnapshotTokenUnlocks = async (
           global_snapshot: filter,
         },
         include: includeDagGlobalSnapshotOrdinal,
-        orderBy: [{ global_snapshot: {ordinal: "desc"} }, { created_at: "desc" }],
+        orderBy: [
+          { global_snapshot: { ordinal: "desc" } },
+          { created_at: "desc" },
+        ],
       },
       prisma.dag_token_unlocks.findMany,
       dagTokenUnlockResponses
@@ -206,7 +246,10 @@ export const addressTokenUnlocks = async (
       {
         where: { source_addr: address },
         include: includeDagGlobalSnapshotOrdinal,
-        orderBy: [{ global_snapshot: {ordinal: "desc"} }, { created_at: "desc" }],
+        orderBy: [
+          { global_snapshot: { ordinal: "desc" } },
+          { created_at: "desc" },
+        ],
       },
       prisma.dag_token_unlocks.findMany,
       dagTokenUnlockResponses
@@ -233,6 +276,23 @@ export const metagraphTokenLocks = async (
     prisma.metagraph_token_locks.findMany,
     metagraphTokenLockResponses
   );
+};
+
+export const metagraphTokenLock = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { identifier: metagraph_id, hash } = event.pathParameters || {};
+
+    const lock = await prisma.metagraph_token_locks.findUnique({
+      where: { metagraph_id, hash },
+      include: includeMetagraphUnlockOrdinal,
+    });
+
+    return respond(lock, metagraphTokenLockResponse);
+  } catch (error) {
+    return handleError(error);
+  }
 };
 
 export const metagraphSnapshotTokenLocks = async (
@@ -305,6 +365,23 @@ export const metagraphTokenUnlocks = async (
     prisma.metagraph_token_unlocks.findMany,
     metagraphTokenUnlockResponses
   );
+};
+
+export const metagraphTokenUnlock = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { identifier: metagraph_id, hash } = event.pathParameters || {};
+
+    const unlock = await prisma.metagraph_token_unlocks.findUnique({
+      where: { metagraph_id, hash },
+      include: includeMetagraphSnapshotOrdinal,
+    });
+
+    return respond(unlock, metagraphTokenUnlockResponse);
+  } catch (error) {
+    return handleError(error);
+  }
 };
 
 export const metagraphSnapshotTokenUnlocks = async (

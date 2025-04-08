@@ -1,3 +1,10 @@
+allowSpend:
+  handler: src/handlers/allowSpendsHandler.allowSpend
+  events:
+    - httpApi:
+        path: /allow-spends/{hash}
+        method: GET
+
 allowSpends:
   handler: src/handlers/allowSpendsHandler.allowSpends
   events:
@@ -26,6 +33,13 @@ spendTransactions:
         path: /spend-transactions
         method: GET
 
+spendTransaction:
+  handler: src/handlers/allowSpendsHandler.spendTransaction
+  events:
+    - httpApi:
+        path: /spend-transactions/{hash}
+        method: GET
+
 globalSnapshotSpendTransactions:
   handler: src/handlers/allowSpendsHandler.globalSnapshotSpendTransactions
   events:
@@ -47,6 +61,13 @@ allowSpendExpirations:
         path: /allow-spend-expirations
         method: GET
 
+allowSpendExpiration:
+  handler: src/handlers/allowSpendsHandler.allowSpendExpiration
+  events:
+    - httpApi:
+        path: /allow-spend-expirations/{hash}
+        method: GET
+
 globalSnapshotAllowSpendExpirations:
   handler: src/handlers/allowSpendsHandler.globalSnapshotAllowSpendExpirations
   events:
@@ -66,6 +87,13 @@ currencyAllowSpends:
   events:
     - httpApi:
         path: /currency/{metagraph_id}/allow-spends
+        method: GET
+
+currencyAllowSpend:
+  handler: src/handlers/allowSpendsHandler.currencyAllowSpend
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/allow-spends/{hash}
         method: GET
 
 currencySnapshotAllowSpends:
@@ -96,6 +124,13 @@ currencySpendTransactions:
         path: /currency/{metagraph_id}/spend-transactions
         method: GET
 
+currencySpendTransaction:
+  handler: src/handlers/allowSpendsHandler.currencySpendTransaction
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/spend-transactions/{hash}
+        method: GET
+
 currencyAddressSpendTransactions:
   handler: src/handlers/allowSpendsHandler.currencyAddressSpendTransactions
   events:
@@ -108,6 +143,13 @@ currencyAllowSpendExpirations:
   events:
     - httpApi:
         path: /currency/{metagraph_id}/allow-spend-expirations
+        method: GET
+
+currencyAllowSpendExpiration:
+  handler: src/handlers/allowSpendsHandler.currencyAllowSpendExpiration
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/allow-spend-expirations/{hash}
         method: GET
 
 currencySnapshotAllowSpendExpirations:

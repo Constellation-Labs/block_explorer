@@ -50,6 +50,22 @@ const spendExpiredResponse = (transaction) => ({
 
 const spendExpiredResponses = (txs) => txs.map(spendExpiredResponse);
 
+export const allowSpend = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { hash } = event.pathParameters || {};
+
+    const allowSpend = await prisma.dag_allow_spends.findUnique({
+      where: { hash },
+    });
+
+    return respond(allowSpend, allowSpendResponse);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 export const allowSpends = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -105,6 +121,22 @@ export const addressAllowSpends = async (
       prisma.dag_allow_spends.findMany,
       allowSpendResponses
     );
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const spendTransaction = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { hash } = event.pathParameters || {};
+
+    const spend = await prisma.dag_spend_transactions.findUnique({
+      where: { hash },
+    });
+
+    return respond(spend, spendTransactionResponse);
   } catch (error) {
     return handleError(error);
   }
@@ -193,6 +225,22 @@ export const allowSpendExpirations = async (
   }
 };
 
+export const allowSpendExpiration = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { hash } = event.pathParameters || {};
+
+    const expired = await prisma.dag_expired_spend_transactions.findUnique({
+      where: { hash },
+    });
+
+    return respond(expired, spendExpiredResponse);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 export const globalSnapshotAllowSpendExpirations = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -259,6 +307,22 @@ export const currencyAllowSpends = async (
       prisma.metagraph_allow_spends.findMany,
       allowSpendResponses
     );
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const currencyAllowSpend = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { metagraph_id, hash } = event.pathParameters || {};
+
+    const allowSpend = await prisma.metagraph_allow_spends.findUnique({
+      where: { metagraph_id, hash },
+    });
+
+    return respond(allowSpend, allowSpendResponse);
   } catch (error) {
     return handleError(error);
   }
@@ -334,6 +398,22 @@ export const currencySpendTransactions = async (
   }
 };
 
+export const currencySpendTransaction = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { metagraph_id, hash } = event.pathParameters || {};
+
+    const spend = await prisma.metagraph_spend_transactions.findUnique({
+      where: { metagraph_id, hash },
+    });
+
+    return respond(spend, spendTransactionResponse);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 export const currencySnapshotSpendTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -400,6 +480,23 @@ export const currencyAllowSpendExpirations = async (
       prisma.metagraph_expired_spend_transactions.findMany,
       spendExpiredResponses
     );
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const currencyAllowSpendExpiration = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { metagraph_id, hash } = event.pathParameters || {};
+
+    const expired =
+      await prisma.metagraph_expired_spend_transactions.findUnique({
+        where: { metagraph_id, hash },
+      });
+
+    return respond(expired, spendExpiredResponse);
   } catch (error) {
     return handleError(error);
   }
