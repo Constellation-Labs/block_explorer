@@ -5,6 +5,13 @@ tokenLocks:
         path: /token-locks
         method: GET
 
+tokenLock:
+  handler: src/handlers/tokenLocksHandler.tokenLock
+  events:
+    - httpApi:
+        path: /token-locks/{hash}
+        method: GET
+
 globalSnapshotTokenLocks:
   handler: src/handlers/tokenLocksHandler.globalSnapshotTokenLocks
   events:
@@ -26,6 +33,13 @@ tokenUnlocks:
         path: /token-unlocks
         method: GET
 
+tokenUnlock:
+  handler: src/handlers/tokenLocksHandler.tokenUnlock
+  events:
+    - httpApi:
+        path: /token-unlocks/{hash}
+        method: GET
+
 globalSnapshotTokenUnlocks:
   handler: src/handlers/tokenLocksHandler.globalSnapshotTokenUnlocks
   events:
@@ -45,6 +59,13 @@ currencyTokenLocks:
   events:
     - httpApi:
         path: /currency/{metagraph_id}/token-locks
+        method: GET
+
+currencyTokenLock:
+  handler: src/handlers/tokenLocksHandler.metagraphTokenLock
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/token-locks/{hash}
         method: GET
 
 currencySnapshotTokenLocks:
@@ -73,6 +94,13 @@ currencyTokenUnlocks:
   events:
     - httpApi:
         path: /currency/{metagraph_id}/token-unlocks
+        method: GET
+
+currencyTokenUnlock:
+  handler: src/handlers/tokenLocksHandler.metagraphTokenUnlock
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/token-unlocks/{hash}
         method: GET
 
 currencyAddressTokenUnlocks:

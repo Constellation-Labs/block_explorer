@@ -31,3 +31,13 @@ echo "Currency Address-Specific Endpoints"
 curl -X GET "http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/addresses/DAG04Qob76gZG7D5qZu9oeZvr8WFxs53Md383q4x/allow-spends"
 curl -X GET "http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/addresses/DAG04Qob76gZG7D5qZu9oeZvr8WFxs53Md383q4x/spend-transactions"
 curl -X GET "http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/addresses/DAG04Qob76gZG7D5qZu9oeZvr8WFxs53Md383q4x/allow-spend-expirations"
+
+echo "Spends by hash" 
+curl http://localhost:3001/allow-spends/tx003
+curl http://localhost:3001/spend-transactions/tx005
+curl http://localhost:3001/allow-spend-expirations/AlLoWsPeNdExPiRaTiOnHaSh123
+
+echo "Metagraph spends by hash" 
+curl http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/allow-spends/tx003mg
+curl http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/spend-transactions/tx005mg
+curl http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/allow-spend-expirations/AlLoWsPeNdExPiRaTiOnHaSh123

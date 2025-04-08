@@ -6,6 +6,10 @@ echo "Testing tokenLocks endpoint..."
 curl http://localhost:3001/token-locks -H "Content-Type: application/json"
 echo -e "\n"
 
+echo "Testing tokenLock endpoint..."
+curl http://localhost:3001/token-locks/tx009 -H "Content-Type: application/json"
+echo -e "\n"
+
 echo "Testing globalSnapshotTokenLocks endpoint..."
 curl http://localhost:3001/global-snapshots/c3071648a319313afdecad217f196558a7893dde2bc78ee56fbb0d0a5b73700b/token-locks -H "Content-Type: application/json"
 echo -e "\n"
@@ -18,6 +22,10 @@ echo "Testing tokenUnlocks endpoint..."
 curl http://localhost:3001/token-unlocks -H"Content-Type: application/json"
 echo -e "\n"
 
+echo "Testing tokenUnlock endpoint..."
+curl http://localhost:3001/token-unlocks/tx_unlock_009 -H "Content-Type: application/json"
+echo -e "\n"
+
 echo "Testing globalSnapshotTokenUnlocks endpoint..."
 curl http://localhost:3001/global-snapshots/f5524dc1bff16b587732dc0dd36e6eb0e96fb067f9e0ec93b1cb9b55e8c2f526/token-unlocks -H"Content-Type: application/json"
 echo -e "\n"
@@ -28,6 +36,10 @@ echo -e "\n"
 
 echo "Testing currencyTokenLocks endpoint..."
 curl http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/token-locks -H"Content-Type: application/json"
+echo -e "\n"
+
+echo "Testing currencyTokenLock endpoint..."
+curl http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/token-locks/tx009mg -H "Content-Type: application/json"
 echo -e "\n"
 
 echo "Testing currencySnapshotTokenLocks endpoint..."
@@ -45,6 +57,11 @@ echo -e "\n"
 echo "Testing currencyTokenUnlocks endpoint..."
 curl http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/token-unlocks -H"Content-Type: application/json"
 echo -e "\n"
+
+echo "Testing currencyTokenUnlock endpoint..."
+curl http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/token-unlocks/tx_unlock_009 -H "Content-Type: application/json"
+echo -e "\n"
+
 
 echo "Testing currencyAddressTokenUnlocks endpoint..."
 curl http://localhost:3001/currency/DAG5ySNMCXFLRmmXdTLwKPhV8YhBB8AFU88TxSbP/addresses/DAG4AqNNL2E7TWBUvQRxSPhraS2Lnr5xPM6xtVbs/token-unlocks -H"Content-Type: application/json"
