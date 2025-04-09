@@ -42,7 +42,7 @@ const metagraphSnapshotWhere = async (term) => {
   }
 };
 
-const metagraphSnapshotExists = async (metagraph_id, term) => {
+const metagraphSnapshotQuery = (metagraph_id, term) => {
   const filter = extractHashOrdinal(term);
 
   let where;
@@ -51,9 +51,12 @@ const metagraphSnapshotExists = async (metagraph_id, term) => {
   } else {
     where = { metagraph_id_hash: { metagraph_id, hash: filter.hash } };
   }
+  return where;
+}
 
+const metagraphSnapshotExists = async (metagraph_id, term) => {
   return prisma.metagraph_snapshots.findUnique({
-    where,
+    where: metagraphSnapshotQuery(metagraph_id, term),
     select: { hash: true },
   });
 };
@@ -134,10 +137,9 @@ export const currencySnapshot = async (
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
 
-    const snapshot = await prisma.metagraph_snapshots.findFirst({
-      where: { metagraph_id: metagraph_id, ...metagraphSnapshotWhere(term) },
+    const snapshot = await prisma.metagraph_snapshots.findUnique({
+      where: metagraphSnapshotQuery(metagraph_id, term),
       include: { metagraph_blocks: true },
-      orderBy: { ordinal: "desc" },
     });
 
     return respond(snapshot, metagraphSnapshotResponse);
