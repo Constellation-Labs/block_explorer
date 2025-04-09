@@ -12,7 +12,7 @@ tokenLock:
         path: /token-locks/{hash}
         method: GET
 
-globalSnapshotTokenLocks:
+gsTokenLocks:
   handler: src/handlers/tokenLocksHandler.globalSnapshotTokenLocks
   events:
     - httpApi:
@@ -40,7 +40,7 @@ tokenUnlock:
         path: /token-unlocks/{hash}
         method: GET
 
-globalSnapshotTokenUnlocks:
+gsTokenUnlocks:
   handler: src/handlers/tokenLocksHandler.globalSnapshotTokenUnlocks
   events:
     - httpApi:
@@ -54,56 +54,56 @@ addressTokenUnlocks:
         path: /addresses/{address}/token-unlocks
         method: GET
 
-currencyTokenLocks:
+ccyTokenLocks:
   handler: src/handlers/tokenLocksHandler.metagraphTokenLocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/token-locks
         method: GET
 
-currencyTokenLock:
+ccyTokenLock:
   handler: src/handlers/tokenLocksHandler.metagraphTokenLock
   events:
     - httpApi:
         path: /currency/{metagraph_id}/token-locks/{hash}
         method: GET
 
-currencySnapshotTokenLocks:
+ccySnapshotTokenLocks:
   handler: src/handlers/tokenLocksHandler.metagraphSnapshotTokenLocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/token-locks
         method: GET
 
-currencyAddressTokenLocks:
+ccyAddressTokenLocks:
   handler: src/handlers/tokenLocksHandler.metagraphAddressTokenLocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/addresses/{address}/token-locks
         method: GET
 
-currencySnapshotTokenUnlocks:
+ccySnapshotTokenUnlocks:
   handler: src/handlers/tokenLocksHandler.metagraphSnapshotTokenUnlocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/token-unlocks
         method: GET
 
-currencyTokenUnlocks:
+ccyTokenUnlocks:
   handler: src/handlers/tokenLocksHandler.metagraphTokenUnlocks
   events:
     - httpApi:
         path: /currency/{metagraph_id}/token-unlocks
         method: GET
 
-currencyTokenUnlock:
+ccyTokenUnlock:
   handler: src/handlers/tokenLocksHandler.metagraphTokenUnlock
   events:
     - httpApi:
         path: /currency/{metagraph_id}/token-unlocks/{hash}
         method: GET
 
-currencyAddressTokenUnlocks:
+ccyAddressTokenUnlocks:
   handler: src/handlers/tokenLocksHandler.metagraphAddressTokenUnlocks
   events:
     - httpApi:

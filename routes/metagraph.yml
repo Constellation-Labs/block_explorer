@@ -1,100 +1,100 @@
-currencySnapshots:
+ccySnapshots:
   handler: src/handlers/metagraphHandler.currencySnapshots
   events:
     - httpApi:
         path: /currency/{identifier}/snapshots
         method: GET
-currencySnapshotsByOwnerAddress:
+ccySnapshotsByOwnerAddress:
   handler: src/handlers/metagraphHandler.currencySnapshotsByOwnerAddress
   events:
     - httpApi:
         path: /addresses/{address}/snapshots
         method: GET
-currencySnapshot:
+ccySnapshot:
   handler: src/handlers/metagraphHandler.currencySnapshot
   events:
     - httpApi:
         path: /currency/{identifier}/snapshots/{term}
         method: GET
-currencySnapshotRewards:
+ccySnapshotRewards:
   handler: src/handlers/metagraphHandler.currencySnapshotRewards
   events:
     - httpApi:
         path: /currency/{identifier}/snapshots/{term}/rewards
         method: GET
-currencySnapshotTransactions:
+ccySnapshotTransactions:
   handler: src/handlers/metagraphHandler.currencySnapshotTransactions
   events:
     - httpApi:
         path: /currency/{identifier}/snapshots/{term}/transactions
         method: GET
-currencyBlock:
+ccyBlock:
   handler: src/handlers/metagraphHandler.currencyBlock
   events:
     - httpApi:
         path: /currency/{identifier}/blocks/{hash}
         method: GET
-currencyTransactions:
+ccyTransactions:
   handler: src/handlers/metagraphHandler.currencyTransactions
   events:
     - httpApi:
         path: /currency/{identifier}/transactions
         method: GET
-currencyTransaction:
+ccyTransaction:
   handler: src/handlers/metagraphHandler.currencyTransaction
   events:
     - httpApi:
         path: /currency/{identifier}/transactions/{hash}
         method: GET
-currencyTransactionsByAddress:
+ccyTransactionsByAddress:
   handler: src/handlers/metagraphHandler.currencyTransactionsByAddress
   events:
     - httpApi:
         path: /currency/{identifier}/addresses/{address}/transactions
         method: GET
-currencyTransactionsBySource:
+ccyTransactionsBySource:
   handler: src/handlers/metagraphHandler.currencyTransactionsBySource
   events:
     - httpApi:
         path: /currency/{identifier}/addresses/{address}/transactions/sent
         method: GET
-currencyTransactionsByDestination:
+ccyTransactionsByDestination:
   handler: src/handlers/metagraphHandler.currencyTransactionsByDestination
   events:
     - httpApi:
         path: /currency/{identifier}/addresses/{address}/transactions/received
         method: GET
-currencyBalanceByAddress:
+ccyBalanceByAddress:
   handler: src/handlers/metagraphHandler.currencyBalanceByAddress
   events:
     - httpApi:
         path: /currency/{identifier}/addresses/{address}/balance
         method: GET
-currencyFeeTransaction:
+ccyFeeTransaction:
   handler: src/handlers/metagraphHandler.currencyFeeTransaction
   events:
     - httpApi:
         path: /currency/{identifier}/fee-transactions/{hash}
         method: GET
-currencySnapshotFeeTransactions:
+ccySnapshotFeeTransactions:
   handler: src/handlers/metagraphHandler.currencySnapshotFeeTransactions
   events:
     - httpApi:
         path: /currency/{identifier}/snapshots/{term}/fee-transactions
         method: GET
-currencyFeeTransactionsByAddress:
+ccyFeeTransactionsByAddress:
   handler: src/handlers/metagraphHandler.currencyFeeTransactionsByAddress
   events:
     - httpApi:
         path: /currency/{identifier}/addresses/{address}/fee-transactions
         method: GET
-currencyFeeTransactionsBySource:
+ccyFeeTransactionsBySource:
   handler: src/handlers/metagraphHandler.currencyFeeTransactionsBySource
   events:
     - httpApi:
         path: /currency/{identifier}/addresses/{address}/fee-transactions/sent
         method: GET
-currencyFeeTransactionsByDestination:
+ccyFeeTransactionsByDestination:
   handler: src/handlers/metagraphHandler.currencyFeeTransactionsByDestination
   events:
     - httpApi:

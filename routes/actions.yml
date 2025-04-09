@@ -5,7 +5,7 @@ actions:
         path: /actions
         method: GET
 
-globalSnapshotActions:
+gsActions:
   handler: src/handlers/actionsHandler.globalSnapshotActions
   events:
     - httpApi:
@@ -19,21 +19,21 @@ addressActions:
         path: /addresses/{address}/actions
         method: GET
 
-currencyActions:
+ccyActions:
   handler: src/handlers/actionsHandler.currencyActions
   events:
     - httpApi:
         path: /currency/{metagraph_id}/actions
         method: GET
 
-currencySnapshotActions:
+ccySnapshotActions:
   handler: src/handlers/actionsHandler.currencySnapshotActions
   events:
     - httpApi:
         path: /currency/{metagraph_id}/snapshots/{term}/actions
         method: GET
 
-currencyAddressActions:
+ccyAddressActions:
   handler: src/handlers/actionsHandler.currencyAddressActions
   events:
     - httpApi:
