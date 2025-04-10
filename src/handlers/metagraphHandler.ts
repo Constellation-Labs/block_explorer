@@ -42,9 +42,7 @@ const metagraphSnapshotWhere = async (term) => {
   }
 };
 
-const metagraphSnapshotQuery = (metagraph_id, term) => {
-  const filter = extractHashOrdinal(term);
-
+const metagraphSnapshotQuery = (metagraph_id, filter) => {
   let where;
   if ("ordinal" in filter) {
     where = { metagraph_id_ordinal: { metagraph_id, ordinal: filter.ordinal } };
@@ -52,11 +50,12 @@ const metagraphSnapshotQuery = (metagraph_id, term) => {
     where = { metagraph_id_hash: { metagraph_id, hash: filter.hash } };
   }
   return where;
-}
+};
 
 const metagraphSnapshotExists = async (metagraph_id, term) => {
+  const filter = extractHashOrdinal(term);
   return prisma.metagraph_snapshots.findUnique({
-    where: metagraphSnapshotQuery(metagraph_id, term),
+    where: metagraphSnapshotQuery(metagraph_id, filter),
     select: { hash: true },
   });
 };
@@ -137,8 +136,10 @@ export const currencySnapshot = async (
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
 
+    const hashOrOrdinalWithLatest = await metagraphSnapshotWhere(term);
+
     const snapshot = await prisma.metagraph_snapshots.findUnique({
-      where: metagraphSnapshotQuery(metagraph_id, term),
+      where: metagraphSnapshotQuery(metagraph_id, hashOrOrdinalWithLatest),
       include: { metagraph_blocks: true },
     });
 
@@ -161,7 +162,7 @@ export const currencySnapshotRewards = async (
       return notFoundResponse();
     }
 
-    const mgSnapshotWhere= await metagraphSnapshotWhere(term)
+    const mgSnapshotWhere = await metagraphSnapshotWhere(term);
 
     const cursor = (row) => ({
       metagraph_id: row.metagraph_id,
@@ -240,7 +241,7 @@ export const currencySnapshotTransactions = async (
     )
       return notFoundResponse();
 
-    const mgSnapshotWhere= await metagraphSnapshotWhere(term)
+    const mgSnapshotWhere = await metagraphSnapshotWhere(term);
 
     const where = {
       where: {
@@ -471,7 +472,7 @@ export const currencySnapshotFeeTransactions = async (
     if (!metagraph_id || !term)
       return missingParameterResponse("identifier or term");
 
-    const mgSnapshotWhere= await metagraphSnapshotWhere(term)
+    const mgSnapshotWhere = await metagraphSnapshotWhere(term);
 
     const where = {
       where: {
