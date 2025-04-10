@@ -26,16 +26,17 @@ import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
 
-const latestMetagraphSnapshot = async () => {
+const latestMetagraphSnapshot = async (metagraph_id) => {
   return prisma.metagraph_snapshots.findFirst({
     select: { hash: true, ordinal: true },
+    where: { metagraph_id },
     orderBy: { ordinal: "desc" },
   });
 };
 
-const metagraphSnapshotWhere = async (term) => {
+const metagraphSnapshotWhere = async (metagraph_id, term) => {
   if (term == "latest") {
-    const latestSnapshotHash = (await latestMetagraphSnapshot())?.hash;
+    const latestSnapshotHash = (await latestMetagraphSnapshot(metagraph_id))?.hash;
     return { hash: latestSnapshotHash };
   } else {
     return extractHashOrdinal(term);
@@ -136,7 +137,7 @@ export const currencySnapshot = async (
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
 
-    const hashOrOrdinalWithLatest = await metagraphSnapshotWhere(term);
+    const hashOrOrdinalWithLatest = await metagraphSnapshotWhere(metagraph_id, term);
 
     const snapshot = await prisma.metagraph_snapshots.findUnique({
       where: metagraphSnapshotQuery(metagraph_id, hashOrOrdinalWithLatest),
@@ -162,7 +163,7 @@ export const currencySnapshotRewards = async (
       return notFoundResponse();
     }
 
-    const mgSnapshotWhere = await metagraphSnapshotWhere(term);
+    const mgSnapshotWhere = await metagraphSnapshotWhere(metagraph_id, term);
 
     const cursor = (row) => ({
       metagraph_id: row.metagraph_id,
@@ -241,7 +242,7 @@ export const currencySnapshotTransactions = async (
     )
       return notFoundResponse();
 
-    const mgSnapshotWhere = await metagraphSnapshotWhere(term);
+    const mgSnapshotWhere = await metagraphSnapshotWhere(metagraph_id, term);
 
     const where = {
       where: {
@@ -370,11 +371,11 @@ export const currencyTransactionsByDestination = async (
   }
 };
 
-const balanceOrZeroFn = async (balance, address, ordinal) => {
+const balanceOrZeroFn = async (metagraph_id, balance, address, ordinal) => {
   if (balance === null) {
     const snapshot_ordinal = isFinite(ordinal)
       ? ordinal
-      : (await latestMetagraphSnapshot())?.ordinal;
+      : (await latestMetagraphSnapshot(metagraph_id))?.ordinal;
     return { balance: 0, address, snapshot_ordinal };
   }
   return balance;
@@ -403,7 +404,7 @@ export const currencyBalanceByAddress = async (
       orderBy: { snapshot_ordinal: "desc" },
     });
 
-    const balanceOrZero = await balanceOrZeroFn(balance, address, ordinal);
+    const balanceOrZero = await balanceOrZeroFn(metagraph_id, balance, address, ordinal);
 
     return respond(balanceOrZero, balanceResponse);
   } catch (error) {
@@ -472,7 +473,7 @@ export const currencySnapshotFeeTransactions = async (
     if (!metagraph_id || !term)
       return missingParameterResponse("identifier or term");
 
-    const mgSnapshotWhere = await metagraphSnapshotWhere(term);
+    const mgSnapshotWhere = await metagraphSnapshotWhere(metagraph_id, term);
 
     const where = {
       where: {
