@@ -86,6 +86,24 @@ const includeMetagraphUnlockOrdinal = {
   },
 };
 
+const ifActiveDagTokenLock = (event) => {
+  const { active } = event.queryStringParameters || {};
+  return active === "true"
+    ? {
+        dag_token_unlock: null,
+      }
+    : {};
+};
+
+const ifActiveMetagraphTokenLock = (event) => {
+  const { active } = event.queryStringParameters || {};
+  return active === "true"
+    ? {
+        metagraph_token_unlock: null,
+      }
+    : {};
+};
+
 export const tokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -94,6 +112,7 @@ export const tokenLocks = async (
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
     {
+      where: ifActiveDagTokenLock(event),
       include: includeDagUnlockOrdinal,
       orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
     },
@@ -269,7 +288,7 @@ export const metagraphTokenLocks = async (
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
     {
-      where: { metagraph_id },
+      where: { metagraph_id, ...ifActiveMetagraphTokenLock(event) },
       include: includeMetagraphUnlockOrdinal,
       orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
     },
