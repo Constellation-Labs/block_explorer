@@ -52,7 +52,7 @@ const data_delegate_stake_create_events = [
     node_id: "NODE_ABC123",
     amount: 500000000000n,
     fee: 500000n,
-    token_lock_ref: data_dag_token_locks[0].hash,
+    lock_reference_hash: data_dag_token_locks[0].hash,
     parent_hash: "parent-hash-xyz",
     global_snapshot_hash: data_global_snapshots[0].hash,
     is_update: false,
@@ -64,7 +64,7 @@ const data_delegate_stake_create_events = [
     node_id: "NODE_ABC123",
     amount: 3333300000000n,
     fee: 500000n,
-    token_lock_ref: data_dag_token_locks[1].hash,
+    lock_reference_hash: data_dag_token_locks[1].hash,
     parent_hash: "stake-event-hash-001",
     global_snapshot_hash: data_global_snapshots[1].hash,
     is_update: false,
@@ -76,7 +76,7 @@ const data_delegate_stake_create_events = [
     node_id: "NODE_ABC123",
     amount: 2222222222,
     fee: 500000n,
-    token_lock_ref: data_dag_token_locks[1].hash,
+    lock_reference_hash: data_dag_token_locks[1].hash,
     parent_hash: "stake-event-hash-001",
     global_snapshot_hash: data_global_snapshots[1].hash,
     is_update: true,
@@ -87,7 +87,7 @@ const data_delegate_stake_withdraw_events = [
   {
     hash: "withdraw-event-hash-001",
     source_addr: data_addresses[0].address,
-    stake_ref: data_delegate_stake_create_events[0].hash,
+    stake_create_hash: data_delegate_stake_create_events[0].hash,
     global_snapshot_hash: data_global_snapshots[1].hash,
   },
 ];
@@ -99,6 +99,16 @@ const data_delegate_stake_balance_changes = [
     node_id: "NODE_DEF456",
     balance: 700000000000n,
     rewards: 1000000000n,
+    stake_create_hash: data_delegate_stake_create_events[0].hash 
+  },
+  {
+    global_snapshot_hash: data_global_snapshots[2].hash,
+    global_snapshot_ordinal: data_global_snapshots[2].ordinal,
+    address: data_addresses[0].address,
+    node_id: "NODE_DEF466",
+    balance: 700000000000n,
+    rewards: 1000000000n,
+    stake_withdraw_hash: data_delegate_stake_withdraw_events[0].hash 
   },
 ];
 const data_delegate_stake_rewards = [
@@ -146,7 +156,7 @@ const validateWithdrawStake = (tx) => {
     (d) => d.hash === tx.hash
   );
   expect(tx.source).toBe(match.source_addr);
-  expect(tx.stakeRef).toBe(match.stake_ref);
+  expect(tx.stakeHash).toBe(match.stake_hash);
   expect(tx.timestamp).toBeDefined();
 };
 

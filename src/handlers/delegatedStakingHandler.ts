@@ -3,14 +3,10 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { extractHashOrdinal, extractPagination } from "../request-params";
 import {
   paginatedQuery,
-  fromCreatedAtOrdinalCursor,
-  toCreatedAtOrdinalCursor,
   toOrdinalCursor,
   fromOrdinalCursor,
 } from "../pagination";
 import { handleError, respond } from "../response";
-import { toNumber } from "lodash";
-import { latestGlobalSnapshot } from "./dagHandler";
 
 const prisma = new PrismaClient();
 
@@ -21,9 +17,8 @@ const delegateStakeCreateResponse = (event) => ({
   nodeId: event.node_id,
   amount: event.amount,
   fee: event.fee,
-  tokenLockRef: event.token_lock_ref,
+  tokenLockHash: event.token_lock_hash,
   parentHash: event.parent_hash,
-  globalSnapshotHash: event.global_snapshot_hash,
   timestamp: event.created_at,
 });
 
@@ -33,8 +28,7 @@ const delegateStakeCreateResponses = (txs) =>
 const delegateStakeWithdrawResponse = (event) => ({
   hash: event.hash,
   source: event.source_addr,
-  stakeRef: event.stake_ref,
-  globalSnapshotHash: event.global_snapshot_hash,
+  stakeHash: event.stake_hash,
   timestamp: event.created_at,
 });
 
@@ -42,7 +36,6 @@ const delegateStakeWithdrawResponses = (txs) =>
   txs.map(delegateStakeWithdrawResponse);
 
 const delegateStakeBalanceChangeResponse = (change) => ({
-  globalSnapshotOrdinal: change.global_snapshot_ordinal,
   address: change.address,
   nodeId: change.node_id,
   balance: change.balance,
@@ -152,19 +145,10 @@ export const stakingBalanceByAddress = async (
   try {
     const { address } = event.pathParameters || {};
 
-    const { ordinal } = event.queryStringParameters || {};
-
-    const ordinalNbr = toNumber(ordinal);
-
-    const ordinalCondition = isFinite(ordinalNbr)
-      ? { global_snapshot_ordinal: { lte: ordinalNbr } }
-      : {};
-
     const latestPerNode = await prisma.delegate_stake_balance_changes.groupBy({
       by: ["node_id"],
       where: {
         address,
-        ...ordinalCondition,
       },
       _max: {
         global_snapshot_ordinal: true,

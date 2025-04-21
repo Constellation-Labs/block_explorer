@@ -554,59 +554,73 @@ model metagraph_token_lock_blocks {
   @@unique([metagraph_id, round_id], map: "metagraph_token_lock_blocks_unique")
 }
 
-model delegate_stake_create_events {
-  hash                 String   @id @db.VarChar
-  ordinal              BigInt
-  source_addr          String   @db.VarChar
-  node_id              String   @db.VarChar
-  amount               BigInt
-  fee                  BigInt   @default(0)
-  token_lock_ref       String   @db.VarChar
-  parent_hash          String   @db.VarChar
-  global_snapshot_hash String   @db.VarChar
-  is_update            Boolean
-  created_at           DateTime @default(now()) @db.Timestamp(6)
-  updated_at           DateTime @default(now()) @db.Timestamp(6)
 
-  global_snapshots              global_snapshots                @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
-  addresses                     addresses                       @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction)
-  dag_token_lock                dag_token_locks                 @relation(fields: [token_lock_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction)
-  delegate_stake_withdraw_event delegate_stake_withdraw_events?
+model delegate_stake_create_events {
+  hash                           String                           @id @db.VarChar
+  ordinal                        BigInt
+  source_addr                    String                           @db.VarChar
+  node_id                        String                           @db.VarChar
+  amount                         BigInt
+  fee                            BigInt                           @default(0)
+  lock_reference_hash            String                           @db.VarChar
+  parent_hash                    String                           @db.VarChar
+  global_snapshot_hash           String                           @db.VarChar
+  is_update                      Boolean
+  created_at                     DateTime                         @default(now()) @db.Timestamp(6)
+  updated_at                     DateTime                         @default(now()) @db.Timestamp(6)
+  delegate_stake_balance_changes delegate_stake_balance_changes[]
+  global_snapshots               global_snapshots                 @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
+  addresses                      addresses                        @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction)
+  dag_token_locks                dag_token_locks                  @relation(fields: [lock_reference_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "delegate_stake_create_events_token_lock_hash_fkey")
+  delegate_stake_withdraw_event  delegate_stake_withdraw_events?
 
   @@index([global_snapshot_hash])
   @@index([source_addr])
-  @@index([token_lock_ref])
+  @@index([lock_reference_hash], map: "delegate_stake_create_events_token_lock_hash_idx")
 }
 
 model delegate_stake_withdraw_events {
-  hash                 String   @id @db.VarChar
-  source_addr          String   @db.VarChar
-  stake_ref            String   @unique @db.VarChar
-  global_snapshot_hash String   @db.VarChar
-  created_at           DateTime @default(now()) @db.Timestamp(6)
-  updated_at           DateTime @default(now()) @db.Timestamp(6)
+  hash                           String                           @id @db.VarChar
+  source_addr                    String                           @db.VarChar
+  stake_create_hash              String  @unique                         @db.VarChar
+  global_snapshot_hash           String                           @db.VarChar
+  created_at                     DateTime                         @default(now()) @db.Timestamp(6)
+  updated_at                     DateTime                         @default(now()) @db.Timestamp(6)
+  delegate_stake_balance_changes delegate_stake_balance_changes[]
+  global_snapshots               global_snapshots                 @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
+  addresses                      addresses                        @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction)
+  delegate_stake_create_events   delegate_stake_create_events     @relation(fields: [stake_create_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
 
-  global_snapshots            global_snapshots             @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
-  addresses                   addresses                    @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction)
-  delegate_stake_create_event delegate_stake_create_events @relation(fields: [stake_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction)
+  @@index([global_snapshot_hash])
+  @@index([source_addr])
+  @@index([stake_create_hash])
+  
 }
 
 model delegate_stake_balance_changes {
-  global_snapshot_hash    String           @db.VarChar
-  address                 String           @db.VarChar
-  node_id                 String           @db.VarChar
-  balance                 BigInt
-  rewards                 BigInt
-  created_at              DateTime         @default(now()) @db.Timestamp(6)
-  updated_at              DateTime         @default(now()) @db.Timestamp(6)
-  global_snapshot_ordinal BigInt
-  addresses               addresses        @relation(fields: [address], references: [address], onDelete: Cascade, onUpdate: NoAction)
-  global_snapshots        global_snapshots @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
+  global_snapshot_hash                                                                      String                          @db.VarChar
+  global_snapshot_ordinal                                                                   BigInt
+  address                                                                                   String                          @db.VarChar
+  node_id                                                                                   String                          @db.VarChar
+  balance                                                                                   BigInt
+  rewards                                                                                   BigInt
+  stake_create_hash                                                                         String?                         @db.VarChar
+  stake_withdraw_hash                                                                       String?                         @db.VarChar
+  created_at                                                                                DateTime                        @default(now()) @db.Timestamp(6)
+  updated_at                                                                                DateTime                        @default(now()) @db.Timestamp(6)
+  addresses                                                                                 addresses                       @relation(fields: [address], references: [address], onDelete: Cascade, onUpdate: NoAction)
+  global_snapshots                                                                          global_snapshots                @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
+  delegate_stake_create_events                                                              delegate_stake_create_events?   @relation(fields: [stake_create_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
+  delegate_stake_withdraw_events                                                            delegate_stake_withdraw_events? @relation(fields: [stake_withdraw_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([global_snapshot_hash, address, node_id, balance, rewards], map: "delegate_stake_balance_changes_unique")
   @@index([address], map: "delegate_stake_rewards_changes_address")
   @@index([global_snapshot_hash], map: "delegate_stake_rewards_changes_global_snapshot_hash_idx")
   @@index([node_id], map: "delegate_stake_rewards_changes_node_id")
+  @@index([address], map: "delegate_stake_balance_changes_address")
+  @@index([global_snapshot_hash])
+  @@index([global_snapshot_ordinal])
+  @@index([node_id], map: "delegate_stake_balance_changes_node_id")
 }
 
 model delegate_stake_rewards {
