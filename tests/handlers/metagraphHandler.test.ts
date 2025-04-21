@@ -238,7 +238,8 @@ describe("Metagraph Handler Integration Tests", () => {
   describe("currencySnapshots", () => {
     it("should return a list of metagraph snapshots", async () => {
       const metagraph_id = data_metagraphs[0].id
-      const event = createAPIGatewayEvent({metagraph_id}, { limit: "10" });
+
+      const event = createAPIGatewayEvent({identifier: metagraph_id}, { limit: "10" });
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencySnapshots(event);
 
@@ -265,7 +266,7 @@ describe("Metagraph Handler Integration Tests", () => {
 
     it("should handle pagination correctly", async () => {
       const metagraph_id = data_metagraphs[0].id
-      const event = createAPIGatewayEvent({metagraph_id}, { limit: "1" });
+      const event = createAPIGatewayEvent({identifier: metagraph_id}, { limit: "1" });
 
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencySnapshots(event);
@@ -278,7 +279,7 @@ describe("Metagraph Handler Integration Tests", () => {
 
       // Try getting the next page
       const nextEvent = createAPIGatewayEvent(
-        {metagraph_id},
+        {identifier: metagraph_id},
         {
           limit: "1",
           next: body.meta.next,
@@ -295,8 +296,8 @@ describe("Metagraph Handler Integration Tests", () => {
     });
 
     it("should return not found on invalid metagraph", async () => {
-      const metagraph_id = "1234567"
-      const event = createAPIGatewayEvent({ metagraph_id }, { limit: "10" });
+      const identifier = "1234567"
+      const event = createAPIGatewayEvent({ identifier }, { limit: "10" });
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencySnapshots(event);
 
@@ -312,7 +313,7 @@ describe("Metagraph Handler Integration Tests", () => {
     it("should return transactions sorted by snapshot ordinal descending", async () => {
       const metagraph_id = data_metagraphs[0].id
 
-      const event = createAPIGatewayEvent({metagraph_id});
+      const event = createAPIGatewayEvent({identifier: metagraph_id});
 
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencyTransactions(event);
@@ -334,8 +335,8 @@ describe("Metagraph Handler Integration Tests", () => {
     });
 
     it("should return not found on invalid metagraph", async () => {
-      const metagraph_id = ""
-      const event = createAPIGatewayEvent({ metagraph_id }, { limit: "10" });
+      const identifier = ""
+      const event = createAPIGatewayEvent({ identifier }, { limit: "10" });
 
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencyTransactions(event);
@@ -352,7 +353,7 @@ describe("Metagraph Handler Integration Tests", () => {
       const address = data_addresses[0].address;
       const metagraph_id = data_metagraphs[0].id
 
-      const event = createAPIGatewayEvent({ address, metagraph_id}, { limit: "10" });
+      const event = createAPIGatewayEvent({ address, identifier: metagraph_id}, { limit: "10" });
 
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencyTransactionsByAddress(event);
@@ -380,7 +381,7 @@ describe("Metagraph Handler Integration Tests", () => {
       const metagraph_id = testBalance.metagraph_id;
 
       const event = createAPIGatewayEvent({
-        metagraph_id,
+        identifier: metagraph_id,
         address: testBalance.address,
       });
 

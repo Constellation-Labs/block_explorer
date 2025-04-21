@@ -1,0 +1,48 @@
+delegatedStakes:
+  handler: src/handlers/delegatedStakingHandler.delegatedStakes
+  events:
+    - httpApi:
+        path: /delegated-stakes
+        method: GET
+
+delegatedStake:
+  handler: src/handlers/delegatedStakingHandler.delegatedStake
+  events:
+    - httpApi:
+        path: /delegated-stakes/{hash}
+        method: GET
+
+addressDelegatedStakes:
+  handler: src/handlers/delegatedStakingHandler.addressDelegatedStakes
+  events:
+    - httpApi:
+        path: /addresses/{address}/delegated-stakes
+        method: GET
+
+delegatedStakeWithdrawals:
+  handler: src/handlers/delegatedStakingHandler.delegatedStakeWithdrawals
+  events:
+    - httpApi:
+        path: /delegated-stake-withdrawals
+        method: GET
+
+delegatedStakeWithdrawal:
+  handler: src/handlers/delegatedStakingHandler.delegatedStakeWithdrawal
+  events:
+    - httpApi:
+        path: /delegated-stake-withdrawals/{hash}
+        method: GET
+
+addressDelegatedStakeWithdrawals:
+  handler: src/handlers/delegatedStakingHandler.addressDelegatedStakeWithdrawals
+  events:
+    - httpApi:
+        path: /addresses/{address}/delegated-stake-withdrawals
+        method: GET
+
+stakingBalanceByAddress:
+  handler: src/handlers/delegatedStakingHandler.stakingBalanceByAddress
+  events:
+    - httpApi:
+        path: /addresses/{address}/delegated-stake-balance
+        method: GET
