@@ -29,7 +29,7 @@ const globalSnapshotExists = async (term) => {
   });
 };
 
-const latestGlobalSnapshot = async () => {
+export const latestGlobalSnapshot = async () => {
   return prisma.global_snapshots.findFirst({
     select: { hash: true, ordinal: true },
     orderBy: { ordinal: "desc" },

@@ -27,6 +27,7 @@ functions:
   - ${file(./routes/token-locks.yml)}
   - ${file(./routes/allow-spends.yml)}
   - ${file(./routes/actions.yml)}
+  - ${file(./routes/delegated-staking.yml)}
 
 plugins:
   - serverless-plugin-typescript
