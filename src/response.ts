@@ -49,6 +49,7 @@ export const dagTransactionResponse = (t) =>
 
 const transactionResponse = (transaction, snapshot) => ({
   hash: transaction.hash,
+  ordinal: transaction.ordinal,
   amount: transaction.amount,
   source: transaction.source_addr,
   destination: transaction.destination_addr,

@@ -98,7 +98,7 @@ export const globalSnapshotRewards = async (
       return notFoundResponse();
     }
 
-    const gsWhere = await globalSnapshotWhere(term)
+    const gsWhere = await globalSnapshotWhere(term);
 
     const toCursor = (row) => ({
       global_snapshot_hash_destination_addr: {
@@ -137,7 +137,7 @@ export const globalSnapshotTransactions = async (
       return notFoundResponse();
     }
 
-    const gsWhere = await globalSnapshotWhere(term)
+    const gsWhere = await globalSnapshotWhere(term);
 
     const query = {
       where: {
@@ -150,7 +150,7 @@ export const globalSnapshotTransactions = async (
           },
         },
       },
-      orderBy: { ordinal: "desc" },
+      orderBy: { created_at: "desc" },
     };
 
     return await paginatedQuery(
@@ -186,7 +186,7 @@ export const dagBlock = async (
   }
 };
 
-const dagTtransactionsQuery = async (
+const dagTransactionsQuery = async (
   where,
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -200,7 +200,10 @@ const dagTtransactionsQuery = async (
           },
         },
       },
-      orderBy: { ordinal: "desc" },
+      orderBy: [
+        { dag_blocks: { global_snapshot: { ordinal: "desc" } } },
+        { created_at: "desc" },
+      ],
     };
 
     const toCursor = (row) => ({
@@ -229,7 +232,7 @@ const dagTtransactionsQuery = async (
 export const dagTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  return dagTtransactionsQuery({}, event);
+  return dagTransactionsQuery({}, event);
 };
 
 export const dagTransaction = async (
@@ -265,7 +268,7 @@ export const dagTransactionsByAddress = async (
       where: { OR: [{ source_addr: address }, { destination_addr: address }] },
     };
 
-    return dagTtransactionsQuery(where, event);
+    return dagTransactionsQuery(where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -279,7 +282,7 @@ export const dagTransactionsBySource = async (
 
     const where = { where: { source_addr: address } };
 
-    return dagTtransactionsQuery(where, event);
+    return dagTransactionsQuery(where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -293,7 +296,7 @@ export const dagTransactionsByDestination = async (
 
     const where = { where: { destination_addr: address } };
 
-    return dagTtransactionsQuery(where, event);
+    return dagTransactionsQuery(where, event);
   } catch (error) {
     return handleError(error);
   }
