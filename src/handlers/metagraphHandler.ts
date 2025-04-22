@@ -19,8 +19,10 @@ import {
 } from "../response";
 import {
   fromCreatedAtOrdinalCursor,
+  fromOrdinalCursor,
   paginatedQuery,
   toCreatedAtOrdinalCursor,
+  toOrdinalCursor,
 } from "../pagination";
 import { toNumber, isFinite } from "lodash";
 
@@ -36,7 +38,8 @@ const latestMetagraphSnapshot = async (metagraph_id) => {
 
 const metagraphSnapshotWhere = async (metagraph_id, term) => {
   if (term == "latest") {
-    const latestSnapshotHash = (await latestMetagraphSnapshot(metagraph_id))?.hash;
+    const latestSnapshotHash = (await latestMetagraphSnapshot(metagraph_id))
+      ?.hash;
     return { hash: latestSnapshotHash };
   } else {
     return extractHashOrdinal(term);
@@ -68,15 +71,15 @@ export const currencySnapshots = async (
     const { identifier } = event.pathParameters || {};
 
     const toCursor = (row) => ({
-      ...toCreatedAtOrdinalCursor(row),
-      metagraph_id: row.metagraph_id,
-      hash: row.hash,
+      metagraph_id_ordinal: {
+        ...toOrdinalCursor(row),
+        metagraph_id: row.metagraph_id,
+      },
     });
 
     const fromCursor = (row) => ({
-      ...fromCreatedAtOrdinalCursor(row),
+      ...fromOrdinalCursor(row),
       metagraph_id: row.metagraph_id,
-      hash: row.hash,
     });
 
     return await paginatedQuery(
@@ -137,7 +140,10 @@ export const currencySnapshot = async (
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
 
-    const hashOrOrdinalWithLatest = await metagraphSnapshotWhere(metagraph_id, term);
+    const hashOrOrdinalWithLatest = await metagraphSnapshotWhere(
+      metagraph_id,
+      term
+    );
 
     const snapshot = await prisma.metagraph_snapshots.findUnique({
       where: metagraphSnapshotQuery(metagraph_id, hashOrOrdinalWithLatest),
@@ -209,7 +215,10 @@ const metagraphTransactionsQuery = async (
           },
         },
       },
-      orderBy: { ordinal: "desc" },
+      orderBy: [
+        { metagraph_blocks: { metagraph_snapshot: { ordinal: "desc" } } },
+        { created_at: "desc" },
+      ],
     };
 
     const cursor = (row) => ({
@@ -404,7 +413,12 @@ export const currencyBalanceByAddress = async (
       orderBy: { snapshot_ordinal: "desc" },
     });
 
-    const balanceOrZero = await balanceOrZeroFn(metagraph_id, balance, address, ordinal);
+    const balanceOrZero = await balanceOrZeroFn(
+      metagraph_id,
+      balance,
+      address,
+      ordinal
+    );
 
     return respond(balanceOrZero, balanceResponse);
   } catch (error) {
