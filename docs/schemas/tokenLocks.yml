@@ -1,0 +1,107 @@
+components:
+  schemas:
+    TokenLock:
+      type: object
+      properties:
+        currencyId:
+          type: string
+          description: The identifier of the currency
+        hash:
+          type: string
+          description: The hash of the token lock transaction
+        amount:
+          type: string
+          description: The amount of tokens locked
+          format: bigint
+        source:
+          type: string
+          description: The source address of the token lock
+        unlockEpoch:
+          type: integer
+          description: The epoch when tokens can be unlocked
+          nullable: true
+        parentHash:
+          type: string
+          description: The hash of the parent transaction
+          nullable: true
+        ordinal:
+          type: string
+          description: The ordinal of the token lock in the blockchain
+          format: bigint
+        timestamp:
+          type: string
+          description: The timestamp when the token lock was created
+          format: date-time
+        unlockedAtOrdinal:
+          type: integer
+          description: The ordinal of the global snapshot where this token was unlocked
+          nullable: true
+    
+    TokenLockResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TokenLock'
+    
+    PaginatedTokenLocks:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenLock'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true
+    
+    TokenUnlock:
+      type: object
+      properties:
+        currencyId:
+          type: string
+          description: The identifier of the currency
+        hash:
+          type: string
+          description: The hash of the token unlock transaction
+        amount:
+          type: string
+          description: The amount of tokens unlocked
+          format: bigint
+        source:
+          type: string
+          description: The source address of the token unlock
+        tokenLockRef:
+          type: string
+          description: Reference to the original token lock transaction hash
+        timestamp:
+          type: string
+          description: The timestamp when the token unlock was created
+          format: date-time
+        globalSnapshotOrdinal:
+          type: integer
+          description: The ordinal of the global snapshot containing this unlock
+    
+    TokenUnlockResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TokenUnlock'
+    
+    PaginatedTokenUnlocks:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenUnlock'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true

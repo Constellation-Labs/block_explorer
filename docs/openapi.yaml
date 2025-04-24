@@ -1,0 +1,2172 @@
+openapi: 3.0.3
+info:
+  title: Constellation Block Explorer API
+  description: API for exploring the Constellation chain data on both the Hypergraph and Metagraphs
+  version: 4.0.0
+servers:
+  - url: https://be-mainnet.constellationnetwork.io
+    description: MainNet
+  - url: https://be-integrationnet.constellationnetwork.io
+    description: IntegrationNet 
+
+# Resource-based tag organization
+tags:
+  - name: Metagraphs
+    description: Metagraph registry and information
+  - name: Account Information
+    description: Balances and address-related data
+  - name: Snapshots
+    description: Global and metagraph snapshots
+  - name: Blocks
+    description: Block information
+  - name: Transactions
+    description: Standard and fee transactions
+  - name: Token Operations
+    description: Token locks, delegated spending, and related operations
+  - name: Actions
+    description: Combined operations view
+
+x-tagGroups:
+  - name: "Network Identity"
+    tags:
+      - Metagraphs
+      - Account Information
+  - name: "Blockchain State"
+    tags:
+      - Snapshots
+      - Blocks
+      - Transactions
+  - name: "Token Actions"
+    tags:
+      - Token Operations
+      - Actions
+      
+
+paths:
+  # ==================== SNAPSHOTS ====================
+  /global-snapshots:
+    get:
+      tags: 
+        - Snapshots
+      summary: Get all global snapshots
+      description: Retrieve a paginated list of global snapshots
+      operationId: getGlobalSnapshots
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/PaginatedGlobalSnapshots'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /global-snapshots/{hash_or_ordinal}:
+    get:
+      tags: 
+        - Snapshots
+      summary: Get global snapshot by hash, ordinal, or 'latest'
+      description: Retrieve a specific global snapshot by its hash, ordinal, or 'latest' keyword for the most recent snapshot
+      operationId: getGlobalSnapshot
+      parameters:
+        - name: hash_or_ordinal
+          in: path
+          description: Hash, ordinal, or 'latest' to identify the global snapshot
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/GlobalSnapshotResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  /addresses/{address}/snapshots:
+    get:
+      tags: 
+        - Snapshots
+      summary: Get metagraph snapshots by owner address
+      description: Retrieve metagraph snapshots associated with a specific owner address
+      operationId: currencySnapshotsByOwnerAddress
+      parameters:
+        - name: address
+          in: path
+          description: Owner address to filter snapshots
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphSnapshots'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  /currency/{metagraph_id}/snapshots:
+    get:
+      tags: 
+        - Snapshots
+      summary: Get all snapshots for a metagraph
+      description: Retrieve a paginated list of snapshots for a specific metagraph
+      operationId: getCurrencySnapshots
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphSnapshots'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/snapshots/{hash_or_ordinal}:
+    get:
+      tags: 
+        - Snapshots
+      summary: Get metagraph snapshot by hash, ordinal, or 'latest'
+      description: Retrieve a specific metagraph snapshot by its hash, ordinal, or 'latest' keyword for the most recent snapshot
+      operationId: getCurrencySnapshot
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash_or_ordinal
+          in: path
+          description: Hash, ordinal, or 'latest' to identify the snapshot
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/MetagraphSnapshotResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/rewards:
+    get:
+      tags: 
+        - Snapshots
+      summary: Get rewards for a metagraph snapshot
+      description: Retrieve rewards associated with a specific metagraph snapshot
+      operationId: getCurrencySnapshotRewards
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash_or_ordinal
+          in: path
+          description: Hash, ordinal, or 'latest' to identify the snapshot
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/PaginatedRewards'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  # ==================== BLOCKS ====================
+  /blocks/{hash}:
+    get:
+      tags: 
+        - Blocks
+      summary: Get block by hash
+      description: Retrieve a specific DAG block by its hash
+      operationId: getBlock
+      parameters:
+        - name: hash
+          in: path
+          description: Hash of the block
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/BlockResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  /currency/{metagraph_id}/blocks/{hash}:
+    get:
+      tags: 
+        - Blocks
+      summary: Get metagraph block by hash
+      description: Retrieve a specific metagraph block by its hash
+      operationId: getCurrencyBlock
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash
+          in: path
+          description: Hash of the block
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/MetagraphBlockResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  # ==================== TRANSACTIONS ====================
+  /transactions:
+    get:
+      tags: 
+        - Transactions
+      summary: Get all transactions
+      description: Retrieve a paginated list of transactions
+      operationId: getTransactions
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/PaginatedTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /transactions/{hash}:
+    get:
+      tags: 
+        - Transactions
+      summary: Get transaction by hash
+      description: Retrieve a specific transaction by its hash
+      operationId: getTransaction
+      parameters:
+        - name: hash
+          in: path
+          description: Hash of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/TransactionResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /global-snapshots/{hash_or_ordinal}/transactions:
+    get:
+      tags: 
+        - Transactions
+      summary: Get transactions for a global snapshot
+      description: Retrieve transactions associated with a specific global snapshot
+      operationId: getGlobalSnapshotTransactions
+      parameters:
+        - name: hash_or_ordinal
+          in: path
+          description: Hash, ordinal, or 'latest' to identify the global snapshot
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/PaginatedTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /global-snapshots/{hash_or_ordinal}/rewards:
+    get:
+      tags: 
+        - Snapshots
+      summary: Get rewards for a global snapshot
+      description: Retrieve rewards associated with a specific global snapshot
+      operationId: getGlobalSnapshotRewards
+      parameters:
+        - name: hash_or_ordinal
+          in: path
+          description: Hash, ordinal, or 'latest' to identify the global snapshot
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/PaginatedRewards'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  /addresses/{address}/transactions:
+    get:
+      tags: 
+        - Transactions
+      summary: Get transactions by address
+      description: Retrieve transactions associated with a specific address (both sent and received)
+      operationId: getAddressTransactions
+      parameters:
+        - name: address
+          in: path
+          description: Address to filter transactions
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/PaginatedTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /addresses/{address}/transactions/sent:
+    get:
+      tags: 
+        - Transactions
+      summary: Get transactions sent from address
+      description: Retrieve transactions sent from a specific address
+      operationId: getAddressSentTransactions
+      parameters:
+        - name: address
+          in: path
+          description: Source address to filter transactions
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/PaginatedTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /addresses/{address}/transactions/received:
+    get:
+      tags: 
+        - Transactions
+      summary: Get transactions received by address
+      description: Retrieve transactions received by a specific address
+      operationId: getAddressReceivedTransactions
+      parameters:
+        - name: address
+          in: path
+          description: Destination address to filter transactions
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/PaginatedTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  /currency/{metagraph_id}/transactions:
+    get:
+      tags: 
+        - Transactions
+      summary: Get all transactions for a metagraph
+      description: Retrieve a paginated list of transactions for a specific metagraph
+      operationId: getCurrencyTransactions
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/transactions/{hash}:
+    get:
+      tags: 
+        - Transactions
+      summary: Get metagraph transaction by hash
+      description: Retrieve a specific metagraph transaction by its hash
+      operationId: getCurrencyTransaction
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash
+          in: path
+          description: Hash of the transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/MetagraphTransactionResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/transactions:
+    get:
+      tags: 
+        - Transactions
+      summary: Get transactions for a metagraph snapshot
+      description: Retrieve transactions associated with a specific metagraph snapshot
+      operationId: getCurrencySnapshotTransactions
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash_or_ordinal
+          in: path
+          description: Hash, ordinal, or 'latest' to identify the snapshot
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/fee-transactions:
+    get:
+      tags: 
+        - Transactions
+      summary: Get fee transactions for a metagraph snapshot
+      description: Retrieve fee transactions associated with a specific metagraph snapshot
+      operationId: getCurrencySnapshotFeeTransactions
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash_or_ordinal
+          in: path
+          description: Hash, ordinal, or 'latest' to identify the snapshot
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/fee-transactions/{hash}:
+    get:
+      tags: 
+        - Transactions
+      summary: Get fee transaction by hash for a metagraph
+      description: Retrieve a specific fee transaction by its hash for a metagraph
+      operationId: getCurrencyFeeTransaction
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash
+          in: path
+          description: Hash of the fee transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/MetagraphTransactionResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/addresses/{address}/fee-transactions:
+    get:
+      tags: 
+        - Transactions
+      summary: Get fee transactions by address in a metagraph
+      description: Retrieve fee transactions associated with a specific address in a metagraph
+      operationId: getCurrencyFeeTransactionsByAddress
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Address to filter fee transactions
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/addresses/{address}/fee-transactions/received:
+    get:
+      tags: 
+        - Transactions
+      summary: Get fee transactions received by address in a metagraph
+      description: Retrieve fee transactions received by a specific address in a metagraph
+      operationId: getCurrencyFeeTransactionsByDestination
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Destination address to filter fee transactions
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/addresses/{address}/fee-transactions/sent:
+    get:
+      tags: 
+        - Transactions
+      summary: Get fee transactions sent from address in a metagraph
+      description: Retrieve fee transactions sent from a specific address in a metagraph
+      operationId: getCurrencyFeeTransactionsBySource
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Source address to filter fee transactions
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/addresses/{address}/transactions:
+    get:
+      tags: 
+        - Transactions
+      summary: Get transactions by address in a metagraph
+      description: Retrieve transactions associated with a specific address in a metagraph
+      operationId: getCurrencyTransactionsByAddress
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Address to filter transactions
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/addresses/{address}/transactions/received:
+    get:
+      tags: 
+        - Transactions
+      summary: Get transactions received by address in a metagraph
+      description: Retrieve transactions received by a specific address in a metagraph
+      operationId: getCurrencyTransactionsByDestination
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Destination address to filter transactions
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/addresses/{address}/transactions/sent:
+    get:
+      tags: 
+        - Transactions
+      summary: Get transactions sent from address in a metagraph
+      description: Retrieve transactions sent from a specific address in a metagraph
+      operationId: getCurrencyTransactionsBySource
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Source address to filter transactions
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  # ==================== TOKEN OPERATIONS ====================
+  /token-locks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get all token locks
+      description: Retrieve a paginated list of token locks on the DAG
+      operationId: getTokenLocks
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenLocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /token-locks/{hash}:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token lock by hash
+      description: Retrieve a specific token lock by its hash
+      operationId: getTokenLock
+      parameters:
+        - name: hash
+          in: path
+          description: Hash of the token lock
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/TokenLockResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /global-snapshots/{hash_or_ordinal}/token-locks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token locks by global snapshot
+      description: Retrieve token locks associated with a specific global snapshot, identified by hash or ordinal
+      operationId: getGlobalSnapshotTokenLocks
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalGlobalParam'
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenLocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /addresses/{address}/token-locks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token locks by address
+      description: Retrieve token locks associated with a specific source address
+      operationId: getAddressTokenLocks
+      parameters:
+        - name: address
+          in: path
+          description: Source address to filter token locks
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenLocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /token-unlocks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get all token unlocks
+      description: Retrieve a paginated list of token unlocks on the DAG
+      operationId: getTokenUnlocks
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenUnlocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /token-unlocks/{hash}:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token unlock by hash
+      description: Retrieve a specific token unlock by its hash
+      operationId: getTokenUnlock
+      parameters:
+        - name: hash
+          in: path
+          description: Hash of the token unlock
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/TokenUnlockResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  /global-snapshots/{hash_or_ordinal}/token-unlocks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token unlocks by global snapshot
+      description: Retrieve token unlocks associated with a specific global snapshot, identified by hash or ordinal
+      operationId: getGlobalSnapshotTokenUnlocks
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalGlobalParam'
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenUnlocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /addresses/{address}/token-unlocks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token unlocks by address
+      description: Retrieve token unlocks associated with a specific source address
+      operationId: getAddressTokenUnlocks
+      parameters:
+        - name: address
+          in: path
+          description: Source address to filter token unlocks
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenUnlocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/token-locks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token locks for a specific metagraph
+      description: Retrieve token locks for a specific currency metagraph
+      operationId: getMetagraphTokenLocks
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenLocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/token-locks/{hash}:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get specific token lock for a metagraph
+      description: Retrieve a specific token lock for a currency metagraph by its hash
+      operationId: getMetagraphTokenLock
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash
+          in: path
+          description: Hash of the token lock
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/TokenLockResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/token-locks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token locks by metagraph snapshot
+      description: Retrieve token locks associated with a specific metagraph snapshot
+      operationId: getMetagraphSnapshotTokenLocks
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalMetagraphParam'
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenLocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/addresses/{address}/token-locks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token locks by metagraph and address
+      description: Retrieve token locks for a specific metagraph and source address
+      operationId: getMetagraphAddressTokenLocks
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Source address to filter token locks
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenLocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/token-unlocks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token unlocks for a specific metagraph
+      description: Retrieve token unlocks for a specific currency metagraph
+      operationId: getMetagraphTokenUnlocks
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenUnlocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/token-unlocks/{hash}:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get specific token unlock for a metagraph
+      description: Retrieve a specific token unlock for a currency metagraph by its hash
+      operationId: getMetagraphTokenUnlock
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash
+          in: path
+          description: Hash of the token unlock
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/TokenUnlockResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/token-unlocks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token unlocks by metagraph snapshot
+      description: Retrieve token unlocks associated with a specific metagraph snapshot
+      operationId: getMetagraphSnapshotTokenUnlocks
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalMetagraphParam'
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenUnlocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/addresses/{address}/token-unlocks:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get token unlocks by metagraph and address
+      description: Retrieve token unlocks for a specific metagraph and source address
+      operationId: getMetagraphAddressTokenUnlocks
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Source address to filter token unlocks
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/tokenLocks.yml#/components/schemas/PaginatedTokenUnlocks'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  # Allow Spend operations
+  /allow-spends:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get all allow spends
+      description: Retrieve a paginated list of allow spend transactions on the DAG
+      operationId: getAllowSpends
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedAllowSpends'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /allow-spends/{hash}:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get allow spend by hash
+      description: Retrieve a specific allow spend transaction by its hash
+      operationId: getAllowSpend
+      parameters:
+        - name: hash
+          in: path
+          description: Hash of the allow spend transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/AllowSpendResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /global-snapshots/{hash_or_ordinal}/allow-spends:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get allow spends by global snapshot
+      description: Retrieve allow spends associated with a specific global snapshot, identified by hash or ordinal
+      operationId: getGlobalSnapshotAllowSpends
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalGlobalParam'
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedAllowSpends'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /addresses/{address}/allow-spends:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get allow spends by address
+      description: Retrieve allow spends associated with a specific source or destination address
+      operationId: getAddressAllowSpends
+      parameters:
+        - name: address
+          in: path
+          description: Address to filter allow spends (source or destination)
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedAllowSpends'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /spend-transactions:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get all spend transactions
+      description: Retrieve a paginated list of spend transactions that have used allow spends
+      operationId: getSpendTransactions
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedSpendTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /spend-transactions/{hash}:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get spend transaction by hash
+      description: Retrieve a specific spend transaction by its hash
+      operationId: getSpendTransaction
+      parameters:
+        - name: hash
+          in: path
+          description: Hash of the spend transaction
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/SpendTransactionResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /global-snapshots/{hash_or_ordinal}/spend-transactions:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get spend transactions by global snapshot
+      description: Retrieve spend transactions associated with a specific global snapshot
+      operationId: getGlobalSnapshotSpendTransactions
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalGlobalParam'
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedSpendTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /addresses/{address}/spend-transactions:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get spend transactions by address
+      description: Retrieve spend transactions associated with a specific source or destination address
+      operationId: getAddressSpendTransactions
+      parameters:
+        - name: address
+          in: path
+          description: Address to filter spend transactions (source or destination)
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedSpendTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /allow-spend-expirations:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get all allow spend expirations
+      description: Retrieve a paginated list of expired allow spend transactions
+      operationId: getAllowSpendExpirations
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedAllowSpendExpirations'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /allow-spend-expirations/{hash}:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get allow spend expiration by hash
+      description: Retrieve a specific allow spend expiration by its hash
+      operationId: getAllowSpendExpiration
+      parameters:
+        - name: hash
+          in: path
+          description: Hash of the allow spend expiration
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/AllowSpendExpirationResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /global-snapshots/{hash_or_ordinal}/allow-spend-expirations:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get allow spend expirations by global snapshot
+      description: Retrieve allow spend expirations associated with a specific global snapshot
+      operationId: getGlobalSnapshotAllowSpendExpirations
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalGlobalParam'
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedAllowSpendExpirations'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /addresses/{address}/allow-spend-expirations:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get allow spend expirations by address
+      description: Retrieve allow spend expirations associated with a specific address
+      operationId: getAddressAllowSpendExpirations
+      parameters:
+        - name: address
+          in: path
+          description: Address to filter allow spend expirations
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedAllowSpendExpirations'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  # Metagraph-specific allow spend operations
+  /currency/{metagraph_id}/allow-spends:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get allow spends for a specific metagraph
+      description: Retrieve allow spends for a specific currency metagraph
+      operationId: getMetagraphAllowSpends
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedAllowSpends'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/allow-spends/{hash}:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get specific allow spend for a metagraph
+      description: Retrieve a specific allow spend for a currency metagraph by its hash
+      operationId: getMetagraphAllowSpend
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: hash
+          in: path
+          description: Hash of the allow spend
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/AllowSpendResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/allow-spends:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get allow spends by metagraph snapshot
+      description: Retrieve allow spends associated with a specific metagraph snapshot
+      operationId: getMetagraphSnapshotAllowSpends
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalMetagraphParam'
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedAllowSpends'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/addresses/{address}/allow-spends:
+    get:
+      tags: 
+        - Token Operations
+      summary: Get allow spends by metagraph and address
+      description: Retrieve allow spends for a specific metagraph and address
+      operationId: getMetagraphAddressAllowSpends
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Address to filter allow spends
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/allowSpends.yml#/components/schemas/PaginatedAllowSpends'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  # ==================== ACCOUNT INFORMATION ====================
+  /addresses/{address}/balance:
+    get:
+      tags: 
+        - Account Information
+      summary: Get DAG balance for address
+      description: Retrieve the current DAG balance for a specific address
+      operationId: getAddressBalance
+      parameters:
+        - name: address
+          in: path
+          description: Address to get balance for
+          required: true
+          schema:
+            type: string
+        - name: ordinal
+          in: query
+          description: Optional ordinal to get balance at a specific point in time
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/BalanceResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+          
+  /currency/{metagraph_id}/addresses/{address}/balance:
+    get:
+      tags: 
+        - Account Information
+      summary: Get balance for address in a metagraph
+      description: Retrieve the current balance for a specific address in a metagraph
+      operationId: getCurrencyBalanceByAddress
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Address to get balance for
+          required: true
+          schema:
+            type: string
+        - name: ordinal
+          in: query
+          description: Optional ordinal to get balance at a specific point in time
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/dag.yml#/components/schemas/BalanceResponse'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  # ==================== ACTIONS ====================
+  /actions:
+    get:
+      tags: 
+        - Actions
+      summary: Get all actions
+      description: Retrieve a paginated list of recent actions
+      operationId: getActions
+      parameters:
+        - name: transactionTypes
+          in: query
+          description: Comma-separated list of transaction types to filter by (AllowSpend, TokenLock, TokenUnlock, SpendTransaction, FeeTransaction, ExpiredSpendTransaction)
+          required: false
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/actions.yml#/components/schemas/PaginatedActions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /global-snapshots/{hash_or_ordinal}/actions:
+    get:
+      tags: 
+        - Actions
+      summary: Get actions by global snapshot
+      description: Retrieve actions associated with a specific global snapshot, identified by hash or ordinal
+      operationId: getGlobalSnapshotActions
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalGlobalParam'
+        - name: transactionTypes
+          in: query
+          description: Comma-separated list of transaction types to filter by (AllowSpend, TokenLock, TokenUnlock, SpendTransaction, FeeTransaction, ExpiredSpendTransaction)
+          required: false
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/actions.yml#/components/schemas/PaginatedActions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /addresses/{address}/actions:
+    get:
+      tags: 
+        - Actions
+      summary: Get actions by address
+      description: Retrieve actions associated with a specific address (source or destination)
+      operationId: getAddressActions
+      parameters:
+        - name: address
+          in: path
+          description: Address to filter actions by
+          required: true
+          schema:
+            type: string
+        - name: transactionTypes
+          in: query
+          description: Comma-separated list of transaction types to filter by (AllowSpend, TokenLock, TokenUnlock, SpendTransaction, FeeTransaction, ExpiredSpendTransaction)
+          required: false
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/actions.yml#/components/schemas/PaginatedActions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  # ==================== METAGRAPHS ====================
+  /currency:
+    get:
+      tags: 
+        - Metagraphs
+      summary: Get all metagraphs
+      description: Retrieve a paginated list of metagraphs
+      operationId: getMetagraphs
+      parameters:
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphs'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  # Additional Action endpoints for metagraphs
+  /currency/{metagraph_id}/actions:
+    get:
+      tags: 
+        - Actions
+      summary: Get actions for a specific metagraph
+      description: Retrieve actions for a specific currency metagraph
+      operationId: getCurrencyActions
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: transactionTypes
+          in: query
+          description: Comma-separated list of transaction types to filter by (AllowSpend, TokenLock, TokenUnlock, SpendTransaction, FeeTransaction, ExpiredSpendTransaction)
+          required: false
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/actions.yml#/components/schemas/PaginatedActions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+  /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/actions:
+    get:
+      tags: 
+        - Actions
+      summary: Get actions by metagraph snapshot
+      description: Retrieve actions associated with a specific metagraph snapshot
+      operationId: getCurrencySnapshotActions
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/hashOrOrdinalMetagraphParam'
+        - name: transactionTypes
+          in: query
+          description: Comma-separated list of transaction types to filter by (AllowSpend, TokenLock, TokenUnlock, SpendTransaction, FeeTransaction, ExpiredSpendTransaction)
+          required: false
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/actions.yml#/components/schemas/PaginatedActions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+  
+  /currency/{metagraph_id}/addresses/{address}/actions:
+    get:
+      tags: 
+        - Actions
+      summary: Get actions by metagraph and address
+      description: Retrieve actions for a specific metagraph and address
+      operationId: getCurrencyAddressActions
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          description: Address to filter actions by
+          required: true
+          schema:
+            type: string
+        - name: transactionTypes
+          in: query
+          description: Comma-separated list of transaction types to filter by (AllowSpend, TokenLock, TokenUnlock, SpendTransaction, FeeTransaction, ExpiredSpendTransaction)
+          required: false
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/actions.yml#/components/schemas/PaginatedActions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'

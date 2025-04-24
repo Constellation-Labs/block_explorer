@@ -1,0 +1,201 @@
+components:
+  schemas:
+    Metagraph:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the metagraph
+        timestamp:
+          type: string
+          description: The timestamp when the metagraph was created
+          format: date-time
+    
+    PaginatedMetagraphs:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Metagraph'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true
+    
+    MetagraphSnapshot:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: The hash of the metagraph snapshot
+        ordinal:
+          type: integer
+          description: The ordinal of the snapshot in the metagraph
+        height:
+          type: integer
+          description: The height of the snapshot
+        subHeight:
+          type: integer
+          description: The sub-height of the snapshot
+        lastSnapshotHash:
+          type: string
+          description: The hash of the previous metagraph snapshot
+        blocks:
+          type: array
+          items:
+            type: string
+          description: Array of block hashes included in this metagraph snapshot
+        epochProgress:
+          type: number
+          description: The progress through the current epoch
+        fee:
+          type: string
+          description: The fee for this metagraph snapshot
+          format: bigint
+        stakingAddress:
+          type: string
+          description: The staking address for this metagraph snapshot
+          nullable: true
+        ownerAddress:
+          type: string
+          description: The owner address for this metagraph snapshot
+          nullable: true
+        sizeInKb:
+          type: number
+          description: The size of the snapshot in kilobytes
+        timestamp:
+          type: string
+          description: The timestamp when the metagraph snapshot was created
+          format: date-time
+    
+    MetagraphBlock:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: The hash of the metagraph block
+        height:
+          type: integer
+          description: The height of the block in the metagraph
+        parents:
+          type: array
+          items:
+            $ref: './dag.yml#/components/schemas/BlockParent'
+          description: Parent blocks
+        timestamp:
+          type: string
+          description: The timestamp when the block was created
+          format: date-time
+        transactions:
+          type: array
+          items:
+            type: string
+          description: Array of transaction hashes included in this block
+        snapshotHash:
+          type: string
+          description: The hash of the metagraph snapshot containing this block
+        snapshotOrdinal:
+          type: integer
+          description: The ordinal of the metagraph snapshot containing this block
+          
+    MetagraphBlockResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MetagraphBlock'
+          
+    MetagraphSnapshotResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MetagraphSnapshot'
+    
+    PaginatedMetagraphSnapshots:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetagraphSnapshot'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true
+    
+    
+    
+    MetagraphTransaction:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: The hash of the metagraph transaction
+        amount:
+          type: string
+          description: The amount of tokens transferred
+          format: bigint
+        source:
+          type: string
+          description: The source address of the transaction
+        destination:
+          type: string
+          description: The destination address of the transaction
+        fee:
+          type: string
+          description: The fee for the transaction
+          format: bigint
+        parent:
+          type: object
+          properties:
+            hash:
+              type: string
+              description: The hash of the parent transaction
+              nullable: true
+            ordinal:
+              type: integer
+              description: The ordinal of the parent transaction
+              nullable: true
+        salt:
+          type: string
+          description: The salt used in the transaction
+        blockHash:
+          type: string
+          description: The hash of the metagraph block containing this transaction
+        snapshotHash:
+          type: string
+          description: The hash of the metagraph snapshot containing this transaction
+        snapshotOrdinal:
+          type: integer
+          description: The ordinal of the metagraph snapshot containing this transaction
+        timestamp:
+          type: string
+          description: The timestamp when the transaction was created
+          format: date-time
+    
+    MetagraphTransactionResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MetagraphTransaction'
+    
+    PaginatedMetagraphTransactions:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetagraphTransaction'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true

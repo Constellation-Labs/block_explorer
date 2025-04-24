@@ -1,0 +1,214 @@
+components:
+  schemas:
+    GlobalSnapshot:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: The hash of the global snapshot
+        ordinal:
+          type: integer
+          description: The ordinal of the snapshot in the blockchain
+        height:
+          type: integer
+          description: The height of the snapshot
+        subHeight:
+          type: integer
+          description: The sub-height of the snapshot
+        lastSnapshotHash:
+          type: string
+          description: The hash of the previous snapshot
+        blocks:
+          type: array
+          items:
+            type: string
+          description: Array of block hashes included in this snapshot
+        epochProgress:
+          type: number
+          description: The progress through the current epoch
+        timestamp:
+          type: string
+          description: The timestamp when the snapshot was created
+          format: date-time
+    
+    GlobalSnapshotResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/GlobalSnapshot'
+    
+    PaginatedGlobalSnapshots:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlobalSnapshot'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true
+    
+    Reward:
+      type: object
+      properties:
+        destination:
+          type: string
+          description: The destination address for the reward
+        amount:
+          type: string
+          description: The amount of the reward
+          format: bigint
+    
+    PaginatedRewards:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true
+    
+    Transaction:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: The hash of the transaction
+        amount:
+          type: string
+          description: The amount of tokens transferred
+          format: bigint
+        source:
+          type: string
+          description: The source address of the transaction
+        destination:
+          type: string
+          description: The destination address of the transaction
+        fee:
+          type: string
+          description: The fee for the transaction
+          format: bigint
+        parent:
+          type: object
+          properties:
+            hash:
+              type: string
+              description: The hash of the parent transaction
+              nullable: true
+            ordinal:
+              type: integer
+              description: The ordinal of the parent transaction
+              nullable: true
+        salt:
+          type: string
+          description: The salt used in the transaction
+        blockHash:
+          type: string
+          description: The hash of the block containing this transaction
+        snapshotHash:
+          type: string
+          description: The hash of the snapshot containing this transaction
+        snapshotOrdinal:
+          type: integer
+          description: The ordinal of the snapshot containing this transaction
+        timestamp:
+          type: string
+          description: The timestamp when the transaction was created
+          format: date-time
+    
+    TransactionResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Transaction'
+    
+    PaginatedTransactions:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true
+    
+    BlockParent:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: The hash of the parent block
+        height:
+          type: integer
+          description: The height of the parent block
+    
+    Block:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: The hash of the block
+        height:
+          type: integer
+          description: The height of the block in the blockchain
+        parents:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlockParent'
+          description: Parent blocks
+        timestamp:
+          type: string
+          description: The timestamp when the block was created
+          format: date-time
+        transactions:
+          type: array
+          items:
+            type: string
+          description: Array of transaction hashes included in this block
+        snapshotHash:
+          type: string
+          description: The hash of the snapshot containing this block
+        snapshotOrdinal:
+          type: integer
+          description: The ordinal of the snapshot containing this block
+    
+    BlockResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Block'
+    
+    Balance:
+      type: object
+      properties:
+        ordinal:
+          type: integer
+          description: The ordinal of the snapshot for this balance
+        balance:
+          type: string
+          description: The balance amount
+          format: bigint
+        address:
+          type: string
+          description: The address for this balance
+    
+    BalanceResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Balance'
