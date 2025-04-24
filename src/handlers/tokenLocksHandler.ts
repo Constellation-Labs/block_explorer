@@ -281,7 +281,7 @@ export const addressTokenUnlocks = async (
 export const metagraphTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  const { identifier: metagraph_id } = event.pathParameters || {};
+  const { metagraph_id } = event.pathParameters || {};
 
   return paginatedQuery(
     extractPagination(event),
@@ -301,7 +301,7 @@ export const metagraphTokenLock = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, hash } = event.pathParameters || {};
+    const { metagraph_id, hash } = event.pathParameters || {};
 
     const lock = await prisma.metagraph_token_locks.findUnique({
       where: { metagraph_id, hash },
@@ -318,7 +318,7 @@ export const metagraphSnapshotTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, hash_or_ordinal } =
+    const { metagraph_id, hash_or_ordinal } =
       event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
@@ -346,7 +346,7 @@ export const metagraphAddressTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
 
     return paginatedQuery(
       extractPagination(event),
@@ -368,7 +368,7 @@ export const metagraphAddressTokenLocks = async (
 export const metagraphTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  const { identifier: metagraph_id } = event.pathParameters || {};
+  const { metagraph_id } = event.pathParameters || {};
   return paginatedQuery(
     extractPagination(event),
     toCreatedAtOrdinalCursor,
@@ -390,7 +390,7 @@ export const metagraphTokenUnlock = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, hash } = event.pathParameters || {};
+    const { metagraph_id, hash } = event.pathParameters || {};
 
     const unlock = await prisma.metagraph_token_unlocks.findUnique({
       where: { metagraph_id, hash },
@@ -407,7 +407,7 @@ export const metagraphSnapshotTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, hash_or_ordinal } =
+    const { metagraph_id, hash_or_ordinal } =
       event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
@@ -438,7 +438,7 @@ export const metagraphAddressTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
 
     return paginatedQuery(
       extractPagination(event),

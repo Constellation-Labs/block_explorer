@@ -145,9 +145,9 @@ export const successResponse = (data: any): APIGatewayProxyResult => ({
   ),
 });
 
-export const notFoundResponse = (): APIGatewayProxyResult => ({
+export const notFoundResponse = (msg=""): APIGatewayProxyResult => ({
   statusCode: 404,
-  body: JSON.stringify({ message: "Not found", errors: [""] }),
+  body: JSON.stringify({ message: "Not found", errors: [msg] }),
 });
 
 export const missingParameterResponse = (

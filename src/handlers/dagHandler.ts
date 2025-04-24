@@ -95,7 +95,7 @@ export const globalSnapshotRewards = async (
     const { term } = event.pathParameters || {};
 
     if (term != "latest" && !(await globalSnapshotExists(term))) {
-      return notFoundResponse();
+      return notFoundResponse("global snapshot");
     }
 
     const gsWhere = await globalSnapshotWhere(term);

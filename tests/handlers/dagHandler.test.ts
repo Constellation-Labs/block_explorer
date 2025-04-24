@@ -7,11 +7,105 @@ import {
 } from "../testUtils";
 import {
   data_addresses,
-  data_dag_blocks,
-  data_dag_transactions,
   data_global_snapshots,
   prisma,
 } from "../../prisma/seed";
+
+
+export const data_dag_blocks = [
+  {
+    hash: "16593f9f612a453c28669b86067e097990ee18742e905afa330674636ca1431c",
+    height: 12n,
+    snapshot_hash: data_global_snapshots[0].hash,
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+  {
+    hash: "48fd7dd45ced78be111174c5262cca65aa44798b6a01b48525590bfcce643bd2",
+    height: 14n,
+    snapshot_hash: data_global_snapshots[1].hash,
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+];
+
+export const data_dag_transactions = [
+  {
+    hash: "1c53bc94c735d8d6eeaddc9f5cb446e7f79144c9aa5bba9479db8dee0ec1aa4c",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 90790983n,
+    fee: 200000n,
+    salt: 1231231232n,
+    parent_ordinal: 21337n,
+    parent_hash:
+      "4a6d3aa5715e304b4b5f32d52f0c91e0909acf7c24b3ca9776324da68db2f30c",
+    ordinal: 234n,
+    block_hash: data_dag_blocks[0].hash,
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+  {
+    hash: "6acc815979e9d1935cce65ba776fde1144c5fc0e97d3a9fe67d82d0e6e21977d",
+    source_addr: data_addresses[1].address,
+    destination_addr: data_addresses[0].address,
+    amount: 90790983n,
+    fee: 100000n,
+    salt: 1234n,
+    parent_ordinal: 21338n,
+    parent_hash:
+      "1c53bc94c735d8d6eeaddc9f5cb446e7f79144c9aa5bba9479db8dee0ec1aa4c",
+    ordinal: 3222n,
+    block_hash: data_dag_blocks[1].hash,
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+  {
+    hash: "1641479831cbb2dcfca627df21cd08ae052edd44b92bbb523f1d0e2b8bd3b058",
+    source_addr: data_addresses[2].address,
+    destination_addr: data_addresses[2].address,
+    amount: 13245n,
+    fee: 10000n,
+    salt: 12234n,
+    parent_ordinal: 21339n,
+    parent_hash:
+      "6acc815979e9d1935cce65ba776fde1144c5fc0e97d3a9fe67d82d0e6e21977d",
+    ordinal: 3222n,
+    block_hash: data_dag_blocks[1].hash,
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+];
+export const data_dag_balance_changes = [
+  {
+    snapshot_hash: data_global_snapshots[0].hash,
+    snapshot_ordinal: data_global_snapshots[0].ordinal,
+    address: data_dag_transactions[0].destination_addr,
+    balance: data_dag_transactions[0].amount,
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+];
+
+
+const seedData = async () => {
+  
+  await prisma.dag_blocks.createManyAndReturn({
+    data: data_dag_blocks,
+  });
+
+  await prisma.dag_transactions.createManyAndReturn({
+    data: data_dag_transactions,
+  });
+
+  await prisma.dag_balance_changes.createManyAndReturn({
+    data: data_dag_balance_changes,
+  });
+}
+
+beforeAll(async () => {
+  await seedData();
+});
 
 const validateTransaction = (tx) => {
   const dbTxn = data_dag_transactions.filter(
@@ -258,7 +352,8 @@ describe("DAG Handler Integration Tests", () => {
       expect([
         body.data[0].snapshotOrdinal,
         body.data[1].snapshotOrdinal,
-      ]).toEqual([2556536, 2556535]);
+        body.data[2].snapshotOrdinal,
+      ]).toEqual([2556536, 2556536, 2556535]);
 
       validateTransaction(body.data[0]);
       validateTransaction(body.data[1]);
