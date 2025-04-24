@@ -28,6 +28,13 @@ import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
 
+
+const metagraphIdExists = async (metagraph_id) => {
+  return prisma.metagraphs.findFirst({
+    where: { id: metagraph_id },
+  });
+};
+
 const latestMetagraphSnapshot = async (metagraph_id) => {
   return prisma.metagraph_snapshots.findFirst({
     select: { hash: true, ordinal: true },
@@ -68,7 +75,11 @@ export const currencySnapshots = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier } = event.pathParameters || {};
+    const { metagraph_id } = event.pathParameters || {};
+
+    if (!(await metagraphIdExists(metagraph_id))){
+      return notFoundResponse("metagraph");
+    }
 
     const toCursor = (row) => ({
       metagraph_id_ordinal: {
@@ -87,7 +98,7 @@ export const currencySnapshots = async (
       toCursor,
       fromCursor,
       {
-        where: { metagraph_id: identifier },
+        where: { metagraph_id },
         include: { metagraph_blocks: true },
         orderBy: { ordinal: "desc" },
       },
@@ -138,7 +149,11 @@ export const currencySnapshot = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, term } = event.pathParameters || {};
+    const { metagraph_id, term } = event.pathParameters || {};
+
+    if (!(await metagraphIdExists(metagraph_id))){
+      return notFoundResponse("metagraph");
+    }
 
     const hashOrOrdinalWithLatest = await metagraphSnapshotWhere(
       metagraph_id,
@@ -160,7 +175,11 @@ export const currencySnapshotRewards = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, term } = event.pathParameters || {};
+    const { metagraph_id, term } = event.pathParameters || {};
+
+    if (!(await metagraphIdExists(metagraph_id))){
+      return notFoundResponse("metagraph");
+    }
 
     if (
       term != "latest" &&
@@ -243,7 +262,11 @@ export const currencySnapshotTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, term } = event.pathParameters || {};
+    const { metagraph_id, term } = event.pathParameters || {};
+
+    if (!(await metagraphIdExists(metagraph_id))){
+      return notFoundResponse("metagraph");
+    }
 
     if (
       term != "latest" &&
@@ -274,7 +297,11 @@ export const currencyBlock = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, hash } = event.pathParameters || {};
+    const { metagraph_id, hash } = event.pathParameters || {};
+
+    if (!(await metagraphIdExists(metagraph_id))){
+      return notFoundResponse("metagraph");
+    }
 
     const block = await prisma.metagraph_blocks.findUnique({
       where: { metagraph_id, hash },
@@ -295,7 +322,11 @@ export const currencyTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id } = event.pathParameters || {};
+    const { metagraph_id } = event.pathParameters || {};
+
+    if (!(await metagraphIdExists(metagraph_id))){
+      return notFoundResponse("metagraph");
+    }
 
     const where = { where: { metagraph_blocks: { metagraph_id } } };
 
@@ -309,7 +340,7 @@ export const currencyTransaction = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, hash } = event.pathParameters || {};
+    const { metagraph_id, hash } = event.pathParameters || {};
 
     const transaction = await prisma.metagraph_transactions.findUnique({
       where: {
@@ -337,7 +368,11 @@ export const currencyTransactionsByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
+
+    if (!(await metagraphIdExists(metagraph_id))){
+      return notFoundResponse("metagraph");
+    }
 
     const where = {
       where: {
@@ -356,7 +391,12 @@ export const currencyTransactionsBySource = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
+
+    if (!(await metagraphIdExists(metagraph_id))){
+      return notFoundResponse("metagraph"); 
+    }
+
 
     const where = { where: { metagraph_id, source_addr: address } };
 
@@ -370,7 +410,7 @@ export const currencyTransactionsByDestination = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
 
     const where = { where: { metagraph_id, destination_addr: address } };
 
@@ -394,7 +434,7 @@ export const currencyBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
 
     const { ordinal } = event.queryStringParameters || {};
 
@@ -430,7 +470,7 @@ export const currencyFeeTransaction = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, hash } = event.pathParameters || {};
+    const { metagraph_id, hash } = event.pathParameters || {};
 
     const transaction = await prisma.metagraph_fee_transactions.findUnique({
       where: {
@@ -483,7 +523,7 @@ export const currencySnapshotFeeTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, term } = event.pathParameters || {};
+    const { metagraph_id, term } = event.pathParameters || {};
     if (!metagraph_id || !term)
       return missingParameterResponse("identifier or term");
 
@@ -506,7 +546,7 @@ export const currencyFeeTransactionsByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
     if (!metagraph_id || !address)
       return missingParameterResponse("identifier or address");
 
@@ -527,7 +567,7 @@ export const currencyFeeTransactionsBySource = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
     if (!metagraph_id || !address)
       return missingParameterResponse("identifier or address");
 
@@ -547,7 +587,7 @@ export const currencyFeeTransactionsByDestination = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { identifier: metagraph_id, address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
     if (!metagraph_id || !address)
       return missingParameterResponse("identifier or address");
 
