@@ -194,6 +194,19 @@ describe("Token Locks Handler Integration Tests", () => {
       expect(body.data.length).toBe(data_dag_token_locks.length);
       body.data.forEach(validateDagTokenLock);
     });
+
+    it("should return active token locks for a specific address", async () => {
+      const address = data_addresses[0].address;
+      const event = createAPIGatewayEvent({ address },{ active: "true" });
+      
+      const response: APIGatewayProxyResult = await tokenLocksHandler.addressTokenLocks(event);
+      
+      expect(response.statusCode).toBe(200);
+      const body = validatePaginatedResponse(response);
+      
+      expect(body.data.length).toBe(2);
+      body.data.forEach(validateDagTokenLock);
+    });
     
     it("should return empty array for address with no token locks", async () => {
       const address = "non-existent-address";
