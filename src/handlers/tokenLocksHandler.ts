@@ -152,7 +152,7 @@ export const globalSnapshotTokenLocks = async (
       {
         where: {
           global_snapshot: filter,
-          ...ifActiveDagTokenLock(event)
+          ...ifActiveDagTokenLock(event),
         },
         include: includeDagUnlockOrdinal,
         orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
@@ -176,7 +176,7 @@ export const addressTokenLocks = async (
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
       {
-        where: { source_addr: address, ...ifActiveDagTokenLock(event)},
+        where: { source_addr: address, ...ifActiveDagTokenLock(event) },
         include: includeDagUnlockOrdinal,
         orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
       },
@@ -319,9 +319,9 @@ export const metagraphSnapshotTokenLocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { metagraph_id, hash_or_ordinal } =
-      event.pathParameters || {};
+    const { metagraph_id, hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
+
     return paginatedQuery(
       extractPagination(event),
       toCreatedAtOrdinalCursor,
@@ -407,8 +407,7 @@ export const metagraphSnapshotTokenUnlocks = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { metagraph_id, hash_or_ordinal } =
-      event.pathParameters || {};
+    const { metagraph_id, hash_or_ordinal } = event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
 
     return paginatedQuery(

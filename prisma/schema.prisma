@@ -440,9 +440,7 @@ model metagraph_token_locks {
   addresses                       addresses                    @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_locks_source_addr_fk")
   abstract_transactions_view      abstract_transactions_view[]
   metagraph_token_unlock          metagraph_token_unlocks?
-  metagraph_snapshot              metagraph_snapshots?         @relation(fields: [metagraph_snapshotsMetagraph_id, metagraph_snapshotsHash], references: [metagraph_id, hash])
-  metagraph_snapshotsMetagraph_id String?                      @db.VarChar
-  metagraph_snapshotsHash         String?                      @db.VarChar
+  metagraph_snapshot              metagraph_snapshots?         @relation(fields: [metagraph_id, snapshot_hash], references: [metagraph_id, hash])
 
   @@id([metagraph_id, hash], map: "metagraph_token_locks_pk")
   @@unique([hash])

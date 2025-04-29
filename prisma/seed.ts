@@ -340,7 +340,17 @@ export const data_metagraph_token_locks = [
     unlock_epoch: 25n,
     round_id: randomUUID(),
     snapshot_hash: data_metagraph_snapshots[1].hash,
-  }
+  },
+     {
+       hash: 'metagraph-token-lock-hash-0030',
+       metagraph_id: data_metagraphs[0].id,
+       source_addr: data_addresses[0].address,
+       amount: 4000n,
+       ordinal: 21n,
+       unlock_epoch: 25n,
+       round_id: randomUUID(),
+       snapshot_hash: data_metagraph_snapshots[1].hash,
+     }
 ];
 
 // Test data for metagraph token unlocks
@@ -352,7 +362,15 @@ export const data_metagraph_token_unlocks = [
     amount: 3000n,
     lock_reference_hash: data_metagraph_token_locks[0].hash,
     snapshot_hash: data_metagraph_snapshots[1].hash,
-  }
+  },
+  {
+      hash: 'metagraph-token-unlock-hash-002',
+      metagraph_id: data_metagraphs[0].id,
+      source_addr: data_addresses[0].address,
+      amount: 3000n,
+      lock_reference_hash: data_metagraph_token_locks[2].hash,
+      snapshot_hash: data_metagraph_snapshots[1].hash,
+    }
 ];
 
 
