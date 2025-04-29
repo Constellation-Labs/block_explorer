@@ -152,6 +152,7 @@ export const globalSnapshotTokenLocks = async (
       {
         where: {
           global_snapshot: filter,
+          ...ifActiveDagTokenLock(event)
         },
         include: includeDagUnlockOrdinal,
         orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
@@ -175,7 +176,7 @@ export const addressTokenLocks = async (
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
       {
-        where: { source_addr: address },
+        where: { source_addr: address, ...ifActiveDagTokenLock(event)},
         include: includeDagUnlockOrdinal,
         orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
       },
