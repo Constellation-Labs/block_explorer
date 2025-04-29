@@ -194,7 +194,6 @@ model dag_token_locks {
   ordinal                      BigInt
   unlock_epoch                 BigInt?
   round_id                     String                         @db.Uuid
-  parent_hash                  String?                        @db.VarChar
   snapshot_hash                String                         @db.VarChar
   addresses                    addresses                      @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_locks_source_addr_fk")
   global_snapshot              global_snapshots               @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_lock_global_snapshot_fk")
@@ -211,10 +210,8 @@ model dag_token_unlocks {
   amount                     BigInt
   created_at                 DateTime                     @default(now()) @db.Timestamp(6)
   updated_at                 DateTime                     @default(now()) @db.Timestamp(6)
-  lock_reference_ordinal     BigInt
   lock_reference_hash        String                       @db.VarChar
   snapshot_hash              String                       @db.VarChar
-  parent_hash                String                       @db.VarChar
   global_snapshot            global_snapshots             @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_unlock_global_snapshot_fk")
   dag_token_lock             dag_token_locks              @relation(fields: [lock_reference_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_unlocks_token_locks_fk")
   addresses                  addresses                    @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "ddag_token_unlocks_address_fk")
@@ -438,14 +435,12 @@ model metagraph_token_locks {
   ordinal                         BigInt
   unlock_epoch                    BigInt
   round_id                        String                       @db.VarChar
-  parent_hash                     String?                      @db.VarChar
   snapshot_hash                   String                       @db.VarChar
   metagraph                       metagraphs                   @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
   addresses                       addresses                    @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_token_locks_source_addr_fk")
   abstract_transactions_view      abstract_transactions_view[]
-  metagraph_snapshot              String?                      @db.VarChar
   metagraph_token_unlock          metagraph_token_unlocks?
-  metagraph_snapshots             metagraph_snapshots?         @relation(fields: [metagraph_snapshotsMetagraph_id, metagraph_snapshotsHash], references: [metagraph_id, hash])
+  metagraph_snapshot              metagraph_snapshots?         @relation(fields: [metagraph_snapshotsMetagraph_id, metagraph_snapshotsHash], references: [metagraph_id, hash])
   metagraph_snapshotsMetagraph_id String?                      @db.VarChar
   metagraph_snapshotsHash         String?                      @db.VarChar
 
@@ -461,10 +456,8 @@ model metagraph_token_unlocks {
   created_at                 DateTime                     @default(now()) @db.Timestamp(6)
   updated_at                 DateTime                     @default(now()) @db.Timestamp(6)
   metagraph_id               String                       @db.VarChar
-  lock_reference_ordinal     BigInt
   lock_reference_hash        String                       @db.VarChar
   snapshot_hash              String                       @db.VarChar
-  parent_hash                String                       @db.VarChar
   addresses                  addresses                    @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "address_fk")
   metagraphs                 metagraphs                   @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
   abstract_transactions_view abstract_transactions_view[]

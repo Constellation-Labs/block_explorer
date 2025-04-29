@@ -16,33 +16,11 @@ import {
 
 import {
   data_addresses,
+  data_dag_token_locks,
   data_global_snapshots,
   prisma,
 } from "../../prisma/seed";
 import { randomUUID } from "crypto";
-
-const data_dag_token_locks = [
-  {
-    hash: `token-lock-hash-002`,
-    source_addr: data_addresses[0].address,
-    amount: 1000n,
-    ordinal: 2n,
-    unlock_epoch: 10n,
-    round_id: randomUUID(),
-    parent_hash: "token-lock-hash-001",
-    snapshot_hash: data_global_snapshots[0].hash,
-  },
-  {
-    hash: `token-lock-hash-003`,
-    source_addr: data_addresses[0].address,
-    amount: 1200n,
-    ordinal: 3n,
-    unlock_epoch: 10n,
-    round_id: randomUUID(),
-    parent_hash: "token-lock-hash-002",
-    snapshot_hash: data_global_snapshots[1].hash,
-  },
-];
 
 const data_delegate_stake_create_events = [
   {
@@ -110,9 +88,6 @@ const data_delegate_stake_rewards = [
   },
 ];
 const seedData = async () => {
-  await prisma.dag_token_locks.createManyAndReturn({
-    data: data_dag_token_locks,
-  });
 
   await prisma.delegate_stake_create_events.createManyAndReturn({
     data: data_delegate_stake_create_events,

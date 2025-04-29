@@ -380,12 +380,11 @@ insert
 -- DROP TABLE dag_token_unlocks;
 
 CREATE TABLE dag_token_unlocks (
-	lock_reference_ordinal int8 NOT NULL,
 	lock_reference_hash varchar NOT NULL,
 	snapshot_hash varchar NOT NULL,
 	parent_hash varchar NOT NULL,
-	CONSTRAINT dag_token_unlocks_pk PRIMARY KEY (lock_reference_ordinal, lock_reference_hash),
-	CONSTRAINT dag_token_unlocks_token_locks_fk FOREIGN KEY (lock_reference_hash,lock_reference_ordinal) REFERENCES dag_token_locks(hash,ordinal) ON DELETE CASCADE,
+	CONSTRAINT dag_token_unlocks_pk PRIMARY KEY (lock_reference_hash),
+	CONSTRAINT dag_token_unlocks_token_locks_fk FOREIGN KEY (lock_reference_hash) REFERENCES dag_token_locks(hash,ordinal) ON DELETE CASCADE,
 	CONSTRAINT ddag_token_unlocks_address_fk FOREIGN KEY (source_addr) REFERENCES addresses(address) ON DELETE CASCADE
 )
 INHERITS (public.abstract_transactions);
@@ -563,15 +562,13 @@ insert
 
 CREATE TABLE metagraph_token_unlocks (
 	metagraph_id varchar NOT NULL,
-	lock_reference_ordinal int8 NOT NULL,
 	lock_reference_hash varchar NOT NULL,
 	snapshot_hash varchar NOT NULL,
 	parent_hash varchar NOT NULL,
-	CONSTRAINT metagraph_token_unlocks_pk PRIMARY KEY (lock_reference_ordinal, lock_reference_hash),
+	CONSTRAINT metagraph_token_unlocks_pk PRIMARY KEY (lock_reference_hash),
 	CONSTRAINT address_fk FOREIGN KEY (source_addr) REFERENCES addresses(address) ON DELETE CASCADE,
 	CONSTRAINT metagraph_id_fk FOREIGN KEY (metagraph_id) REFERENCES metagraphs(id) ON DELETE CASCADE,
 	CONSTRAINT metagraph_token_unlocks_token_locks_fk FOREIGN KEY (metagraph_id,lock_reference_hash) REFERENCES metagraph_token_locks(metagraph_id,hash) ON DELETE CASCADE,
-	CONSTRAINT metagraph_token_unlocks_token_locks_ordinal_fk FOREIGN KEY (metagraph_id,lock_reference_ordinal) REFERENCES metagraph_token_locks(metagraph_id,ordinal) ON DELETE CASCADE
 )
 INHERITS (public.abstract_transactions);
 

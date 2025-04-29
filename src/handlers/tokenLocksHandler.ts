@@ -321,7 +321,6 @@ export const metagraphSnapshotTokenLocks = async (
     const { metagraph_id, hash_or_ordinal } =
       event.pathParameters || {};
     const filter = extractHashOrdinal(hash_or_ordinal);
-
     return paginatedQuery(
       extractPagination(event),
       toCreatedAtOrdinalCursor,

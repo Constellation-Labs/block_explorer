@@ -8,80 +8,11 @@ import {
 import {
   data_addresses,
   data_global_snapshots,
+  data_metagraph_snapshots,
+  data_metagraphs,
   prisma,
 } from "../../prisma/seed";
 
-const data_metagraphs = [
-  {
-    id: "DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C",
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-  {
-    id: "DAG6666666666666666666666666666666666666",
-    created_at: new Date("2025-04-02T00:01:02Z"),
-    updated_at: new Date(),
-  },
-];
-
-const data_metagraph_snapshots = [
-  {
-    metagraph_id: data_metagraphs[0].id,
-    global_snapshot_hash: data_global_snapshots[0].hash,
-    ordinal: 1n,
-    hash: "1c1e16746af43bc1f93aadaf006cd981852a706e74f1d24b66a7e5e9fa4188e5",
-    height: 1n,
-    subheight: 1,
-    owner_address: null,
-    staking_address: null,
-    epoch_progress: 1n,
-    size: 1n,
-    last_snapshot_hash:
-      "0000000000000000000000000000000000000000000000000000000000000000",
-    fee: 1n,
-    version: "0.0.1",
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-  {
-    metagraph_id: data_metagraphs[0].id,
-    global_snapshot_hash: data_global_snapshots[1].hash,
-    ordinal: 2n,
-    hash: "9bf40b2d2e355401bbca7a7924880ab799ffa91e95d1b93f3298b549758aac64",
-
-    height: 2n,
-    subheight: 2,
-    owner_address: null,
-    staking_address: null,
-    epoch_progress: 1n,
-    size: 1n,
-    last_snapshot_hash:
-      "1c1e16746af43bc1f93aadaf006cd981852a706e74f1d24b66a7e5e9fa4188e5",
-    fee: 1n,
-    version: "0.0.1",
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-  {
-    metagraph_id:  data_metagraphs[1].id,
-    global_snapshot_hash: data_global_snapshots[1].hash,
-    ordinal: 1n,
-    hash: "9bf40b2d2e3123123123123123123123123123123123123123123549758aac64",
-
-    height: 3n,
-    subheight: 2,
-    owner_address: null,
-    staking_address: null,
-    epoch_progress: 1n,
-    size: 1n,
-    last_snapshot_hash:
-      "9bf40b2d2e355401bbca7a7924880ab799ffa91e95d1b93f3298b549758aac64",
-    fee: 1n,
-    version: "0.0.1",
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-];
 
 const data_metagraph_blocks = [
   {
@@ -190,12 +121,8 @@ const data_metagraph_balance_changes = [
 ];
 
 const seedData = async () => {
-  await prisma.metagraphs.createManyAndReturn({ data: data_metagraphs });
 
-  await prisma.metagraph_snapshots.createManyAndReturn({
-    data: data_metagraph_snapshots,
-  });
-  
+ 
   await prisma.metagraph_blocks.createManyAndReturn({
     data: data_metagraph_blocks,
   });
