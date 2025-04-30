@@ -31,7 +31,7 @@ const spendTransactionResponse = (transaction) => ({
   amount: transaction.amount,
   source: transaction.source_addr,
   destination: transaction.destination_addr,
-  allowSpendRef: transaction.allow_spend_ref,
+  allowSpendHash: transaction.allow_spend_ref,
   snapshotHash: transaction.snapshot_hash,
   timestamp: transaction.created_at,
 });
@@ -43,12 +43,36 @@ const spendExpiredResponse = (transaction) => ({
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,
-  allowSpendRef: transaction.allow_spend_ref,
+  allowSpendHash: transaction.allow_spend_ref,
   snapshotHash: transaction.snapshot_hash,
   timestamp: transaction.created_at,
 });
 
 const spendExpiredResponses = (txs) => txs.map(spendExpiredResponse);
+
+const ifActiveAllowSpend = (event) => {
+  const { active } = event.queryStringParameters || {};
+  return active === "true"
+    ? {
+        AND: [
+          { dag_spend_transaction: null },
+          { dag_expired_spend_transaction: null },
+        ],
+      }
+    : {};
+};
+
+const ifActiveMetagraphAllowSpend = (event) => {
+  const { active } = event.queryStringParameters || {};
+  return active === "true"
+    ? {
+        AND: [
+          { metagraph_spend_transaction: null },
+          { metagraph_expired_spend_transaction: null },
+        ],
+      }
+    : {};
+};
 
 export const allowSpend = async (
   event: APIGatewayProxyEvent
@@ -73,7 +97,7 @@ export const allowSpends = async (
     extractPagination(event),
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
-    { orderBy: { created_at: "desc" } },
+    { where: ifActiveAllowSpend(event), orderBy: { created_at: "desc" } },
     prisma.dag_allow_spends.findMany,
     allowSpendResponses
   );
@@ -91,7 +115,7 @@ export const globalSnapshotAllowSpends = async (
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
       {
-        where: { global_snapshot: filter },
+        where: { global_snapshot: filter, ...ifActiveAllowSpend(event) },
         orderBy: { created_at: "desc" },
       },
       prisma.dag_allow_spends.findMany,
@@ -115,6 +139,7 @@ export const addressAllowSpends = async (
       {
         where: {
           OR: [{ source_addr: address }, { destination_addr: address }],
+          ...ifActiveAllowSpend(event),
         },
         orderBy: { created_at: "desc" },
       },
@@ -303,7 +328,10 @@ export const currencyAllowSpends = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { metagraph_id }, orderBy: { created_at: "desc" } },
+      {
+        where: { metagraph_id, ...ifActiveMetagraphAllowSpend(event) },
+        orderBy: { created_at: "desc" },
+      },
       prisma.metagraph_allow_spends.findMany,
       allowSpendResponses
     );
@@ -342,7 +370,8 @@ export const currencySnapshotAllowSpends = async (
       {
         where: {
           metagraph_id,
-          metagraph_allow_spend_block: { metagraph_snapshot: filter },
+          metagraph_snapshot: filter,
+          ...ifActiveMetagraphAllowSpend(event),
         },
         orderBy: { created_at: "desc" },
       },
@@ -368,6 +397,7 @@ export const currencyAddressAllowSpends = async (
         where: {
           metagraph_id,
           OR: [{ source_addr: address }, { destination_addr: address }],
+          ...ifActiveMetagraphAllowSpend(event),
         },
         orderBy: { created_at: "desc" },
       },
@@ -429,7 +459,7 @@ export const currencySnapshotSpendTransactions = async (
         where: {
           metagraph_id,
           metagraph_allow_spend: {
-            metagraph_allow_spend_block: { metagraph_snapshot: filter },
+            metagraph_snapshot: filter,
           },
         },
         orderBy: { created_at: "desc" },
@@ -517,7 +547,7 @@ export const currencySnapshotAllowSpendExpirations = async (
         where: {
           metagraph_id,
           metagraph_allow_spend: {
-            metagraph_allow_spend_block: { metagraph_snapshot: filter },
+            metagraph_snapshot: filter,
           },
         },
         orderBy: { created_at: "desc" },
