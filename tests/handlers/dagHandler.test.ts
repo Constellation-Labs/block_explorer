@@ -157,6 +157,7 @@ describe("DAG Handler Integration Tests", () => {
       expect(snapshot.subHeight).toBe(Number(testSnapshot.subheight));
       expect(Array.isArray(snapshot.blocks)).toBe(true);
       expect(snapshot.timestamp).toBeDefined();
+      expect(snapshot.metagraphSnashotCount).toBe(Number(testSnapshot.metagraph_snapshot_count));
     });
 
     it("should handle pagination correctly", async () => {

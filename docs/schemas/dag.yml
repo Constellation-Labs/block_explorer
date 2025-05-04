@@ -26,6 +26,9 @@ components:
         epochProgress:
           type: number
           description: The progress through the current epoch
+        metagraphSnashotCount:
+          type: number
+          description: Metagraph snapshots included in this snapshot
         timestamp:
           type: string
           description: The timestamp when the snapshot was created

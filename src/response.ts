@@ -33,6 +33,7 @@ const commonSnapshotResponse = (snapshot, blocksProperty) => ({
 
 export const globalSnapshotResponse = (snapshot) => ({
   ...commonSnapshotResponse(snapshot, "dag_blocks"),
+  metagraphSnashotCount: snapshot.metagraph_snapshot_count
 });
 
 export const rewardsResponse = (rs) => rs.map(rewardResponse);
