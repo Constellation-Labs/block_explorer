@@ -40,12 +40,7 @@ const tableFilter = (event) => {
 };
 
 const currencyId = (transaction) =>
-  transaction.metagraph_token_lock?.metagraph_id ??
-  transaction.metagraph_token_unlock?.metagraph_id ??
-  transaction.metagraph_allow_spend?.metagraph_id ??
-  transaction.metagraph_spend_transaction?.metagraph_id ??
-  transaction.metagraph_fee_transaction?.metagraph_id ??
-  null;
+  transaction.metagraph_snapshot?.metagraph_id ?? null;
 
 const actionResponse = (transaction) => ({
   type: getTransactionType(transaction.table_name),
@@ -56,16 +51,21 @@ const actionResponse = (transaction) => ({
   destination: transaction.destination_addr ?? null,
   unlockEpoch:
     transaction.dag_allow_spend?.last_valid_epoch_progress ??
-    transaction.dag_token_lock?.unlock_epoch ?? null,
+    transaction.dag_token_lock?.unlock_epoch ??
+    null,
   parentHash:
     transaction.dag_spend_transaction?.allow_spend_ref ??
-    transaction.dag_token_unlock?.lock_reference_hash ?? null,
+    transaction.dag_token_unlock?.lock_reference_hash ??
+    null,
   timestamp: transaction.created_at,
+  globalSnapshotOrdinal: transaction.global_snapshot?.ordinal,
+  metagraphSnapshotOrdinal:  transaction.metagraph_snapshot?.ordinal,
 });
 
 export const actionsResponse = (ts) => ts.map(actionResponse);
 
 const dagInclude = {
+  global_snapshot: { select: { hash: true, ordinal: true } },
   dag_token_lock: { select: { unlock_epoch: true } },
   dag_allow_spend: { select: { last_valid_epoch_progress: true } },
   dag_spend_transaction: { select: { allow_spend_ref: true } },
@@ -74,6 +74,7 @@ const dagInclude = {
 };
 
 const metagraphInclude = {
+  metagraph_snapshot: { select: { hash: true, ordinal: true } },
   metagraph_token_lock: { select: { unlock_epoch: true } },
   metagraph_allow_spend: { select: { last_valid_epoch_progress: true } },
   metagraph_spend_transaction: { select: { allow_spend_ref: true } },
@@ -101,40 +102,6 @@ export const dagActions = async (
   );
 };
 
-const tokenLockGlobalSnapshotCond = (filter) => ({
-  dag_token_lock: {
-      global_snapshot: filter,
-  },
-});
-const tokenUnlockGlobalSnapshotCond = (filter) => ({
-  dag_token_unlock: {
-    dag_token_lock: {
-        global_snapshot: filter,
-    },
-  },
-});
-const allowSpendGlobalSnapshotCond = (filter) => ({
-  dag_allow_spend: {
-      global_snapshot: filter,
-  },
-});
-const spendTxGlobalSnapshotCond = (filter) => ({
-  dag_spend_transaction: allowSpendGlobalSnapshotCond(filter),
-});
-const expiredSpendTxGlobalSnapshotCond = (filter) => ({
-  dag_expired_spend_transaction: allowSpendGlobalSnapshotCond(filter),
-});
-
-const filterByGlobalSnapshot = (filter) => ({
-  OR: [
-    tokenLockGlobalSnapshotCond(filter),
-    tokenUnlockGlobalSnapshotCond(filter),
-    allowSpendGlobalSnapshotCond(filter),
-    spendTxGlobalSnapshotCond(filter),
-    expiredSpendTxGlobalSnapshotCond(filter),
-  ],
-});
-
 export const globalSnapshotActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -150,7 +117,7 @@ export const globalSnapshotActions = async (
       hashCursor,
       {
         where: {
-          ...filterByGlobalSnapshot(filter),
+          global_snapshot: filter,
           table_name: { in: selectedTables },
         },
         include: dagInclude,
@@ -201,55 +168,6 @@ export const dagAddressActions = async (
   }
 };
 
-const metagraphIdCond = (metagraph_id) => ({
-  OR: [
-    { metagraph_token_lock: { metagraph_id } },
-    { metagraph_token_unlock: { metagraph_id } },
-    { metagraph_allow_spend: { metagraph_id } },
-    { metagraph_spend_transaction: { metagraph_id } },
-    { metagraph_expired_spend_transaction: { metagraph_id } },
-    { metagraph_fee_transaction: { metagraph_id } },
-  ],
-});
-
-const tokenLockMetagraphSnapshotCond = (filter) => ({
-  metagraph_token_lock: {
-    metagraph_snapshot: filter,
-  },
-});
-const tokenUnlockMetagraphSnapshotCond = (filter) => ({
-  metagraph_token_unlock: {
-    token_lock: {
-      metagraph_snapshot: filter,
-    },
-  },
-});
-const allowSpendMetagraphSnapshotCond = (filter) => ({
-  metagraph_allow_spend: {
-      metagraph_snapshot: filter,
-  },
-});
-const spendTxMetagraphSnapshotCond = (filter) => ({
-  metagraph_spend_transaction: allowSpendMetagraphSnapshotCond(filter),
-});
-const expiredSpendTxMetagraphSnapshotCond = (filter) => ({
-  metagraph_expired_spend_transaction: allowSpendMetagraphSnapshotCond(filter),
-});
-const feeTxMetagraphSnapshotCond = (filter) => ({
-  metagraph_fee_transaction: { metagraph_snapshot: filter },
-});
-
-const filterByMetagraphSnapshot = (filter) => ({
-  OR: [
-    tokenLockMetagraphSnapshotCond(filter),
-    tokenUnlockMetagraphSnapshotCond(filter),
-    allowSpendMetagraphSnapshotCond(filter),
-    spendTxMetagraphSnapshotCond(filter),
-    expiredSpendTxMetagraphSnapshotCond(filter),
-    feeTxMetagraphSnapshotCond(filter),
-  ],
-});
-
 export const currencyActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -264,7 +182,7 @@ export const currencyActions = async (
       hashCursor,
       {
         where: {
-          ...metagraphIdCond(metagraph_id),
+          metagraph_snapshot: { metagraph_id },
           table_name: { in: selectedTables },
         },
         include: metagraphInclude,
@@ -293,8 +211,7 @@ export const currencySnapshotActions = async (
       hashCursor,
       {
         where: {
-          ...metagraphIdCond(metagraph_id),
-          ...filterByMetagraphSnapshot(filter),
+          metagraph_snapshot: { metagraph_id, ...filter },
           table_name: { in: selectedTables },
         },
         include: metagraphInclude,
@@ -322,7 +239,7 @@ export const currencyAddressActions = async (
       hashCursor,
       {
         where: {
-          ...metagraphIdCond(metagraph_id),
+          metagraph_snapshot: { metagraph_id },
           OR: [
             { source_addr: address },
             { metagraph_allow_spend: { destination_addr: address } },

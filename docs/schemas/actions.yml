@@ -9,7 +9,7 @@ components:
           enum: [AllowSpend, TokenLock, TokenUnlock, SpendTransaction, FeeTransaction, ExpiredSpendTransaction]
         currencyId:
           type: string
-          description: The identifier of the currency
+          description: The identifier of the currency if it's a currency action
           nullable: true
         hash:
           type: string
@@ -37,6 +37,18 @@ components:
           type: string
           description: The timestamp when the transaction was created
           format: date-time
+      oneOf:
+      - required: [globalSnapshotOrdinal]
+        properties:
+          globalSnapshotOrdinal:
+            type: integer
+            description: Global snapshot ordinal if it's a DAG action
+      - required: [metagraphSnapshotOrdinal]
+        properties:
+          metagraphSnapshotOrdinal:
+            type: integer
+            description: Metagraph snapshot ordinal if it's a currency action
+
     
     ActionResponse:
       type: object
