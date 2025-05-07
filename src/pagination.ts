@@ -3,7 +3,8 @@ import { handleError, respond } from "./response";
 import { Pagination } from "./request-params";
 import { toNumber, isFinite } from "lodash";
 
-export const maxSizeLimit = 100;
+export const maxSizeLimit = 10000;
+export const defaultPageSize = 100;
 
 export enum SortOrder {
   Desc = "desc",
@@ -46,7 +47,7 @@ export const fromCreatedAtOrdinalCursor = (row) => ({
 export const hashCursor = (row) => ({ hash: row.hash });
 
 const buildPageQuery = <T>(pagination: Pagination, nextToCursor) => {
-  const pageSize = safeNumber(pagination.size, maxSizeLimit);
+  const pageSize = safeNumber(pagination.size, defaultPageSize);
   const incrementedSize = pageSize + 1;
 
   if (
