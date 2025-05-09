@@ -95,7 +95,6 @@ export const paginatedQuery = async (
     };
 
     const rawResults = await findMany(pagedQuery);
-
     const pageSize = pageQueryParams.take
       ? pageQueryParams.take - 1
       : maxSizeLimit;
