@@ -5,7 +5,7 @@ import {
   delegatedStakeWithdrawals,
   delegatedStakeWithdrawal,
   addressDelegatedStakeWithdrawals,
-  stakingBalanceByAddress,
+  stakingPositions,
 } from "../../src/handlers/delegatedStakingHandler";
 
 import {
@@ -20,7 +20,6 @@ import {
   data_global_snapshots,
   prisma,
 } from "../../prisma/seed";
-import { randomUUID } from "crypto";
 
 const data_delegate_stake_create_events = [
   {
@@ -33,7 +32,6 @@ const data_delegate_stake_create_events = [
     lock_reference_hash: data_dag_token_locks[0].hash,
     parent_hash: "parent-hash-xyz",
     global_snapshot_hash: data_global_snapshots[0].hash,
-    is_update: false,
   },
   {
     hash: "stake-event-hash-002",
@@ -45,19 +43,18 @@ const data_delegate_stake_create_events = [
     lock_reference_hash: data_dag_token_locks[1].hash,
     parent_hash: "stake-event-hash-001",
     global_snapshot_hash: data_global_snapshots[1].hash,
-    is_update: false,
   },
   {
     hash: "stake-event-hash-003",
     ordinal: 10003n,
     source_addr: data_addresses[0].address,
     node_id: "NODE_ABC123",
-    amount: 2222222222,
+    amount: 2222222222n,
     fee: 500000n,
     lock_reference_hash: data_dag_token_locks[1].hash,
     parent_hash: "stake-event-hash-001",
     global_snapshot_hash: data_global_snapshots[1].hash,
-    is_update: true,
+    transfer_from_hash: "stake-event-hash-002",
   },
 ];
 
@@ -67,26 +64,29 @@ const data_delegate_stake_withdraw_events = [
     source_addr: data_addresses[0].address,
     stake_create_hash: data_delegate_stake_create_events[0].hash,
     global_snapshot_hash: data_global_snapshots[1].hash,
+    unlock_epoch: 11000n,
+    is_completed: false,
   },
-];
-const data_delegate_stake_balance_changes = [
   {
+    hash: "withdraw-event-hash-002",
+    source_addr: data_addresses[0].address,
+    stake_create_hash: data_delegate_stake_create_events[1].hash,
     global_snapshot_hash: data_global_snapshots[1].hash,
-    global_snapshot_ordinal: data_global_snapshots[1].ordinal,
-    address: data_addresses[0].address,
-    node_id: "NODE_DEF456",
-    balance: 700000000000n,
-    rewards: 1000000000n,
+    unlock_epoch: 8000n,
+    is_completed: true,
   },
 ];
+
 const data_delegate_stake_rewards = [
   {
     global_snapshot_hash: data_global_snapshots[2].hash,
     address: data_addresses[0].address,
     node_id: "NODE_ABC123",
     rewards: 2500000000n,
+    stake_create_hash: data_delegate_stake_create_events[0].hash,
   },
 ];
+
 const seedData = async () => {
   await prisma.delegate_stake_create_events.createMany({
     data: data_delegate_stake_create_events,
@@ -96,14 +96,21 @@ const seedData = async () => {
     data: data_delegate_stake_withdraw_events,
   });
 
-  await prisma.delegate_stake_balance_changes.createMany({
-    data: data_delegate_stake_balance_changes,
-  });
-
   await prisma.delegate_stake_rewards.createMany({
     data: data_delegate_stake_rewards,
   });
 };
+
+expect.extend({
+  toBeBigInt(received, expected) {
+    const pass = BigInt(received) === BigInt(expected);
+    return {
+      pass,
+      message: () =>
+        `expected ${received} to be the same BigInt as ${expected}`,
+    };
+  },
+});
 
 const validateCreateStake = (tx) => {
   const match = data_delegate_stake_create_events.find(
@@ -111,8 +118,10 @@ const validateCreateStake = (tx) => {
   );
   expect(tx.source).toBe(match.source_addr);
   expect(tx.nodeId).toBe(match.node_id);
-  expect(Number(tx.amount)).toBe(Number(match.amount));
+  expect(tx.amount).toBeBigInt(match.amount);
+  expect(tx.fee).toBeBigInt(match.fee);
   expect(tx.timestamp).toBeDefined();
+  expect(tx.type).toBe(match.transfer_from_hash ? "transfer" : "create");
 };
 
 const validateWithdrawStake = (tx) => {
@@ -120,17 +129,26 @@ const validateWithdrawStake = (tx) => {
     (d) => d.hash === tx.hash
   );
   expect(tx.source).toBe(match.source_addr);
-  expect(tx.stakeHash).toBe(match.stake_create_hash);
+  expect(tx.stake.hash).toBe(match.stake_create_hash);
+  expect(tx.unlockEpoch).toBeBigInt(match.unlock_epoch);
+  expect(tx.status).toBe(
+    match.is_completed ? "withdrawalComplete" : "pendingWithdrawal"
+  );
   expect(tx.timestamp).toBeDefined();
 };
 
-const validateBalanceChange = (tx) => {
-  const match = data_delegate_stake_balance_changes.find(
-    (d) => d.address === tx.address && d.node_id === tx.nodeId
+const validateStakingPosition = (tx) => {
+  const match = data_delegate_stake_create_events.find(
+    (d) => d.hash === tx.stakeHash
   );
-  expect(tx.balance).toBe(Number(match.balance));
-  expect(tx.rewards).toBe(Number(match.rewards));
-  expect(tx.timestamp).toBeDefined();
+  expect(tx.address).toBe(match.source_addr);
+  expect(tx.nodeId).toBe(match.node_id);
+  expect(tx.lockAmount).toBeBigInt(match.amount);
+  expect(tx.rewardsAccrued).toBeBigInt(
+    data_delegate_stake_rewards
+      .filter((r) => r.stake_create_hash === match.hash)
+      .reduce((sum, r) => sum + r.rewards, BigInt(0))
+  );
 };
 
 describe("Delegated Stake Handler Integration Tests", () => {
@@ -140,17 +158,30 @@ describe("Delegated Stake Handler Integration Tests", () => {
 
   describe("delegatedStakes", () => {
     it("should return a list of delegated stakes", async () => {
-      const activeStates = [
-        data_delegate_stake_create_events[1],
-        data_delegate_stake_create_events[2],
-      ];
       const event = createAPIGatewayEvent({}, { limit: "10" });
       const response = await delegatedStakes(event);
       expect(response.statusCode).toBe(200);
 
       const body = validatePaginatedResponse(response);
-      expect(body.data.length).toBe(activeStates.length);
-      validateCreateStake(body.data[0]);
+      expect(body.data.length).toBeGreaterThan(0);
+      body.data.forEach(validateCreateStake);
+    });
+
+    it("should handle status filtering", async () => {
+      const event = createAPIGatewayEvent(
+        {},
+        {
+          limit: "10",
+          status: "transfered,active",
+        }
+      );
+      const response = await delegatedStakes(event);
+      expect(response.statusCode).toBe(200);
+
+      const body = validatePaginatedResponse(response);
+      body.data.forEach((tx) => {
+        expect(["transfered", "active"]).toContain(tx.status);
+      });
     });
   });
 
@@ -188,7 +219,7 @@ describe("Delegated Stake Handler Integration Tests", () => {
 
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(data_delegate_stake_withdraw_events.length);
-      validateWithdrawStake(body.data[0]);
+      body.data.forEach(validateWithdrawStake);
     });
   });
 
@@ -218,17 +249,33 @@ describe("Delegated Stake Handler Integration Tests", () => {
     });
   });
 
-  describe("stakingBalanceByAddress", () => {
-    it("should return staking balance per node for an address", async () => {
-      const test = data_delegate_stake_balance_changes[0];
-      const event = createAPIGatewayEvent({ address: test.address });
+  describe("stakingPositions", () => {
+    it("should return staking positions for an address", async () => {
+      const test = data_delegate_stake_create_events[0];
+      const event = createAPIGatewayEvent({ address: test.source_addr });
 
-      const response = await stakingBalanceByAddress(event);
+      const response = await stakingPositions(event);
       expect(response.statusCode).toBe(200);
 
-      const body = validateResponseStructure(response)["data"];
-      expect(Array.isArray(body)).toBe(true);
-      body.forEach(validateBalanceChange);
+      const body = validatePaginatedResponse(response);
+      body.data.forEach(validateStakingPosition);
+    });
+
+    it("should handle status filtering", async () => {
+      const event = createAPIGatewayEvent(
+        {},
+        {
+          limit: "10",
+          status: "active,pendingWithdrawal",
+        }
+      );
+      const response = await stakingPositions(event);
+      expect(response.statusCode).toBe(200);
+
+      const body = validatePaginatedResponse(response);
+      body.data.forEach((tx) => {
+        expect(["active", "pendingWithdrawal"]).toContain(tx.status);
+      });
     });
   });
 });

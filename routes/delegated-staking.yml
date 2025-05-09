@@ -2,21 +2,21 @@ delegatedStakes:
   handler: src/handlers/delegatedStakingHandler.delegatedStakes
   events:
     - httpApi:
-        path: /delegated-stakes
+        path: /delegated-stake-events
         method: GET
 
 delegatedStake:
   handler: src/handlers/delegatedStakingHandler.delegatedStake
   events:
     - httpApi:
-        path: /delegated-stakes/{hash}
+        path: /delegated-stake-events/{hash}
         method: GET
 
 addressDelegatedStakes:
   handler: src/handlers/delegatedStakingHandler.addressDelegatedStakes
   events:
     - httpApi:
-        path: /addresses/{address}/delegated-stakes
+        path: /addresses/{address}/delegated-stake-events
         method: GET
 
 delegatedStakeWithdrawals:
@@ -40,9 +40,17 @@ addressDelegatedStakeWithdrawals:
         path: /addresses/{address}/delegated-stake-withdrawals
         method: GET
 
-stakingBalanceByAddress:
-  handler: src/handlers/delegatedStakingHandler.stakingBalanceByAddress
+
+stakingPositions:
+  handler: src/handlers/delegatedStakingHandler.stakingPositions
   events:
     - httpApi:
-        path: /addresses/{address}/delegated-stake-balance
+        path: /delegated-stake-positions
+        method: GET
+
+stakingPositionsByAddress:
+  handler: src/handlers/delegatedStakingHandler.stakingPositions
+  events:
+    - httpApi:
+        path: /addresses/{address}/delegated-stake-positions
         method: GET

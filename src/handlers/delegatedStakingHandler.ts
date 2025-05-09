@@ -1,16 +1,49 @@
-import { PrismaClient } from "@prisma/client";
+import {
+  delegate_stake_create_events,
+  delegate_stake_withdraw_events,
+  PrismaClient,
+} from "@prisma/client";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { extractHashOrdinal, extractPagination } from "../request-params";
+import { extractPagination } from "../request-params";
 import {
   paginatedQuery,
   toOrdinalCursor,
   fromOrdinalCursor,
 } from "../pagination";
 import { handleError, respond } from "../response";
-import { toNumber } from "lodash";
-import { latestGlobalSnapshot } from "./dagHandler";
 
 const prisma = new PrismaClient();
+
+const latestWithdrawEvents = (
+  events: delegate_stake_withdraw_events[] = []
+) => {
+  let withdrawalCreate: delegate_stake_withdraw_events | null = null;
+  let withdrawalComplete: delegate_stake_withdraw_events | null = null;
+
+  for (const event of events) {
+    if (event.is_completed) {
+      withdrawalComplete = event;
+    } else {
+      withdrawalCreate = event;
+    }
+  }
+
+  return { withdrawalCreate, withdrawalComplete };
+};
+
+const withdrawalStatus = (isCompleted) =>
+  isCompleted ? "withdrawalComplete" : "pendingWithdrawal";
+
+const createStatus = (ce) => (ce.transfer_from_hash ? "transfered" : "active");
+
+const stakeStatus = (event) => {
+  const withdrawalEvents = event.delegate_stake_withdraw_events;
+  if (withdrawalEvents?.length > 0) {
+    return withdrawalStatus(withdrawalEvents > 1);
+  } else {
+    return createStatus(event);
+  }
+};
 
 const delegateStakeCreateResponse = (event) => ({
   hash: event.hash,
@@ -19,9 +52,10 @@ const delegateStakeCreateResponse = (event) => ({
   nodeId: event.node_id,
   amount: event.amount,
   fee: event.fee,
-  tokenLockRef: event.lock_reference_hash,
+  tokenLockHash: event.lock_reference_hash,
   parentHash: event.parent_hash,
-  globalSnapshotHash: event.global_snapshot_hash,
+  type: event.transfer_from_hash ? "transfer" : "create",
+  status: stakeStatus(event),
   timestamp: event.created_at,
 });
 
@@ -31,36 +65,125 @@ const delegateStakeCreateResponses = (txs) =>
 const delegateStakeWithdrawResponse = (event) => ({
   hash: event.hash,
   source: event.source_addr,
-  stakeHash: event.stake_create_hash,
+  stake: event.delegate_stake_create_event,
   globalSnapshotHash: event.global_snapshot_hash,
+  unlockEpoch: event.unlock_epoch,
+  status: withdrawalStatus(event.is_completed),
   timestamp: event.created_at,
 });
 
 const delegateStakeWithdrawResponses = (txs) =>
   txs.map(delegateStakeWithdrawResponse);
 
-const delegateStakeBalanceChangeResponse = (change) => ({
-  globalSnapshotOrdinal: change.global_snapshot_ordinal,
-  address: change.address,
-  nodeId: change.node_id,
-  balance: change.balance,
-  rewards: change.rewards,
-  timestamp: change.created_at,
-});
+const totalRewards = (rs) =>
+  (rs ?? []).reduce((sum, r) => sum + r.rewards, BigInt(0));
 
-const delegateStakeBalanceChangeResponses = (txs) =>
-  txs.map(delegateStakeBalanceChangeResponse);
+const completedAmount = (change) => {
+  const withdrawal = change.withdrawal_event;
+  if (change.withdrawal_event?.is_complete) {
+    const createEvent = withdrawal.delegate_stake_create_even;
+    return (
+      createEvent.amount + totalRewards(createEvent.delegate_stake_rewards)
+    );
+  } else {
+    return 0;
+  }
+};
+
+const delegateStakePositionResponse = (change) => {
+  const { withdrawalCreate, withdrawalComplete } = latestWithdrawEvents(
+    change.delegate_stake_withdraw_events
+  );
+  return {
+    address: change.source_addr,
+    nodeId: change.node_id,
+    status: stakeStatus(change),
+    stakeHash: change.hash,
+    lockAmount: change.amount,
+    rewardsAccrued: totalRewards(change.delegate_stake_rewards),
+    withdrawnAmount: completedAmount(change),
+    transferedFromHash: change.delegated_from?.hash ?? null,
+    transferedToHash: change.delegated_to?.hash ?? null,
+    createdAt: change.created_at,
+    transferredAt: change.delegated_to?.created_at ?? null,
+    withdrawalStartedAt: withdrawalCreate?.created_at ?? null,
+    withdrawalCompletedAt: withdrawalComplete?.created_at ?? null,
+  };
+};
+
+const delegateStakePositionResponses = (txs) =>
+  txs.map(delegateStakePositionResponse);
+
+const statusFilter = (event) => {
+  const statusParam =
+    event.queryStringParameters?.status ?? "active,pendingWithdrawal";
+  return statusParam.split(",");
+};
+
+const buildStatusWhereQuery = (statuses) => {
+  let statusFilters: any[] = [];
+
+  if (statuses.includes("active")) {
+    statusFilters.push({
+      transfer_from_hash: null,
+      delegate_stake_withdraw_events: {
+        none: {},
+      },
+    });
+  }
+
+  if (statuses.includes("transfered")) {
+    statusFilters.push({
+      transfer_from_hash: {
+        not: null,
+      },
+      delegate_stake_withdraw_events: {
+        none: {},
+      },
+    });
+  }
+
+  if (statuses.includes("pendingWithdrawal")) {
+    statusFilters.push({
+      delegate_stake_withdraw_events: {
+        some: {},
+        every: {
+          is_completed: false,
+        },
+      },
+    });
+  }
+
+  if (statuses.includes("withdrawalComplete")) {
+    statusFilters.push({
+      delegate_stake_withdraw_events: {
+        some: {
+          is_completed: true,
+        },
+      },
+    });
+  }
+
+  return statusFilters.length > 0 ? { OR: statusFilters } : {};
+};
 
 export const delegatedStakes = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
+  const statuses = statusFilter(event);
+  const statusWhere = buildStatusWhereQuery(statuses);
   return paginatedQuery(
     extractPagination(event),
     toOrdinalCursor,
     fromOrdinalCursor,
     {
       where: {
-        delegate_stake_withdraw_event: null,
+        ...statusWhere,
+      },
+      include: {
+        delegate_stake_withdraw_events: true,
+        delegated_to: true,
+        delegated_from: true,
       },
       orderBy: [{ ordinal: "desc" }],
     },
@@ -75,6 +198,11 @@ export const delegatedStake = async (event) => {
 
     const stake = await prisma.delegate_stake_create_events.findUnique({
       where: { hash },
+      include: {
+        delegate_stake_withdraw_events: true,
+        delegated_to: true,
+        delegated_from: true,
+      },
     });
 
     return respond(stake, delegateStakeCreateResponse);
@@ -85,6 +213,10 @@ export const delegatedStake = async (event) => {
 
 export const addressDelegatedStakes = async (event) => {
   const address = event.pathParameters?.address;
+
+  const statuses = statusFilter(event);
+  const statusWhere = buildStatusWhereQuery(statuses);
+
   return paginatedQuery(
     extractPagination(event),
     toOrdinalCursor,
@@ -92,6 +224,12 @@ export const addressDelegatedStakes = async (event) => {
     {
       where: {
         source_addr: address,
+        ...statusWhere,
+      },
+      include: {
+        delegate_stake_withdraw_events: true,
+        delegated_to: true,
+        delegated_from: true,
       },
       orderBy: [{ ordinal: "desc" }],
     },
@@ -106,6 +244,7 @@ export const delegatedStakeWithdrawals = async (event) => {
     toOrdinalCursor,
     fromOrdinalCursor,
     {
+      include: { delegate_stake_create_event: true },
       orderBy: [{ created_at: "desc" }],
     },
     prisma.delegate_stake_withdraw_events.findMany,
@@ -119,6 +258,7 @@ export const delegatedStakeWithdrawal = async (event) => {
 
     const withdrawal = await prisma.delegate_stake_withdraw_events.findUnique({
       where: { hash },
+      include: { delegate_stake_create_event: true },
     });
 
     return respond(withdrawal, delegateStakeWithdrawResponse);
@@ -137,6 +277,7 @@ export const addressDelegatedStakeWithdrawals = async (event) => {
       where: {
         source_addr: address,
       },
+      include: { delegate_stake_create_event: true },
       orderBy: [{ created_at: "desc" }],
     },
     prisma.delegate_stake_withdraw_events.findMany,
@@ -144,46 +285,55 @@ export const addressDelegatedStakeWithdrawals = async (event) => {
   );
 };
 
-export const stakingBalanceByAddress = async (
+export const stakingPositions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
     const { address } = event.pathParameters || {};
 
-    const { ordinal } = event.queryStringParameters || {};
+    const statuses = statusFilter(event);
+    const statusWhere = buildStatusWhereQuery(statuses);
 
-    const ordinalNbr = toNumber(ordinal);
-
-    const ordinalCondition = isFinite(ordinalNbr)
-      ? { global_snapshot_ordinal: { lte: ordinalNbr } }
-      : {};
-
-    const latestPerNode = await prisma.delegate_stake_balance_changes.groupBy({
-      by: ["node_id"],
-      where: {
-        address,
-        ...ordinalCondition,
-      },
+    const maxOrdinals = await prisma.delegate_stake_create_events.groupBy({
+      by: ["source_addr", "node_id"],
       _max: {
-        global_snapshot_ordinal: true,
+        ordinal: true,
       },
     });
 
-    const latestConditions = latestPerNode.map(({ node_id, _max }) => ({
-      address,
-      node_id,
-      global_snapshot_ordinal: _max.global_snapshot_ordinal ?? {},
-    }));
-
-    const latestBalances = await prisma.delegate_stake_balance_changes.findMany(
-      {
-        where: {
-          OR: latestConditions,
-        },
-      }
+    const whereConditions = maxOrdinals.map(
+      ({ source_addr, node_id, _max }) => ({
+        source_addr,
+        node_id,
+        ordinal: _max.ordinal!,
+      })
     );
 
-    return respond(latestBalances, delegateStakeBalanceChangeResponses);
+    const addressFilter = address?.trim()
+      ? { source_addr: address.trim() }
+      : {};
+
+    return paginatedQuery(
+      extractPagination(event),
+      toOrdinalCursor,
+      fromOrdinalCursor,
+      {
+        where: {
+          OR: whereConditions,
+          ...statusWhere,
+          ...addressFilter,
+        },
+        include: {
+          delegate_stake_withdraw_events: true,
+          delegate_stake_rewards: true,
+          delegated_to: true,
+          delegated_from: true,
+        },
+        orderBy: [{ source_addr: "asc" }, { node_id: "asc" }],
+      },
+      prisma.delegate_stake_create_events.findMany,
+      delegateStakePositionResponses
+    );
   } catch (error) {
     return handleError(error);
   }
