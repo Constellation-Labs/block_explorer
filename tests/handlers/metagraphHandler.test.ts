@@ -13,7 +13,6 @@ import {
   prisma,
 } from "../../prisma/seed";
 
-
 const data_metagraph_blocks = [
   {
     metagraph_id: data_metagraphs[0].id,
@@ -110,7 +109,7 @@ const data_metagraph_balance_changes = [
     updated_at: new Date(),
   },
   {
-    metagraph_id:  data_metagraphs[1].id,
+    metagraph_id: data_metagraphs[1].id,
     metagraph_snapshot_hash: data_metagraph_snapshots[2].hash,
     snapshot_ordinal: data_metagraph_snapshots[2].ordinal,
     address: data_metagraph_transactions[2].destination_addr,
@@ -120,29 +119,58 @@ const data_metagraph_balance_changes = [
   },
 ];
 
-const seedData = async () => {
+const data_metagraph_fee_transactions = [
+  {
+    metagraph_id: data_metagraphs[0].id,
+    metagraph_snapshot_hash: data_metagraph_snapshots[0].hash,
+    metagraph_snapshot_ordinal: data_metagraph_snapshots[0].ordinal,
+    hash: "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 90790983n,
+    data_update_ref:
+      "5056fdfbba0637dcecfc0b7fa3f441c745c852cf850c3bfc0dbc8a7410b8d722",
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+  {
+    metagraph_id: data_metagraphs[1].id,
+    metagraph_snapshot_hash: data_metagraph_snapshots[2].hash,
+    metagraph_snapshot_ordinal: data_metagraph_snapshots[2].ordinal,
+    hash: "39c990000000000000000000000000000000000000007654fc5ca9917cb7e72b",
+    source_addr: data_addresses[2].address,
+    destination_addr: data_addresses[3].address,
+    amount: 10090983n,
+    data_update_ref:
+      "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+];
 
- 
-  await prisma.metagraph_blocks.createManyAndReturn({
+const seedData = async () => {
+  await prisma.metagraph_blocks.createMany({
     data: data_metagraph_blocks,
   });
 
-  await prisma.metagraph_transactions.createManyAndReturn({
+  await prisma.metagraph_transactions.createMany({
     data: data_metagraph_transactions,
   });
 
-  await prisma.metagraph_balance_changes.createManyAndReturn({
+  await prisma.metagraph_balance_changes.createMany({
     data: data_metagraph_balance_changes,
   });
-}
 
-  beforeAll(async () => {
-      await seedData();
+  await prisma.metagraph_fee_transactions.createMany({
+    data: data_metagraph_fee_transactions,
   });
+};
 
+beforeAll(async () => {
+  await seedData();
+});
 
 const validateTransaction = (tx, expected) => {
-
   const dbBlock = data_metagraph_blocks.filter(
     (_dbBlock) => _dbBlock.hash === expected.block_hash
   )[0];
@@ -161,19 +189,38 @@ const validateTransaction = (tx, expected) => {
   expect(+new Date(tx.timestamp)).toBe(+new Date(expected.created_at));
 };
 
+const validateFeeTransaction = (tx, expected) => {
+  const dbSnapshot = data_metagraph_snapshots.filter(
+    (_dbSnapshot) => _dbSnapshot.hash === expected.metagraph_snapshot_hash
+  )[0];
+
+  expect(tx.hash).toBe(expected.hash);
+  expect(tx.source).toBe(expected.source_addr);
+  expect(tx.destination).toBe(expected.destination_addr);
+  expect(tx.amount).toBe(Number(expected.amount));
+  expect(tx.snapshotHash).toBe(dbSnapshot.hash);
+  expect(tx.snapshotOrdinal).toBe(Number(dbSnapshot.ordinal));
+  expect(+new Date(tx.timestamp)).toBe(+new Date(expected.created_at));
+};
+
 describe("Metagraph Handler Integration Tests", () => {
   describe("currencySnapshots", () => {
     it("should return a list of metagraph snapshots", async () => {
-      const metagraph_id = data_metagraphs[0].id
+      const metagraph_id = data_metagraphs[0].id;
 
-      const event = createAPIGatewayEvent({identifier: metagraph_id}, { limit: "10" });
+      const event = createAPIGatewayEvent(
+        { identifier: metagraph_id },
+        { limit: "10" }
+      );
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencySnapshots(event);
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
 
-      const expected = data_metagraph_snapshots.filter(ms => ms.metagraph_id === metagraph_id)
+      const expected = data_metagraph_snapshots.filter(
+        (ms) => ms.metagraph_id === metagraph_id
+      );
 
       expect(body.data.length).toBe(expected.length);
 
@@ -192,8 +239,11 @@ describe("Metagraph Handler Integration Tests", () => {
     });
 
     it("should handle pagination correctly", async () => {
-      const metagraph_id = data_metagraphs[0].id
-      const event = createAPIGatewayEvent({identifier: metagraph_id}, { limit: "1" });
+      const metagraph_id = data_metagraphs[0].id;
+      const event = createAPIGatewayEvent(
+        { identifier: metagraph_id },
+        { limit: "1" }
+      );
 
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencySnapshots(event);
@@ -206,7 +256,7 @@ describe("Metagraph Handler Integration Tests", () => {
 
       // Try getting the next page
       const nextEvent = createAPIGatewayEvent(
-        {identifier: metagraph_id},
+        { identifier: metagraph_id },
         {
           limit: "1",
           next: body.meta.next,
@@ -223,29 +273,31 @@ describe("Metagraph Handler Integration Tests", () => {
     });
 
     it("should return not found on invalid metagraph", async () => {
-      const identifier = "1234567"
+      const identifier = "1234567";
       const event = createAPIGatewayEvent({ identifier }, { limit: "10" });
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencySnapshots(event);
 
       expect(response.statusCode).toBe(404);
 
-      expect(response.body).toBe('{"message":"Not found","errors":["metagraph"]}');
-
+      expect(response.body).toBe(
+        '{"message":"Not found","errors":["metagraph"]}'
+      );
     });
-    
   });
 
   describe("currencyTransactions", () => {
     it("should return transactions sorted by snapshot ordinal descending", async () => {
-      const metagraph_id = data_metagraphs[0].id
+      const metagraph_id = data_metagraphs[0].id;
 
-      const event = createAPIGatewayEvent({identifier: metagraph_id});
+      const event = createAPIGatewayEvent({ identifier: metagraph_id });
 
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencyTransactions(event);
 
-      const transactions = data_metagraph_transactions.filter(tx => tx.metagraph_id === metagraph_id)
+      const transactions = data_metagraph_transactions.filter(
+        (tx) => tx.metagraph_id === metagraph_id
+      );
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
@@ -262,7 +314,7 @@ describe("Metagraph Handler Integration Tests", () => {
     });
 
     it("should return not found on invalid metagraph", async () => {
-      const identifier = ""
+      const identifier = "";
       const event = createAPIGatewayEvent({ identifier }, { limit: "10" });
 
       const response: APIGatewayProxyResult =
@@ -270,22 +322,30 @@ describe("Metagraph Handler Integration Tests", () => {
 
       expect(response.statusCode).toBe(404);
 
-      expect(response.body).toBe('{"message":"Not found","errors":["metagraph"]}');
-
+      expect(response.body).toBe(
+        '{"message":"Not found","errors":["metagraph"]}'
+      );
     });
   });
 
   describe("currencyTransactionsByAddress", () => {
     it("should return transactions for specified address sorted by snapshot ordinal descending", async () => {
       const address = data_addresses[0].address;
-      const metagraph_id = data_metagraphs[0].id
+      const metagraph_id = data_metagraphs[0].id;
 
-      const event = createAPIGatewayEvent({ address, identifier: metagraph_id}, { limit: "10" });
+      const event = createAPIGatewayEvent(
+        { address, identifier: metagraph_id },
+        { limit: "10" }
+      );
 
       const response: APIGatewayProxyResult =
         await metagraphHandler.currencyTransactionsByAddress(event);
 
-      const transactions = data_metagraph_transactions.filter(tx => tx.metagraph_id === metagraph_id && (tx.source_addr === address || tx.destination_addr === address))
+      const transactions = data_metagraph_transactions.filter(
+        (tx) =>
+          tx.metagraph_id === metagraph_id &&
+          (tx.source_addr === address || tx.destination_addr === address)
+      );
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
@@ -295,7 +355,7 @@ describe("Metagraph Handler Integration Tests", () => {
       expect([
         body.data[0].snapshotOrdinal,
         body.data[1].snapshotOrdinal,
-      ]).toEqual([2, 1]);    
+      ]).toEqual([2, 1]);
 
       validateTransaction(body.data[0], data_metagraph_transactions[1]);
       validateTransaction(body.data[1], data_metagraph_transactions[0]);
@@ -322,5 +382,98 @@ describe("Metagraph Handler Integration Tests", () => {
       expect(body.address).toBe(testBalance.address);
       expect(body.ordinal).toBeDefined();
     });
+  });
+
+  test("currencyFeeTransaction returns expected result", async () => {
+    const event = createAPIGatewayEvent({
+      identifier: data_metagraphs[0].id,
+      hash: data_metagraph_transactions[0].hash,
+    });
+
+    const result = (await metagraphHandler.currencyFeeTransaction(
+      event
+    )) as APIGatewayProxyResult;
+    expect(result.statusCode).toBe(200);
+    const body = validateResponseStructure(result);
+    validateFeeTransaction(body.data, data_metagraph_fee_transactions[0]);
+  });
+
+  test("currencyFeeTransactions returns list of transactions", async () => {
+    const d = await prisma.metagraph_fee_transactions.findMany();
+
+    const event = createAPIGatewayEvent({
+      identifier: data_metagraphs[0].id,
+    });
+
+    const result = (await metagraphHandler.currencyFeeTransactions(
+      event
+    )) as APIGatewayProxyResult;
+    expect(result.statusCode).toBe(200);
+    const body = validatePaginatedResponse(result);
+
+    expect(body.data.length).toBe(1);
+    validateFeeTransaction(body.data[0], data_metagraph_fee_transactions[0]);
+  });
+
+  test("currencySnapshotFeeTransactions returns snapshot fee transactions", async () => {
+    const event = createAPIGatewayEvent({
+      identifier: data_metagraph_fee_transactions[0].metagraph_id,
+      term: data_metagraph_fee_transactions[0].metagraph_snapshot_hash,
+    });
+
+    const result = (await metagraphHandler.currencySnapshotFeeTransactions(
+      event
+    )) as APIGatewayProxyResult;
+    expect(result.statusCode).toBe(200);
+    const body = validatePaginatedResponse(result);
+
+    expect(body.data.length).toBe(1);
+    validateFeeTransaction(body.data[0], data_metagraph_fee_transactions[0]);
+  });
+
+  test("currencyFeeTransactionsByAddress returns transactions for address", async () => {
+    const event = createAPIGatewayEvent({
+      identifier: data_metagraphs[0].id,
+      address: data_addresses[0].address,
+    });
+
+    const result = (await metagraphHandler.currencyFeeTransactionsByAddress(
+      event
+    )) as APIGatewayProxyResult;
+    expect(result.statusCode).toBe(200);
+    const body = validatePaginatedResponse(result);
+    expect(body.data.length).toBe(1);
+    validateFeeTransaction(body.data[0], data_metagraph_fee_transactions[0]);
+  });
+
+  test("currencyFeeTransactionsBySource returns transactions for source address", async () => {
+    const event = createAPIGatewayEvent({
+      identifier: data_metagraphs[0].id,
+      address: data_addresses[0].address,
+    });
+
+    const result = (await metagraphHandler.currencyFeeTransactionsBySource(
+      event
+    )) as APIGatewayProxyResult;
+    expect(result.statusCode).toBe(200);
+    const body = validatePaginatedResponse(result);
+    expect(body.data.length).toBe(1);
+    validateFeeTransaction(body.data[0], data_metagraph_fee_transactions[0]);
+  });
+
+  test("currencyFeeTransactionsByDestination returns transactions for destination address", async () => {
+    const event = createAPIGatewayEvent({
+      identifier: data_metagraphs[0].id,
+      address: data_addresses[1].address,
+    });
+
+    const result = (await metagraphHandler.currencyFeeTransactionsByDestination(
+      event
+    )) as APIGatewayProxyResult;
+    expect(result.statusCode).toBe(200);
+    const body = validatePaginatedResponse(result);
+
+    expect(body.data.length).toBe(1);
+    validateFeeTransaction(body.data[0], data_metagraph_fee_transactions[0]);
   });
 });

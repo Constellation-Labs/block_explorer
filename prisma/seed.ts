@@ -13,7 +13,6 @@ import {
 } from "@prisma/client";
 import { randomUUID } from "crypto";
 
-
 export const prisma = new PrismaClient();
 
 export const data_addresses = [
@@ -36,7 +35,7 @@ export const data_addresses = [
     address: "DAG8bxrEjLbqPeMsN233MGFGqrLcpgbdXwQzYrYv",
     created_at: new Date("2025-04-02T00:00:02Z"),
     updated_at: new Date(),
-  }
+  },
 ];
 
 export const data_global_snapshots = [
@@ -155,63 +154,62 @@ export const data_metagraphs = [
 ];
 
 export const data_metagraph_snapshots = [
-    {
-        metagraph_id: data_metagraphs[0].id,
-        global_snapshot_hash: data_global_snapshots[0].hash,
-        ordinal: 1n,
-        hash: "1c1e16746af43bc1f93aadaf006cd981852a706e74f1d24b66a7e5e9fa4188e5",
-        height: 1n,
-        subheight: 1,
-        owner_address: null,
-        staking_address: null,
-        epoch_progress: 1n,
-        size: 1n,
-        last_snapshot_hash:
-          "0000000000000000000000000000000000000000000000000000000000000000",
-        fee: 1n,
-        version: "0.0.1",
-        created_at: new Date("2025-04-02T00:00:02Z"),
-        updated_at: new Date(),
-      },
-      {
-        metagraph_id: data_metagraphs[0].id,
-        global_snapshot_hash: data_global_snapshots[1].hash,
-        ordinal: 2n,
-        hash: "9bf40b2d2e355401bbca7a7924880ab799ffa91e95d1b93f3298b549758aac64",
-    
-        height: 2n,
-        subheight: 2,
-        owner_address: null,
-        staking_address: null,
-        epoch_progress: 1n,
-        size: 1n,
-        last_snapshot_hash:
-          "1c1e16746af43bc1f93aadaf006cd981852a706e74f1d24b66a7e5e9fa4188e5",
-        fee: 1n,
-        version: "0.0.1",
-        created_at: new Date("2025-04-02T00:00:02Z"),
-        updated_at: new Date(),
-      },
-      {
-        metagraph_id:  data_metagraphs[1].id,
-        global_snapshot_hash: data_global_snapshots[1].hash,
-        ordinal: 1n,
-        hash: "9bf40b2d2e3123123123123123123123123123123123123123123549758aac64",
-    
-        height: 3n,
-        subheight: 2,
-        owner_address: null,
-        staking_address: null,
-        epoch_progress: 1n,
-        size: 1n,
-        last_snapshot_hash:
-          "9bf40b2d2e355401bbca7a7924880ab799ffa91e95d1b93f3298b549758aac64",
-        fee: 1n,
-        version: "0.0.1",
-        created_at: new Date("2025-04-02T00:00:02Z"),
-        updated_at: new Date(),
-      },
-    
+  {
+    metagraph_id: data_metagraphs[0].id,
+    global_snapshot_hash: data_global_snapshots[0].hash,
+    ordinal: 1n,
+    hash: "1c1e16746af43bc1f93aadaf006cd981852a706e74f1d24b66a7e5e9fa4188e5",
+    height: 1n,
+    subheight: 1,
+    owner_address: null,
+    staking_address: null,
+    epoch_progress: 1n,
+    size: 1n,
+    last_snapshot_hash:
+      "0000000000000000000000000000000000000000000000000000000000000000",
+    fee: 1n,
+    version: "0.0.1",
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+  {
+    metagraph_id: data_metagraphs[0].id,
+    global_snapshot_hash: data_global_snapshots[1].hash,
+    ordinal: 2n,
+    hash: "9bf40b2d2e355401bbca7a7924880ab799ffa91e95d1b93f3298b549758aac64",
+
+    height: 2n,
+    subheight: 2,
+    owner_address: null,
+    staking_address: null,
+    epoch_progress: 1n,
+    size: 1n,
+    last_snapshot_hash:
+      "1c1e16746af43bc1f93aadaf006cd981852a706e74f1d24b66a7e5e9fa4188e5",
+    fee: 1n,
+    version: "0.0.1",
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+  {
+    metagraph_id: data_metagraphs[1].id,
+    global_snapshot_hash: data_global_snapshots[1].hash,
+    ordinal: 1n,
+    hash: "9bf40b2d2e3123123123123123123123123123123123123123123549758aac64",
+
+    height: 3n,
+    subheight: 2,
+    owner_address: null,
+    staking_address: null,
+    epoch_progress: 1n,
+    size: 1n,
+    last_snapshot_hash:
+      "9bf40b2d2e355401bbca7a7924880ab799ffa91e95d1b93f3298b549758aac64",
+    fee: 1n,
+    version: "0.0.1",
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
 ];
 
 export const data_metagraph_blocks = [
@@ -311,18 +309,18 @@ export const data_dag_token_locks = [
 // Test data for DAG token unlocks
 export const data_dag_token_unlocks = [
   {
-    hash: 'token-unlock-hash-0010',
+    hash: "token-unlock-hash-0010",
     source_addr: data_addresses[0].address,
     amount: 1000n,
     lock_reference_hash: data_dag_token_locks[0].hash,
     snapshot_hash: data_global_snapshots[1].hash,
-  }
+  },
 ];
 
 // Test data for metagraph token locks
 export const data_metagraph_token_locks = [
   {
-    hash: 'metagraph-token-lock-hash-0010',
+    hash: "metagraph-token-lock-hash-0010",
     metagraph_id: data_metagraphs[0].id,
     source_addr: data_addresses[0].address,
     amount: 3000n,
@@ -332,7 +330,7 @@ export const data_metagraph_token_locks = [
     snapshot_hash: data_metagraph_snapshots[0].hash,
   },
   {
-    hash: 'metagraph-token-lock-hash-0020',
+    hash: "metagraph-token-lock-hash-0020",
     metagraph_id: data_metagraphs[0].id,
     source_addr: data_addresses[0].address,
     amount: 4000n,
@@ -341,22 +339,22 @@ export const data_metagraph_token_locks = [
     round_id: randomUUID(),
     snapshot_hash: data_metagraph_snapshots[1].hash,
   },
-     {
-       hash: 'metagraph-token-lock-hash-0030',
-       metagraph_id: data_metagraphs[0].id,
-       source_addr: data_addresses[0].address,
-       amount: 4000n,
-       ordinal: 21n,
-       unlock_epoch: 25n,
-       round_id: randomUUID(),
-       snapshot_hash: data_metagraph_snapshots[1].hash,
-     }
+  {
+    hash: "metagraph-token-lock-hash-0030",
+    metagraph_id: data_metagraphs[0].id,
+    source_addr: data_addresses[0].address,
+    amount: 4000n,
+    ordinal: 21n,
+    unlock_epoch: 25n,
+    round_id: randomUUID(),
+    snapshot_hash: data_metagraph_snapshots[1].hash,
+  },
 ];
 
 // Test data for metagraph token unlocks
 export const data_metagraph_token_unlocks = [
   {
-    hash: 'metagraph-token-unlock-hash-001',
+    hash: "metagraph-token-unlock-hash-001",
     metagraph_id: data_metagraphs[0].id,
     source_addr: data_addresses[0].address,
     amount: 3000n,
@@ -364,48 +362,47 @@ export const data_metagraph_token_unlocks = [
     snapshot_hash: data_metagraph_snapshots[1].hash,
   },
   {
-      hash: 'metagraph-token-unlock-hash-002',
-      metagraph_id: data_metagraphs[0].id,
-      source_addr: data_addresses[0].address,
-      amount: 3000n,
-      lock_reference_hash: data_metagraph_token_locks[2].hash,
-      snapshot_hash: data_metagraph_snapshots[1].hash,
-    }
+    hash: "metagraph-token-unlock-hash-002",
+    metagraph_id: data_metagraphs[0].id,
+    source_addr: data_addresses[0].address,
+    amount: 3000n,
+    lock_reference_hash: data_metagraph_token_locks[2].hash,
+    snapshot_hash: data_metagraph_snapshots[1].hash,
+  },
 ];
 
-
 export async function seed() {
-  await prisma.addresses.createManyAndReturn({ data: data_addresses });
+  await prisma.addresses.createMany({ data: data_addresses });
 
-  await prisma.global_snapshots.createManyAndReturn({
+  await prisma.global_snapshots.createMany({
     data: data_global_snapshots,
   });
 
-  await prisma.metagraphs.createManyAndReturn({ data: data_metagraphs });
+  await prisma.metagraphs.createMany({ data: data_metagraphs });
 
-  await prisma.metagraph_snapshots.createManyAndReturn({
+  await prisma.metagraph_snapshots.createMany({
     data: data_metagraph_snapshots,
   });
 
-    // Create DAG token locks
-    await prisma.dag_token_locks.createManyAndReturn({
-      data: data_dag_token_locks,
-    });
-    
-    // Create DAG token unlocks
-    await prisma.dag_token_unlocks.createManyAndReturn({
-      data: data_dag_token_unlocks,
-    });
-    
-    // Create metagraph token locks
-    await prisma.metagraph_token_locks.createManyAndReturn({
-      data: data_metagraph_token_locks,
-    });
-    
-    // Create metagraph token unlocks
-    await prisma.metagraph_token_unlocks.createManyAndReturn({
-      data: data_metagraph_token_unlocks,
-    });
+  // Create DAG token locks
+  await prisma.dag_token_locks.createMany({
+    data: data_dag_token_locks,
+  });
+
+  // Create DAG token unlocks
+  await prisma.dag_token_unlocks.createMany({
+    data: data_dag_token_unlocks,
+  });
+
+  // Create metagraph token locks
+  await prisma.metagraph_token_locks.createMany({
+    data: data_metagraph_token_locks,
+  });
+
+  // Create metagraph token unlocks
+  await prisma.metagraph_token_unlocks.createMany({
+    data: data_metagraph_token_unlocks,
+  });
 }
 
 export async function resetDatabase() {

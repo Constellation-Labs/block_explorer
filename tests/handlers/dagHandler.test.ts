@@ -11,7 +11,6 @@ import {
   prisma,
 } from "../../prisma/seed";
 
-
 export const data_dag_blocks = [
   {
     hash: "16593f9f612a453c28669b86067e097990ee18742e905afa330674636ca1431c",
@@ -87,21 +86,19 @@ export const data_dag_balance_changes = [
   },
 ];
 
-
 const seedData = async () => {
-  
-  await prisma.dag_blocks.createManyAndReturn({
+  await prisma.dag_blocks.createMany({
     data: data_dag_blocks,
   });
 
-  await prisma.dag_transactions.createManyAndReturn({
+  await prisma.dag_transactions.createMany({
     data: data_dag_transactions,
   });
 
-  await prisma.dag_balance_changes.createManyAndReturn({
+  await prisma.dag_balance_changes.createMany({
     data: data_dag_balance_changes,
   });
-}
+};
 
 beforeAll(async () => {
   await seedData();
@@ -157,7 +154,9 @@ describe("DAG Handler Integration Tests", () => {
       expect(snapshot.subHeight).toBe(Number(testSnapshot.subheight));
       expect(Array.isArray(snapshot.blocks)).toBe(true);
       expect(snapshot.timestamp).toBeDefined();
-      expect(snapshot.metagraphSnashotCount).toBe(Number(testSnapshot.metagraph_snapshot_count));
+      expect(snapshot.metagraphSnashotCount).toBe(
+        Number(testSnapshot.metagraph_snapshot_count)
+      );
     });
 
     it("should handle pagination correctly", async () => {

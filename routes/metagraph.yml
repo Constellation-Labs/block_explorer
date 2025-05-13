@@ -70,6 +70,12 @@ ccyBalanceByAddress:
     - httpApi:
         path: /currency/{identifier}/addresses/{address}/balance
         method: GET
+ccyFeeTransactions:
+  handler: src/handlers/metagraphHandler.currencyFeeTransactions
+  events:
+    - httpApi:
+        path: /currency/{identifier}/fee-transactions
+        method: GET        
 ccyFeeTransaction:
   handler: src/handlers/metagraphHandler.currencyFeeTransaction
   events:
