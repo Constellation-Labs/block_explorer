@@ -88,20 +88,19 @@ const data_delegate_stake_rewards = [
   },
 ];
 const seedData = async () => {
-
-  await prisma.delegate_stake_create_events.createManyAndReturn({
+  await prisma.delegate_stake_create_events.createMany({
     data: data_delegate_stake_create_events,
   });
 
-  await prisma.delegate_stake_withdraw_events.createManyAndReturn({
+  await prisma.delegate_stake_withdraw_events.createMany({
     data: data_delegate_stake_withdraw_events,
   });
 
-  await prisma.delegate_stake_balance_changes.createManyAndReturn({
+  await prisma.delegate_stake_balance_changes.createMany({
     data: data_delegate_stake_balance_changes,
   });
 
-  await prisma.delegate_stake_rewards.createManyAndReturn({
+  await prisma.delegate_stake_rewards.createMany({
     data: data_delegate_stake_rewards,
   });
 };

@@ -166,25 +166,25 @@ export const data_metagraph_expired_spend_transactions = [
 ];
 
 const seedData = async () => {
-  await prisma.dag_allow_spends.createManyAndReturn({
+  await prisma.dag_allow_spends.createMany({
     data: data_dag_allow_spends,
   });
 
-  await prisma.dag_spend_transactions.createManyAndReturn({
+  await prisma.dag_spend_transactions.createMany({
     data: data_dag_spend_transactions,
   });
 
-  await prisma.dag_expired_spend_transactions.createManyAndReturn({
+  await prisma.dag_expired_spend_transactions.createMany({
     data: data_dag_expired_spend_transactions,
   });
 
-  await prisma.metagraph_allow_spends.createManyAndReturn({
+  await prisma.metagraph_allow_spends.createMany({
     data: data_metagraph_allow_spends,
   });
-  await prisma.metagraph_spend_transactions.createManyAndReturn({
+  await prisma.metagraph_spend_transactions.createMany({
     data: data_metagraph_spend_transactions,
   });
-  await prisma.metagraph_expired_spend_transactions.createManyAndReturn({
+  await prisma.metagraph_expired_spend_transactions.createMany({
     data: data_metagraph_expired_spend_transactions,
   });
 };

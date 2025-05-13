@@ -93,6 +93,7 @@ export const paginatedQuery = async (
       ...baseQuery,
       ...(pagination ? pageQueryParams : {}),
     };
+
     const rawResults = await findMany(pagedQuery);
 
     const pageSize = pageQueryParams.take

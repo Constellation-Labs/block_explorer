@@ -28,7 +28,6 @@ import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
 
-
 const metagraphIdExists = async (metagraph_id) => {
   return prisma.metagraphs.findFirst({
     where: { id: metagraph_id },
@@ -77,7 +76,7 @@ export const currencySnapshots = async (
   try {
     const { identifier: metagraph_id } = event.pathParameters || {};
 
-    if (!(await metagraphIdExists(metagraph_id))){
+    if (!(await metagraphIdExists(metagraph_id))) {
       return notFoundResponse("metagraph");
     }
 
@@ -98,7 +97,7 @@ export const currencySnapshots = async (
       toCursor,
       fromCursor,
       {
-        where: { metagraph_id  },
+        where: { metagraph_id },
         include: { metagraph_blocks: true },
         orderBy: { ordinal: "desc" },
       },
@@ -151,7 +150,7 @@ export const currencySnapshot = async (
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
 
-    if (!(await metagraphIdExists(metagraph_id))){
+    if (!(await metagraphIdExists(metagraph_id))) {
       return notFoundResponse("metagraph");
     }
 
@@ -177,7 +176,7 @@ export const currencySnapshotRewards = async (
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
 
-    if (!(await metagraphIdExists(metagraph_id))){
+    if (!(await metagraphIdExists(metagraph_id))) {
       return notFoundResponse("metagraph");
     }
 
@@ -264,7 +263,7 @@ export const currencySnapshotTransactions = async (
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
 
-    if (!(await metagraphIdExists(metagraph_id))){
+    if (!(await metagraphIdExists(metagraph_id))) {
       return notFoundResponse("metagraph");
     }
 
@@ -299,7 +298,7 @@ export const currencyBlock = async (
   try {
     const { identifier: metagraph_id, hash } = event.pathParameters || {};
 
-    if (!(await metagraphIdExists(metagraph_id))){
+    if (!(await metagraphIdExists(metagraph_id))) {
       return notFoundResponse("metagraph");
     }
 
@@ -324,7 +323,7 @@ export const currencyTransactions = async (
   try {
     const { identifier: metagraph_id } = event.pathParameters || {};
 
-    if (!(await metagraphIdExists(metagraph_id))){
+    if (!(await metagraphIdExists(metagraph_id))) {
       return notFoundResponse("metagraph");
     }
 
@@ -370,7 +369,7 @@ export const currencyTransactionsByAddress = async (
   try {
     const { identifier: metagraph_id, address } = event.pathParameters || {};
 
-    if (!(await metagraphIdExists(metagraph_id))){
+    if (!(await metagraphIdExists(metagraph_id))) {
       return notFoundResponse("metagraph");
     }
 
@@ -393,10 +392,9 @@ export const currencyTransactionsBySource = async (
   try {
     const { identifier: metagraph_id, address } = event.pathParameters || {};
 
-    if (!(await metagraphIdExists(metagraph_id))){
-      return notFoundResponse("metagraph"); 
+    if (!(await metagraphIdExists(metagraph_id))) {
+      return notFoundResponse("metagraph");
     }
-
 
     const where = { where: { metagraph_id, source_addr: address } };
 
@@ -472,10 +470,16 @@ export const currencyFeeTransaction = async (
   try {
     const { identifier: metagraph_id, hash } = event.pathParameters || {};
 
+    if (!metagraph_id || !hash) {
+      throw new Error("Missing required path parameters: identifier or hash.");
+    }
+
     const transaction = await prisma.metagraph_fee_transactions.findUnique({
       where: {
-        metagraph_id: metagraph_id!,
-        hash: hash!,
+        metagraph_id_hash: {
+          metagraph_id,
+          hash,
+        },
       },
       include: {
         metagraph_snapshot: { select: { hash: true, ordinal: true } },
@@ -519,6 +523,24 @@ const metagraphFeeTransactionsQuery = async (
   }
 };
 
+export const currencyFeeTransactions = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  try {
+    const { identifier: metagraph_id } = event.pathParameters || {};
+
+    const where = {
+      where: {
+        metagraph_id: metagraph_id,
+      },
+    };
+
+    return metagraphFeeTransactionsQuery(where, event);
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 export const currencySnapshotFeeTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -531,8 +553,10 @@ export const currencySnapshotFeeTransactions = async (
 
     const where = {
       where: {
-        metagraph_id: metagraph_id,
-        ...mgSnapshotWhere,
+        metagraph_snapshot: {
+          metagraph_id: metagraph_id,
+          ...mgSnapshotWhere,
+        },
       },
     };
 
@@ -556,7 +580,6 @@ export const currencyFeeTransactionsByAddress = async (
         OR: [{ source_addr: address }, { destination_addr: address }],
       },
     };
-
     return metagraphFeeTransactionsQuery(where, event);
   } catch (error) {
     return handleError(error);

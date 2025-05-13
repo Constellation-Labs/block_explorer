@@ -33,7 +33,7 @@ const commonSnapshotResponse = (snapshot, blocksProperty) => ({
 
 export const globalSnapshotResponse = (snapshot) => ({
   ...commonSnapshotResponse(snapshot, "dag_blocks"),
-  metagraphSnashotCount: snapshot.metagraph_snapshot_count
+  metagraphSnashotCount: snapshot.metagraph_snapshot_count,
 });
 
 export const rewardsResponse = (rs) => rs.map(rewardResponse);
@@ -93,6 +93,7 @@ export const balanceResponse = (balance) => ({
 
 export const metagraphSnapshotsResponse = (ss) =>
   ss.map(metagraphSnapshotResponse);
+
 export const metagraphSnapshotResponse = (snapshot) => ({
   ...commonSnapshotResponse(snapshot, "metagraph_blocks"),
   fee: snapshot.fee,
@@ -110,13 +111,16 @@ export const metagraphBlockResponse = (block) => ({
 
 export const metagraphTransactionsResponse = (ts) =>
   ts.map(metagraphTransactionResponse);
+
 export const metagraphTransactionResponse = (t) =>
   transactionResponse(t, t.metagraph_blocks.metagraph_snapshot);
 
 export const metagraphFeeTransactionsResponse = (ts) =>
-  ts.map(metagraphTransactionResponse);
-export const metagraphFeeTransactionResponse = (t) =>
-  transactionResponse(t, t.metagraph_snapshot);
+  ts.map(metagraphFeeTransactionResponse);
+
+export const metagraphFeeTransactionResponse = (t) => {
+  return transactionResponse(t, t.metagraph_snapshot);
+};
 
 export const metagraphsResponse = (mgs) => mgs.map(metagraphResponse);
 export const metagraphResponse = (mg) => ({
@@ -146,7 +150,7 @@ export const successResponse = (data: any): APIGatewayProxyResult => ({
   ),
 });
 
-export const notFoundResponse = (msg=""): APIGatewayProxyResult => ({
+export const notFoundResponse = (msg = ""): APIGatewayProxyResult => ({
   statusCode: 404,
   body: JSON.stringify({ message: "Not found", errors: [msg] }),
 });
