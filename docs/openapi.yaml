@@ -599,7 +599,39 @@ paths:
           $ref: './schemas/responses.yml#/components/responses/NotFound'
         '500':
           $ref: './schemas/responses.yml#/components/responses/InternalServerError'
-          
+  /currency/{metagraph_id}/snapshots/fee-transactions:
+    get:
+      tags:
+        - Transactions
+      summary: Get fee transactions for a metagraph
+      description: Retrieve fee transactions for a metagraph
+      operationId: getCurrencyFeeTransactions
+      parameters:
+        - name: metagraph_id
+          in: path
+          description: Identifier for the metagraph
+          required: true
+          schema:
+            type: string
+        - $ref: './schemas/params.yml#/components/parameters/limitParam'
+        - $ref: './schemas/params.yml#/components/parameters/nextParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
+        - $ref: './schemas/params.yml#/components/parameters/searchBeforeParam'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/metagraph.yml#/components/schemas/PaginatedMetagraphTransactions'
+        '400':
+          $ref: './schemas/responses.yml#/components/responses/BadRequest'
+        '404':
+          $ref: './schemas/responses.yml#/components/responses/NotFound'
+        '500':
+          $ref: './schemas/responses.yml#/components/responses/InternalServerError'
+
+
   /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/fee-transactions:
     get:
       tags: 
