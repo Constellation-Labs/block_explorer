@@ -7,7 +7,6 @@ import {
 } from "../testUtils";
 import {
   data_addresses,
-  data_global_snapshots,
   data_metagraph_snapshots,
   data_metagraphs,
   prisma,
@@ -39,6 +38,7 @@ const data_metagraph_blocks = [
     updated_at: new Date(),
   },
 ];
+
 const data_metagraph_transactions = [
   {
     metagraph_id: data_metagraphs[0].id,
@@ -53,6 +53,7 @@ const data_metagraph_transactions = [
       "5056fdfbba0637dcecfc0b7fa3f441c745c852cf850c3bfc0dbc8a7410b8d722",
     ordinal: 12n,
     block_hash: data_metagraph_blocks[0].hash,
+    snapshot_hash: data_metagraph_blocks[0].metagraph_snapshot_hash,
     created_at: new Date("2025-04-02T00:00:02Z"),
     updated_at: new Date(),
   },
@@ -69,7 +70,8 @@ const data_metagraph_transactions = [
       "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
     ordinal: 123n,
     block_hash: data_metagraph_blocks[1].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
+    snapshot_hash: data_metagraph_blocks[1].metagraph_snapshot_hash,
+    created_at: new Date("2025-04-02T00:01:02Z"),
     updated_at: new Date(),
   },
   {
@@ -85,10 +87,12 @@ const data_metagraph_transactions = [
       "39c9909d3b006666666666666666666666666666666666666c5ca9917cb7e72b",
     ordinal: 123n,
     block_hash: data_metagraph_blocks[2].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
+    snapshot_hash: data_metagraph_blocks[2].metagraph_snapshot_hash,
+    created_at: new Date("2025-04-02T00:02:02Z"),
     updated_at: new Date(),
   },
 ];
+
 const data_metagraph_balance_changes = [
   {
     metagraph_id: data_metagraphs[0].id,

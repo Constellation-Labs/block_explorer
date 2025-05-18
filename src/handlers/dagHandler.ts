@@ -4,7 +4,6 @@ import { extractHashOrdinal, extractPagination } from "../request-params";
 import {
   balanceResponse,
   dagBlockResponse,
-  dagTransactionResponse,
   dagTransactionsResponse,
   globalSnapshotResponse,
   globalSnapshotsResponse,
@@ -12,6 +11,7 @@ import {
   notFoundResponse,
   respond,
   rewardsResponse,
+  transactionResponse,
 } from "../response";
 import {
   fromCreatedAtOrdinalCursor,
@@ -141,14 +141,10 @@ export const globalSnapshotTransactions = async (
 
     const query = {
       where: {
-        dag_blocks: { global_snapshot: { ...gsWhere } },
+        global_snapshot: { ...gsWhere },
       },
       include: {
-        dag_blocks: {
-          select: {
-            global_snapshot: { select: { hash: true, ordinal: true } },
-          },
-        },
+        global_snapshot: { select: { hash: true, ordinal: true } },
       },
       orderBy: { created_at: "desc" },
     };
@@ -194,16 +190,9 @@ const dagTransactionsQuery = async (
     const query = {
       ...where,
       include: {
-        dag_blocks: {
-          include: {
-            global_snapshot: { select: { hash: true, ordinal: true } },
-          },
-        },
+        global_snapshot: { select: { hash: true, ordinal: true } },
       },
-      orderBy: [
-        { dag_blocks: { global_snapshot: { ordinal: "desc" } } },
-        { created_at: "desc" },
-      ],
+      orderBy: [{ created_at: "desc" }],
     };
 
     const toCursor = (row) => ({
@@ -244,15 +233,11 @@ export const dagTransaction = async (
     const transaction = await prisma.dag_transactions.findUnique({
       where: { hash },
       include: {
-        dag_blocks: {
-          include: {
-            global_snapshot: { select: { hash: true, ordinal: true } },
-          },
-        },
+        global_snapshot: { select: { hash: true, ordinal: true } },
       },
     });
 
-    return respond(transaction, dagTransactionResponse);
+    return respond(transaction, transactionResponse);
   } catch (error) {
     return handleError(error);
   }

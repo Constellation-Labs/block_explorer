@@ -46,3 +46,12 @@ CREATE INDEX dag_allow_spends_source_addr_idx ON dag_allow_spends USING btree (s
 CREATE INDEX dag_balance_changes_snapshot_hash_idx ON dag_balance_changes USING btree (snapshot_hash);
 
 
+
+
+ALTER TABLE dag_allow_spends DROP CONSTRAINT dag_allow_spends_ordinal;
+ALTER TABLE metagraph_allow_spends DROP CONSTRAINT metagraph_allow_spends_ordinal;
+
+
+
+
+ALTER TABLE public.metagraph_spend_transactions ADD CONSTRAINT dag_spend_transactions_metagraph_allow_spends_fk FOREIGN KEY (allow_spend_ref) REFERENCES metagraph_allow_spends(hash)

@@ -5,17 +5,16 @@ import {
   balanceResponse,
   handleError,
   metagraphBlockResponse,
-  metagraphFeeTransactionResponse,
   metagraphFeeTransactionsResponse,
   metagraphSnapshotResponse,
   metagraphSnapshotsResponse,
   metagraphsResponse,
   metagraphTransactionsResponse,
-  metagraphTransactionResponse,
   missingParameterResponse,
   notFoundResponse,
   respond,
   rewardsResponse,
+  transactionResponse,
 } from "../response";
 import {
   fromCreatedAtOrdinalCursor,
@@ -227,16 +226,9 @@ const metagraphTransactionsQuery = async (
     const query = {
       ...baseQuery,
       include: {
-        metagraph_blocks: {
-          include: {
-            metagraph_snapshot: { select: { hash: true, ordinal: true } },
-          },
-        },
+        metagraph_snapshot: { select: { hash: true, ordinal: true } },
       },
-      orderBy: [
-        { metagraph_blocks: { metagraph_snapshot: { ordinal: "desc" } } },
-        { created_at: "desc" },
-      ],
+      orderBy: [{ created_at: "desc" }],
     };
 
     const cursor = (row) => ({
@@ -277,11 +269,9 @@ export const currencySnapshotTransactions = async (
 
     const where = {
       where: {
-        metagraph_blocks: {
-          metagraph_snapshot: {
-            metagraph_id: metagraph_id,
-            ...mgSnapshotWhere,
-          },
+        metagraph_snapshot: {
+          metagraph_id: metagraph_id,
+          ...mgSnapshotWhere,
         },
       },
     };
@@ -327,7 +317,7 @@ export const currencyTransactions = async (
       return notFoundResponse("metagraph");
     }
 
-    const where = { where: { metagraph_blocks: { metagraph_id } } };
+    const where = { where: { metagraph_id } };
 
     return metagraphTransactionsQuery(where, event);
   } catch (error) {
@@ -349,15 +339,11 @@ export const currencyTransaction = async (
         },
       },
       include: {
-        metagraph_blocks: {
-          include: {
-            metagraph_snapshot: { select: { hash: true, ordinal: true } },
-          },
-        },
+        metagraph_snapshot: { select: { hash: true, ordinal: true } },
       },
     });
 
-    return respond(transaction, metagraphTransactionResponse);
+    return respond(transaction, transactionResponse);
   } catch (error) {
     return handleError(error);
   }
@@ -486,7 +472,7 @@ export const currencyFeeTransaction = async (
       },
     });
 
-    return respond(transaction, metagraphFeeTransactionResponse);
+    return respond(transaction, transactionResponse);
   } catch (error) {
     return handleError(error);
   }

@@ -43,28 +43,29 @@ export const rewardResponse = (reward) => ({
   amount: reward.amount,
 });
 
-export const dagTransactionsResponse = (ts) => ts.map(dagTransactionResponse);
+export const dagTransactionsResponse = (ts) => ts.map(transactionResponse);
 
-export const dagTransactionResponse = (t) =>
-  transactionResponse(t, t.dag_blocks.global_snapshot);
-
-const transactionResponse = (transaction, snapshot) => ({
-  hash: transaction.hash,
-  ordinal: transaction.ordinal,
-  amount: transaction.amount,
-  source: transaction.source_addr,
-  destination: transaction.destination_addr,
-  fee: transaction.fee,
-  parent: {
-    hash: transaction.parent_hash ?? null,
-    ordinal: transaction.parent_ordinal ?? null,
-  },
-  salt: transaction.salt,
-  blockHash: transaction.block_hash,
-  snapshotHash: snapshot.hash,
-  snapshotOrdinal: snapshot.ordinal,
-  timestamp: transaction.created_at,
-});
+export const transactionResponse = (transaction) => {
+  const snapshot =
+    transaction.metagraph_snapshot ?? transaction.global_snapshot ?? null;
+  return {
+    hash: transaction.hash,
+    ordinal: transaction.ordinal,
+    amount: transaction.amount,
+    source: transaction.source_addr,
+    destination: transaction.destination_addr,
+    fee: transaction.fee,
+    parent: {
+      hash: transaction.parent_hash ?? null,
+      ordinal: transaction.parent_ordinal ?? null,
+    },
+    salt: transaction.salt,
+    blockHash: transaction.block_hash,
+    snapshotHash: snapshot.hash,
+    snapshotOrdinal: snapshot.ordinal,
+    timestamp: transaction.created_at,
+  };
+};
 
 const blockResponse = (block) => ({
   hash: block.hash,
@@ -110,17 +111,10 @@ export const metagraphBlockResponse = (block) => ({
 });
 
 export const metagraphTransactionsResponse = (ts) =>
-  ts.map(metagraphTransactionResponse);
-
-export const metagraphTransactionResponse = (t) =>
-  transactionResponse(t, t.metagraph_blocks.metagraph_snapshot);
+  ts.map(transactionResponse);
 
 export const metagraphFeeTransactionsResponse = (ts) =>
-  ts.map(metagraphFeeTransactionResponse);
-
-export const metagraphFeeTransactionResponse = (t) => {
-  return transactionResponse(t, t.metagraph_snapshot);
-};
+  ts.map(transactionResponse);
 
 export const metagraphsResponse = (mgs) => mgs.map(metagraphResponse);
 export const metagraphResponse = (mg) => ({

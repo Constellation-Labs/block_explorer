@@ -32,6 +32,11 @@ BEGIN
     VALUES (NEW.hash, NEW.source_addr, NEW.amount, NEW.created_at, snap_hash)
     ON CONFLICT (hash) DO NOTHING;
 
+    --temporarily until new streaming is deployed
+    UPDATE dag_transactions
+    SET snapshot_hash = snap_hash
+    WHERE hash = NEW.hash;
+
     RETURN NEW;
 END;
 $$;
@@ -58,6 +63,11 @@ BEGIN
     INSERT INTO abstract_transactions (hash, source_addr, amount, created_at, snapshot_hash)
     VALUES (NEW.hash, NEW.source_addr, NEW.amount, NEW.created_at, snap_hash)
     ON CONFLICT (hash) DO NOTHING;
+
+    --temporarily until new streaming is deployed
+    UPDATE metagraph_transactions
+    SET snapshot_hash = snap_hash
+    WHERE hash = NEW.hash;
 
     RETURN NEW;
 END;

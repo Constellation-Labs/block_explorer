@@ -80,66 +80,6 @@ export const data_global_snapshots = [
   },
 ];
 
-export const data_dag_blocks = [
-  {
-    hash: "16593f9f612a453c28669b86067e097990ee18742e905afa330674636ca1431c",
-    height: 12n,
-    snapshot_hash: data_global_snapshots[0].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-  {
-    hash: "48fd7dd45ced78be111174c5262cca65aa44798b6a01b48525590bfcce643bd2",
-    height: 14n,
-    snapshot_hash: data_global_snapshots[1].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-];
-
-export const data_dag_transactions = [
-  {
-    hash: "1c53bc94c735d8d6eeaddc9f5cb446e7f79144c9aa5bba9479db8dee0ec1aa4c",
-    source_addr: data_addresses[0].address,
-    destination_addr: data_addresses[1].address,
-    amount: 90790983n,
-    fee: 200000n,
-    salt: 1231231232n,
-    parent_ordinal: 21337n,
-    parent_hash:
-      "4a6d3aa5715e304b4b5f32d52f0c91e0909acf7c24b3ca9776324da68db2f30c",
-    ordinal: 234n,
-    block_hash: data_dag_blocks[0].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-  {
-    hash: "6acc815979e9d1935cce65ba776fde1144c5fc0e97d3a9fe67d82d0e6e21977d",
-    source_addr: data_addresses[1].address,
-    destination_addr: data_addresses[0].address,
-    amount: 90790983n,
-    fee: 100000n,
-    salt: 1234n,
-    parent_ordinal: 21337n,
-    parent_hash:
-      "1c53bc94c735d8d6eeaddc9f5cb446e7f79144c9aa5bba9479db8dee0ec1aa4c",
-    ordinal: 3222n,
-    block_hash: data_dag_blocks[1].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-];
-export const data_dag_balance_changes = [
-  {
-    snapshot_hash: data_global_snapshots[0].hash,
-    snapshot_ordinal: data_global_snapshots[0].ordinal,
-    address: data_dag_transactions[0].destination_addr,
-    balance: data_dag_transactions[0].amount,
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-];
-
 export const data_metagraphs = [
   {
     id: "DAG5kfY9GoHF1CYaY8tuRJxmB3JSzAEARJEAkA2C",
@@ -209,70 +149,6 @@ export const data_metagraph_snapshots = [
     version: "0.0.1",
     created_at: new Date("2025-04-02T00:00:02Z"),
     updated_at: new Date(),
-  },
-];
-
-export const data_metagraph_blocks = [
-  {
-    metagraph_id: data_metagraphs[0].id,
-    hash: "33374138dd6f5f9846261d541dab33dadcbae8c9f5a39026336a34a3e2aafb93",
-    height: 12n,
-    metagraph_snapshot_hash: data_metagraph_snapshots[0].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-  {
-    metagraph_id: data_metagraphs[0].id,
-    hash: "3d5a9616d65a6d98fe629f1a056489df9245a40d1e8589ed9d655c6fcb3ee361",
-    height: 14n,
-    metagraph_snapshot_hash: data_metagraph_snapshots[1].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-];
-export const data_metagraph_transactions = [
-  {
-    metagraph_id: data_metagraphs[0].id,
-    hash: "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
-    source_addr: data_addresses[0].address,
-    destination_addr: data_addresses[1].address,
-    amount: 90790983n,
-    fee: 200000n,
-    salt: 1231231232n,
-    parent_ordinal: 21337n,
-    parent_hash:
-      "5056fdfbba0637dcecfc0b7fa3f441c745c852cf850c3bfc0dbc8a7410b8d722",
-    ordinal: 12n,
-    block_hash: data_metagraph_blocks[0].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-  {
-    metagraph_id: data_metagraphs[0].id,
-    hash: "aa50e85a32e3e84c9b49880e103ee240f572a6febd255d97db1406f6c936af6f",
-    source_addr: data_addresses[1].address,
-    destination_addr: data_addresses[0].address,
-    amount: 90790983n,
-    fee: 100000n,
-    salt: 1234n,
-    parent_ordinal: 21337n,
-    parent_hash:
-      "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
-    ordinal: 123n,
-    block_hash: data_metagraph_blocks[1].hash,
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-];
-export const data_metagraph_balance_changes = [
-  {
-    metagraph_id: data_metagraphs[0].id,
-    metagraph_snapshot_hash: data_metagraph_snapshots[0].hash,
-    snapshot_ordinal: data_metagraph_snapshots[0].ordinal,
-    address: data_metagraph_transactions[0].destination_addr,
-    balance: data_metagraph_transactions[0].amount,
-    created_at: new Date("2025-04-02T00:10:01Z"), // set explicitly to avoid race condition
-    updated_at: new Date("2025-04-02T00:10:01Z"),
   },
 ];
 
