@@ -4,6 +4,7 @@
   "description": "",
   "main": "src/handler.ts",
   "dependencies": {
+    "@opensearch-project/opensearch": "^1.2.0",
     "@prisma/client": "^6.2.1",
     "aws-lambda": "^1.0.7",
     "date-fns": "^2.30.0",
