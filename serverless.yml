@@ -15,6 +15,7 @@ provider:
   environment:
     SLS_DEBUG: "*"
     DATABASE_URL: ${self:custom.env.db_url}
+    OPENSEARCH_NODE: ${self:custom.env.opensearch}
   httpApi:
     cors: true
   vpc: ${self:custom.env.vpc}

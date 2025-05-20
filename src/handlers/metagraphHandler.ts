@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { extractHashOrdinal, extractPagination } from "../request-params";
+import { isRight } from "fp-ts/Either";
 import {
   balanceResponse,
   handleError,
@@ -23,6 +24,7 @@ import {
   toCreatedAtOrdinalCursor,
   toOrdinalCursor,
 } from "../pagination";
+import * as OpenSearch from "../opensearch/opensearch";
 import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
@@ -414,6 +416,8 @@ const balanceOrZeroFn = async (metagraph_id, balance, address, ordinal) => {
   return balance;
 };
 
+const osClient = OpenSearch.getClient();
+
 export const currencyBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -428,7 +432,7 @@ export const currencyBalanceByAddress = async (
       ? { snapshot_ordinal: { lte: ordinalNbr } }
       : {};
 
-    const balance = await prisma.metagraph_balance_changes.findFirst({
+    const dbBalance = await prisma.metagraph_balance_changes.findFirst({
       where: {
         metagraph_id,
         address,
@@ -437,14 +441,36 @@ export const currencyBalanceByAddress = async (
       orderBy: { snapshot_ordinal: "desc" },
     });
 
-    const balanceOrZero = await balanceOrZeroFn(
-      metagraph_id,
-      balance,
-      address,
-      ordinal
-    );
+    const eitherOsBalance = await OpenSearch.findBalanceByAddress(osClient)(
+      address!,
+      metagraph_id!,
+      ordinalNbr
+    )();
+    const osBalance = isRight(eitherOsBalance)
+      ? eitherOsBalance.right.data
+      : null;
 
-    return respond(balanceOrZero, balanceResponse);
+    let balance;
+    if (dbBalance === null) {
+      if (osBalance === null) {
+        balance = await balanceOrZeroFn(
+          metagraph_id,
+          balance,
+          address,
+          ordinal !== undefined ? ordinalNbr : undefined
+        );
+      } else {
+        balance = { ...osBalance, snapshot_ordinal: ordinalNbr };
+      }
+    } else {
+      if (osBalance != null && osBalance.ordinal > dbBalance.snapshot_ordinal) {
+        balance = { ...osBalance, snapshot_ordinal: ordinalNbr };
+      } else {
+        balance = dbBalance;
+      }
+    }
+
+    return respond(balance, balanceResponse);
   } catch (error) {
     return handleError(error);
   }
