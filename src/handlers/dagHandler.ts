@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { extractHashOrdinal, extractPagination } from "../request-params";
+import { isRight } from "fp-ts/Either";
 import {
   balanceResponse,
   dagBlockResponse,
@@ -18,6 +19,8 @@ import {
   paginatedQuery,
   toCreatedAtOrdinalCursor,
 } from "../pagination";
+import * as OpenSearch from "../opensearch/opensearch";
+
 import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
@@ -297,6 +300,8 @@ const balanceOrZeroFn = async (balance, address, ordinal) => {
   return balance;
 };
 
+const osClient = OpenSearch.getClient();
+
 export const dagBalanceByAddress = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -311,14 +316,36 @@ export const dagBalanceByAddress = async (
       ? { snapshot_ordinal: { lte: ordinalNbr } }
       : {};
 
-    const balance = await prisma.dag_balance_changes.findFirst({
+    const dbBalance = await prisma.dag_balance_changes.findFirst({
       where: { address, ...ordinalCondition },
       orderBy: { snapshot_ordinal: "desc" },
     });
 
-    const balanceOrZero = await balanceOrZeroFn(balance, address, ordinalNbr);
+    const eitherOsBalance = await OpenSearch.findBalanceByAddress(osClient)(
+      address!,
+      null,
+      ordinalNbr
+    )();
+    const osBalance = isRight(eitherOsBalance)
+      ? eitherOsBalance.right.data
+      : null;
 
-    return respond(balanceOrZero, balanceResponse);
+    let balance;
+    if (dbBalance === null) {
+      if (osBalance === null) {
+        balance = await balanceOrZeroFn(balance, address, ordinalNbr);
+      } else {
+        balance = { ...osBalance, snapshot_ordinal: ordinalNbr };
+      }
+    } else {
+      if (osBalance != null && osBalance.ordinal > dbBalance.snapshot_ordinal) {
+        balance = { ...osBalance, snapshot_ordinal: ordinalNbr };
+      } else {
+        balance = dbBalance;
+      }
+    }
+
+    return respond(balance, balanceResponse);
   } catch (error) {
     return handleError(error);
   }
