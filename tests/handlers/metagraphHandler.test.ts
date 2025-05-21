@@ -240,6 +240,7 @@ describe("Metagraph Handler Integration Tests", () => {
       expect(snapshot.subHeight).toBe(Number(testSnapshot.subheight));
       expect(Array.isArray(snapshot.blocks)).toBe(true);
       expect(snapshot.timestamp).toBeDefined();
+      expect(snapshot.sizeInKB).toBe(Number(testSnapshot.size));
     });
 
     it("should handle pagination correctly", async () => {

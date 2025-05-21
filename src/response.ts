@@ -100,7 +100,7 @@ export const metagraphSnapshotResponse = (snapshot) => ({
   fee: snapshot.fee,
   stakingAddress: snapshot.staking_address ?? null,
   ownerAddress: snapshot.owner_address ?? null,
-  sizeInKb: snapshot.size,
+  sizeInKB: snapshot.size,
 });
 
 export const metagraphBlockResponse = (block) => ({
