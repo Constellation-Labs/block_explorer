@@ -408,9 +408,12 @@ export const currencyTransactionsByDestination = async (
 
 const balanceOrZeroFn = async (metagraph_id, balance, address, ordinal) => {
   if (balance === null) {
+    console.log("balanceOrZeroFn", balance);
     const snapshot_ordinal = isFinite(ordinal)
       ? ordinal
       : (await latestMetagraphSnapshot(metagraph_id))?.ordinal;
+
+    console.log("snapshot_ordinal", snapshot_ordinal);
     return { balance: 0, address, snapshot_ordinal };
   }
   return balance;
@@ -449,8 +452,7 @@ export const currencyBalanceByAddress = async (
     const osBalance = isRight(eitherOsBalance)
       ? eitherOsBalance.right.data
       : null;
-
-    let balance;
+    let balance: {} | null = null;
     if (dbBalance === null) {
       if (osBalance === null) {
         balance = await balanceOrZeroFn(
