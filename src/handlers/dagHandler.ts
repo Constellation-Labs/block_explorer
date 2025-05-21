@@ -330,7 +330,7 @@ export const dagBalanceByAddress = async (
       ? eitherOsBalance.right.data
       : null;
 
-    let balance;
+    let balance: {} | null = null;
     if (dbBalance === null) {
       if (osBalance === null) {
         balance = await balanceOrZeroFn(balance, address, ordinalNbr);
