@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { extractHashOrdinal, extractPagination } from "../request-params";
-import { isRight } from "fp-ts/Either";
 import {
   balanceResponse,
   handleError,
@@ -24,7 +23,6 @@ import {
   toCreatedAtOrdinalCursor,
   toOrdinalCursor,
 } from "../pagination";
-import * as OpenSearch from "../opensearch/opensearch";
 import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
@@ -408,18 +406,13 @@ export const currencyTransactionsByDestination = async (
 
 const balanceOrZeroFn = async (metagraph_id, balance, address, ordinal) => {
   if (balance === null) {
-    console.log("balanceOrZeroFn", balance);
     const snapshot_ordinal = isFinite(ordinal)
       ? ordinal
       : (await latestMetagraphSnapshot(metagraph_id))?.ordinal;
-
-    console.log("snapshot_ordinal", snapshot_ordinal);
     return { balance: 0, address, snapshot_ordinal };
   }
   return balance;
 };
-
-const osClient = OpenSearch.getClient();
 
 export const currencyBalanceByAddress = async (
   event: APIGatewayProxyEvent
@@ -434,8 +427,7 @@ export const currencyBalanceByAddress = async (
     const ordinalCondition = isFinite(ordinalNbr)
       ? { snapshot_ordinal: { lte: ordinalNbr } }
       : {};
-
-    const dbBalance = await prisma.metagraph_balance_changes.findFirst({
+    const balance = await prisma.metagraph_balance_changes.findFirst({
       where: {
         metagraph_id,
         address,
@@ -443,36 +435,13 @@ export const currencyBalanceByAddress = async (
       },
       orderBy: { snapshot_ordinal: "desc" },
     });
-
-    const eitherOsBalance = await OpenSearch.findBalanceByAddress(osClient)(
-      address!,
-      metagraph_id!,
+    const balanceOrZero = await balanceOrZeroFn(
+      metagraph_id,
+      balance,
+      address,
       ordinalNbr
-    )();
-    const osBalance = isRight(eitherOsBalance)
-      ? eitherOsBalance.right.data
-      : null;
-    let balance: {} | null = null;
-    if (dbBalance === null) {
-      if (osBalance === null) {
-        balance = await balanceOrZeroFn(
-          metagraph_id,
-          balance,
-          address,
-          ordinal !== undefined ? ordinalNbr : undefined
-        );
-      } else {
-        balance = { ...osBalance, snapshot_ordinal: ordinalNbr };
-      }
-    } else {
-      if (osBalance != null && osBalance.ordinal > dbBalance.snapshot_ordinal) {
-        balance = { ...osBalance, snapshot_ordinal: ordinalNbr };
-      } else {
-        balance = dbBalance;
-      }
-    }
-
-    return respond(balance, balanceResponse);
+    );
+    return respond(balanceOrZero, balanceResponse);
   } catch (error) {
     return handleError(error);
   }
