@@ -9,6 +9,7 @@ import {
   paginatedQuery,
   toOrdinalCursor,
   fromOrdinalCursor,
+  hashCursor,
 } from "../pagination";
 import { handleError, respond } from "../response";
 
@@ -174,8 +175,8 @@ export const delegatedStakes = async (
   const statusWhere = buildStatusWhereQuery(statuses);
   return paginatedQuery(
     extractPagination(event),
-    toOrdinalCursor,
-    fromOrdinalCursor,
+    hashCursor,
+    hashCursor,
     {
       where: {
         ...statusWhere,
@@ -219,8 +220,8 @@ export const addressDelegatedStakes = async (event) => {
 
   return paginatedQuery(
     extractPagination(event),
-    toOrdinalCursor,
-    fromOrdinalCursor,
+    hashCursor,
+    hashCursor,
     {
       where: {
         source_addr: address,
@@ -241,8 +242,8 @@ export const addressDelegatedStakes = async (event) => {
 export const delegatedStakeWithdrawals = async (event) => {
   return paginatedQuery(
     extractPagination(event),
-    toOrdinalCursor,
-    fromOrdinalCursor,
+    hashCursor,
+    hashCursor,
     {
       include: { delegate_stake_create_event: true },
       orderBy: [{ created_at: "desc" }],
@@ -271,8 +272,8 @@ export const addressDelegatedStakeWithdrawals = async (event) => {
   const address = event.pathParameters?.address;
   return paginatedQuery(
     extractPagination(event),
-    toOrdinalCursor,
-    fromOrdinalCursor,
+    hashCursor,
+    hashCursor,
     {
       where: {
         source_addr: address,
@@ -315,8 +316,8 @@ export const stakingPositions = async (
 
     return paginatedQuery(
       extractPagination(event),
-      toOrdinalCursor,
-      fromOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           OR: whereConditions,
