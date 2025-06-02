@@ -295,6 +295,9 @@ export const stakingPositions = async (
     const statuses = statusFilter(event);
     const statusWhere = buildStatusWhereQuery(statuses);
 
+    const nodeId = event.queryStringParameters?.nodeId;
+    const nodeIdWhere = nodeId ? { node_id: nodeId } : {};
+
     const maxOrdinals = await prisma.delegate_stake_create_events.groupBy({
       by: ["source_addr", "node_id"],
       _max: {
@@ -322,6 +325,7 @@ export const stakingPositions = async (
         where: {
           OR: whereConditions,
           ...statusWhere,
+          ...nodeIdWhere,
           ...addressFilter,
         },
         include: {

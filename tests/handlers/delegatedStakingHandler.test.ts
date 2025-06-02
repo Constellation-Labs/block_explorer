@@ -48,7 +48,7 @@ const data_delegate_stake_create_events = [
     hash: "stake-event-hash-003",
     ordinal: 10003n,
     source_addr: data_addresses[0].address,
-    node_id: "NODE_ABC123",
+    node_id: "NODE_ABC234",
     amount: 2222222222n,
     fee: 500000n,
     lock_reference_hash: data_dag_token_locks[1].hash,
@@ -250,9 +250,8 @@ describe("Delegated Stake Handler Integration Tests", () => {
   });
 
   describe("stakingPositions", () => {
-    it("should return staking positions for an address", async () => {
-      const test = data_delegate_stake_create_events[0];
-      const event = createAPIGatewayEvent({ address: test.source_addr });
+    it("should return staking positions", async () => {
+      const event = createAPIGatewayEvent();
 
       const response = await stakingPositions(event);
       expect(response.statusCode).toBe(200);
@@ -276,6 +275,28 @@ describe("Delegated Stake Handler Integration Tests", () => {
       body.data.forEach((tx) => {
         expect(["active", "pendingWithdrawal"]).toContain(tx.status);
       });
+    });
+
+    it("should return staking positions for an address", async () => {
+      const test = data_delegate_stake_create_events[0];
+      const event = createAPIGatewayEvent({ address: test.source_addr });
+
+      const response = await stakingPositions(event);
+      expect(response.statusCode).toBe(200);
+
+      const body = validatePaginatedResponse(response);
+      body.data.forEach(validateStakingPosition);
+    });
+
+    it("should return staking positions for a node", async () => {
+      const test = data_delegate_stake_create_events[0];
+      const event = createAPIGatewayEvent({}, { nodeId: "NODE_ABC123" });
+
+      const response = await stakingPositions(event);
+      expect(response.statusCode).toBe(200);
+
+      const body = validatePaginatedResponse(response);
+      body.data.forEach(validateStakingPosition);
     });
   });
 });
