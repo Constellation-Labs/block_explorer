@@ -241,6 +241,7 @@ model dag_transactions {
   block_hash                                             String     @db.VarChar
   dag_blocks                                             dag_blocks @relation(fields: [block_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_transaction_dag_block_fk")
   snapshot_hash              String                      @db.VarChar
+  transaction_original       Json?
   global_snapshot            global_snapshots            @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_dag_transactions_global_snapshot_fk")
   addresses_dag_transactions_destination_addrToaddresses addresses  @relation("dag_transactions_destination_addrToaddresses", fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_transactions_destination_addr_fk")
   addresses_dag_transactions_source_addrToaddresses      addresses  @relation("dag_transactions_source_addrToaddresses", fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_transactions_source_addr_fk")
@@ -493,6 +494,7 @@ model metagraph_transactions {
   ordinal                                                      BigInt
   block_hash                                                   String           @db.VarChar
   snapshot_hash              String                            @db.VarChar
+  transaction_original       Json?
   metagraph_snapshot         metagraph_snapshots               @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_transactions_metagraph_snapshot_fk")
   metagraphs                                                   metagraphs       @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
   metagraph_blocks                                             metagraph_blocks @relation(fields: [metagraph_id, block_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_transaction_metagraph_block_fk")
