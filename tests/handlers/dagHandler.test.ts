@@ -42,6 +42,17 @@ const data_dag_transactions = [
     ordinal: 234n,
     block_hash: data_dag_blocks[0].hash,
     snapshot_hash: data_dag_blocks[0].snapshot_hash,
+    transaction_original: {
+      fee: 1,
+      salt: 8971636413389910,
+      amount: 2768293270,
+      parent: {
+        hash: "ec37fa4b293d4c3d08c8474dad933d37219c94a80d4b934af3b27114cac7bf6e",
+        ordinal: 20631,
+      },
+      source: "DAG4nBMH7KwFAnpfB6VaFRaKEwACNSidzeMuPtgV",
+      destination: "DAG5t8AVrmUK2dLF9DNLavMJvFRm4dpMYKBqnd9r",
+    },
     created_at: new Date("2025-04-02T00:00:02Z"),
     updated_at: new Date(),
   },
@@ -58,6 +69,17 @@ const data_dag_transactions = [
     ordinal: 3222n,
     block_hash: data_dag_blocks[1].hash,
     snapshot_hash: data_dag_blocks[1].snapshot_hash,
+    transaction_original: {
+      fee: 1,
+      salt: 8885443039669825,
+      amount: 163220763999,
+      parent: {
+        hash: "0000000000000000000000000000000000000000000000000000000000000000",
+        ordinal: 0,
+      },
+      source: "DAG8YtxgtUe8rfvpy1n3z4Q3ayATmZ7M2Xck7xeW",
+      destination: "DAG1pLpkyX7aTtFZtbF98kgA9QTZRzrsGaFmf4BT",
+    },
     created_at: new Date("2025-04-02T00:01:02Z"),
     updated_at: new Date(),
   },
@@ -74,6 +96,17 @@ const data_dag_transactions = [
     ordinal: 3222n,
     block_hash: data_dag_blocks[1].hash,
     snapshot_hash: data_dag_blocks[1].snapshot_hash,
+    transaction_original: {
+      fee: 200000,
+      salt: 8759543125914451,
+      amount: 5000000000,
+      parent: {
+        hash: "ef8e659dabf02247eabdf91ce143c0986efa8b1dbbc0305d8e6c0866820f3c77",
+        ordinal: 45,
+      },
+      source: "DAG3Vj5dp43ZqcJWNzrKVaeaDTkLJZqpbqWuEhBj",
+      destination: "DAG85EgRCHMeBYak31AxBzfinmML4bJWdRVH4XxF",
+    },
     created_at: new Date("2025-04-02T00:02:02Z"),
     updated_at: new Date(),
   },
@@ -128,6 +161,7 @@ const validateTransaction = (tx) => {
   expect(tx.fee).toBe(Number(dbTxn.fee));
   expect(tx.snapshotHash).toBe(dbSnapshot.hash);
   expect(tx.snapshotOrdinal).toBe(Number(dbSnapshot.ordinal));
+  expect(tx.transactionOriginal).toEqual(dbTxn.transaction_original);
   expect(+new Date(tx.timestamp)).toBe(+new Date(dbTxn.created_at));
 };
 

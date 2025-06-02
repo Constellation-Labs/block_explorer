@@ -63,6 +63,7 @@ export const transactionResponse = (transaction) => {
     blockHash: transaction.block_hash,
     snapshotHash: snapshot.hash,
     snapshotOrdinal: snapshot.ordinal,
+    transactionOriginal: transaction.transaction_original,
     timestamp: transaction.created_at,
   };
 };
