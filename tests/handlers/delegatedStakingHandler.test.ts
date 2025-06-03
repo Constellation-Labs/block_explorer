@@ -17,89 +17,12 @@ import {
 import {
   data_addresses,
   data_dag_token_locks,
+  data_delegate_stake_create_events,
+  data_delegate_stake_rewards,
+  data_delegate_stake_withdraw_events,
   data_global_snapshots,
   prisma,
 } from "../../prisma/seed";
-
-const data_delegate_stake_create_events = [
-  {
-    hash: "stake-event-hash-001",
-    ordinal: 10001n,
-    source_addr: data_addresses[0].address,
-    node_id: "NODE_ABC123",
-    amount: 500000000000n,
-    fee: 500000n,
-    lock_reference_hash: data_dag_token_locks[0].hash,
-    parent_hash: "parent-hash-xyz",
-    global_snapshot_hash: data_global_snapshots[0].hash,
-  },
-  {
-    hash: "stake-event-hash-002",
-    ordinal: 10002n,
-    source_addr: data_addresses[0].address,
-    node_id: "NODE_ABC123",
-    amount: 3333300000000n,
-    fee: 500000n,
-    lock_reference_hash: data_dag_token_locks[1].hash,
-    parent_hash: "stake-event-hash-001",
-    global_snapshot_hash: data_global_snapshots[1].hash,
-  },
-  {
-    hash: "stake-event-hash-003",
-    ordinal: 10003n,
-    source_addr: data_addresses[0].address,
-    node_id: "NODE_ABC234",
-    amount: 2222222222n,
-    fee: 500000n,
-    lock_reference_hash: data_dag_token_locks[1].hash,
-    parent_hash: "stake-event-hash-001",
-    global_snapshot_hash: data_global_snapshots[1].hash,
-    transfer_from_hash: "stake-event-hash-002",
-  },
-];
-
-const data_delegate_stake_withdraw_events = [
-  {
-    hash: "withdraw-event-hash-001",
-    source_addr: data_addresses[0].address,
-    stake_create_hash: data_delegate_stake_create_events[0].hash,
-    global_snapshot_hash: data_global_snapshots[1].hash,
-    unlock_epoch: 11000n,
-    is_completed: false,
-  },
-  {
-    hash: "withdraw-event-hash-002",
-    source_addr: data_addresses[0].address,
-    stake_create_hash: data_delegate_stake_create_events[1].hash,
-    global_snapshot_hash: data_global_snapshots[1].hash,
-    unlock_epoch: 8000n,
-    is_completed: true,
-  },
-];
-
-const data_delegate_stake_rewards = [
-  {
-    global_snapshot_hash: data_global_snapshots[2].hash,
-    address: data_addresses[0].address,
-    node_id: "NODE_ABC123",
-    rewards: 2500000000n,
-    stake_create_hash: data_delegate_stake_create_events[0].hash,
-  },
-];
-
-const seedData = async () => {
-  await prisma.delegate_stake_create_events.createMany({
-    data: data_delegate_stake_create_events,
-  });
-
-  await prisma.delegate_stake_withdraw_events.createMany({
-    data: data_delegate_stake_withdraw_events,
-  });
-
-  await prisma.delegate_stake_rewards.createMany({
-    data: data_delegate_stake_rewards,
-  });
-};
 
 expect.extend({
   toBeBigInt(received, expected) {
@@ -152,10 +75,6 @@ const validateStakingPosition = (tx) => {
 };
 
 describe("Delegated Stake Handler Integration Tests", () => {
-  beforeAll(async () => {
-    await seedData();
-  });
-
   describe("delegatedStakes", () => {
     it("should return a list of delegated stakes", async () => {
       const event = createAPIGatewayEvent({}, { limit: "10" });
