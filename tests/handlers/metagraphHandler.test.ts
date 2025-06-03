@@ -7,6 +7,7 @@ import {
 } from "../testUtils";
 import {
   data_addresses,
+  data_metagraph_fee_transactions,
   data_metagraph_snapshots,
   data_metagraphs,
   prisma,
@@ -156,35 +157,6 @@ const data_metagraph_balance_changes = [
   },
 ];
 
-const data_metagraph_fee_transactions = [
-  {
-    metagraph_id: data_metagraphs[0].id,
-    metagraph_snapshot_hash: data_metagraph_snapshots[0].hash,
-    metagraph_snapshot_ordinal: data_metagraph_snapshots[0].ordinal,
-    hash: "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
-    source_addr: data_addresses[0].address,
-    destination_addr: data_addresses[1].address,
-    amount: 90790983n,
-    data_update_ref:
-      "5056fdfbba0637dcecfc0b7fa3f441c745c852cf850c3bfc0dbc8a7410b8d722",
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-  {
-    metagraph_id: data_metagraphs[1].id,
-    metagraph_snapshot_hash: data_metagraph_snapshots[2].hash,
-    metagraph_snapshot_ordinal: data_metagraph_snapshots[2].ordinal,
-    hash: "39c990000000000000000000000000000000000000007654fc5ca9917cb7e72b",
-    source_addr: data_addresses[2].address,
-    destination_addr: data_addresses[3].address,
-    amount: 10090983n,
-    data_update_ref:
-      "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
-    created_at: new Date("2025-04-02T00:00:02Z"),
-    updated_at: new Date(),
-  },
-];
-
 const seedData = async () => {
   await prisma.metagraph_blocks.createMany({
     data: data_metagraph_blocks,
@@ -196,10 +168,6 @@ const seedData = async () => {
 
   await prisma.metagraph_balance_changes.createMany({
     data: data_metagraph_balance_changes,
-  });
-
-  await prisma.metagraph_fee_transactions.createMany({
-    data: data_metagraph_fee_transactions,
   });
 };
 

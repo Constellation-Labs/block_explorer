@@ -6,98 +6,76 @@ import { handleError } from "../response";
 
 const prisma = new PrismaClient();
 
-const transactionTypeMap: Record<string, string> = {
-  AllowSpend: "allow_spends",
-  TokenLock: "token_locks",
-  TokenUnlock: "token_unlocks",
-  SpendTransaction: "spend_transactions",
-  FeeTransaction: "fee_transactions",
-  ExpiredSpendTransaction: "expired_spend_transactions",
-};
+const allowedTypes = [
+  "AllowSpend",
+  "TokenLock",
+  "TokenUnlock",
+  "SpendTransaction",
+  "FeeTransaction",
+  "ExpiredSpendTransaction",
+  "DelegateStakeCreate",
+  "DelegateStakeWithdraw",
+] as const;
 
-const reverseTransactionTypeMap = Object.entries(transactionTypeMap).reduce(
-  (acc, [key, value]) => ({ ...acc, [value]: key }),
-  {} as Record<string, string>
-);
+type TransactionType = (typeof allowedTypes)[number];
 
-const getTransactionType = (tableName: string): string | undefined => {
-  const strippedName = tableName.replace(/^(dag_|metagraph_)/, ""); // Remove prefix
-  return reverseTransactionTypeMap[strippedName];
-};
+const actionsTransactions: TransactionType[] = [...allowedTypes];
 
-const dagTable = (name: string) => `dag_${name}`;
-const metagraphTable = (name: string) => `metagraph_${name}`;
+function isValidTransactionType(type: string): type is TransactionType {
+  return allowedTypes.includes(type as TransactionType);
+}
 
-const actionsTables = Object.values(transactionTypeMap);
-
-const tableFilter = (event) => {
+const transactionFilter = (event): TransactionType[] => {
   const queryParams = event.queryStringParameters || {};
-  const transactionTypes = queryParams.transactionTypes?.split(",") || [];
+  const rawTypes = queryParams.transactionTypes?.split(",") || [];
 
-  return transactionTypes.length > 0
-    ? transactionTypes.map((type) => transactionTypeMap[type]).filter(Boolean)
-    : actionsTables;
+  const filtered = rawTypes.filter(isValidTransactionType);
+
+  return filtered.length > 0 ? filtered : actionsTransactions;
 };
 
 const currencyId = (transaction) =>
   transaction.metagraph_snapshot?.metagraph_id ?? null;
 
 const actionResponse = (transaction) => ({
-  type: getTransactionType(transaction.table_name),
+  type: transaction.transaction_type,
   currencyId: currencyId(transaction),
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,
   destination: transaction.destination_addr ?? null,
-  unlockEpoch:
-    transaction.dag_allow_spend?.last_valid_epoch_progress ??
-    transaction.dag_token_lock?.unlock_epoch ??
-    null,
-  parentHash:
-    transaction.dag_spend_transaction?.allow_spend_ref ??
-    transaction.dag_token_unlock?.lock_reference_hash ??
-    null,
+  unlockEpoch: transaction.unlock_epoch ?? null,
+  parentHash: transaction.parent_hash ?? null,
   timestamp: transaction.created_at,
   globalSnapshotOrdinal: transaction.global_snapshot?.ordinal,
-  metagraphSnapshotOrdinal:  transaction.metagraph_snapshot?.ordinal,
+  metagraphSnapshotOrdinal: transaction.metagraph_snapshot?.ordinal,
 });
 
 export const actionsResponse = (ts) => ts.map(actionResponse);
 
 const dagInclude = {
   global_snapshot: { select: { hash: true, ordinal: true } },
-  dag_token_lock: { select: { unlock_epoch: true } },
-  dag_allow_spend: { select: { last_valid_epoch_progress: true } },
-  dag_spend_transaction: { select: { allow_spend_ref: true } },
-  dag_token_unlock: { select: { lock_reference_hash: true } },
-  dag_expired_spend_transaction: { select: { allow_spend_ref: true } },
 };
 
 const metagraphInclude = {
   metagraph_snapshot: { select: { hash: true, ordinal: true } },
-  metagraph_token_lock: { select: { unlock_epoch: true } },
-  metagraph_allow_spend: { select: { last_valid_epoch_progress: true } },
-  metagraph_spend_transaction: { select: { allow_spend_ref: true } },
-  metagraph_token_unlock: { select: { lock_reference_hash: true } },
-  metagraph_expired_spend_transaction: { select: { allow_spend_ref: true } },
-  metagraph_fee_transaction: { select: { data_update_ref: true } },
 };
 
 export const dagActions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
-  const selectedTables = tableFilter(event).map(dagTable);
+  const selectedTransactions = transactionFilter(event);
 
   return await paginatedQuery(
     extractPagination(event),
     hashCursor,
     hashCursor,
     {
-      where: { table_name: { in: selectedTables } },
+      where: { transaction_type: { in: selectedTransactions } },
       include: dagInclude,
       orderBy: [{ created_at: "desc" }, { hash: "desc" }],
     },
-    prisma.abstract_transactions_view.findMany,
+    prisma.dag_actions_view.findMany,
     actionsResponse
   );
 };
@@ -109,7 +87,7 @@ export const globalSnapshotActions = async (
     const { term } = event.pathParameters || {};
     const filter = extractHashOrdinal(term);
 
-    const selectedTables = tableFilter(event).map(dagTable);
+    const selectedTransactions = transactionFilter(event);
 
     return await paginatedQuery(
       extractPagination(event),
@@ -118,12 +96,12 @@ export const globalSnapshotActions = async (
       {
         where: {
           global_snapshot: filter,
-          table_name: { in: selectedTables },
+          transaction_type: { in: selectedTransactions },
         },
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.abstract_transactions_view.findMany,
+      prisma.dag_actions_view.findMany,
       actionsResponse
     );
   } catch (error) {
@@ -137,7 +115,7 @@ export const dagAddressActions = async (
   try {
     const { address } = event.pathParameters || {};
 
-    const selectedTables = tableFilter(event).map(dagTable);
+    const selectedTransactions = transactionFilter(event);
 
     return await paginatedQuery(
       extractPagination(event),
@@ -155,12 +133,12 @@ export const dagAddressActions = async (
               },
             },
           ],
-          table_name: { in: selectedTables },
+          transaction_type: { in: selectedTransactions },
         },
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.abstract_transactions_view.findMany,
+      prisma.dag_actions_view.findMany,
       actionsResponse
     );
   } catch (error) {
@@ -174,7 +152,7 @@ export const currencyActions = async (
   try {
     const { metagraph_id } = event.pathParameters || {};
 
-    const selectedTables = tableFilter(event).map(metagraphTable);
+    const selectedTransactions = transactionFilter(event);
 
     return await paginatedQuery(
       extractPagination(event),
@@ -183,12 +161,12 @@ export const currencyActions = async (
       {
         where: {
           metagraph_snapshot: { metagraph_id },
-          table_name: { in: selectedTables },
+          transaction_type: { in: selectedTransactions },
         },
         include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.abstract_transactions_view.findMany,
+      prisma.metagraph_actions_view.findMany,
       actionsResponse
     );
   } catch (error) {
@@ -203,7 +181,7 @@ export const currencySnapshotActions = async (
     const { metagraph_id, term } = event.pathParameters || {};
     const filter = extractHashOrdinal(term);
 
-    const selectedTables = tableFilter(event).map(metagraphTable);
+    const selectedTransactions = transactionFilter(event);
 
     return await paginatedQuery(
       extractPagination(event),
@@ -212,12 +190,12 @@ export const currencySnapshotActions = async (
       {
         where: {
           metagraph_snapshot: { metagraph_id, ...filter },
-          table_name: { in: selectedTables },
+          transaction_type: { in: selectedTransactions },
         },
         include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.abstract_transactions_view.findMany,
+      prisma.metagraph_actions_view.findMany,
       actionsResponse
     );
   } catch (error) {
@@ -231,7 +209,7 @@ export const currencyAddressActions = async (
   try {
     const { metagraph_id, address } = event.pathParameters || {};
 
-    const selectedTables = tableFilter(event).map(metagraphTable);
+    const selectedTransactions = transactionFilter(event);
 
     return await paginatedQuery(
       extractPagination(event),
@@ -251,12 +229,12 @@ export const currencyAddressActions = async (
               },
             },
           ],
-          table_name: { in: selectedTables },
+          transaction_type: { in: selectedTransactions },
         },
         include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.abstract_transactions_view.findMany,
+      prisma.metagraph_actions_view.findMany,
       actionsResponse
     );
   } catch (error) {

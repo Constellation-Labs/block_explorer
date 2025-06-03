@@ -12,6 +12,8 @@ import {
   metagraphs,
 } from "@prisma/client";
 import { randomUUID } from "crypto";
+import { readFileSync } from "fs";
+import path from "path";
 
 export const prisma = new PrismaClient();
 
@@ -247,6 +249,253 @@ export const data_metagraph_token_unlocks = [
   },
 ];
 
+export const data_dag_allow_spends = [
+  {
+    hash: "allowSpendHash1",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 1000n,
+    fee: 5n,
+    last_valid_epoch_progress: 100n,
+    ordinal: 1n,
+    snapshot_hash: data_global_snapshots[0].hash,
+    round_id: "11111111-1111-1111-1111-111111111111",
+    created_at: new Date("2024-01-01T10:00:00Z"),
+    updated_at: new Date("2024-01-01T10:00:00Z"),
+  },
+  {
+    hash: "allowSpendHash2",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[2].address,
+    amount: 2000n,
+    fee: 10n,
+    last_valid_epoch_progress: 600n,
+    ordinal: 2n,
+    snapshot_hash: data_global_snapshots[0].hash,
+    round_id: "22222222-2222-2222-2222-222222222222",
+    created_at: new Date("2024-01-02T10:00:00Z"),
+    updated_at: new Date("2024-01-02T10:00:00Z"),
+  },
+  {
+    hash: "allowSpendHash3",
+    source_addr: data_addresses[2].address,
+    destination_addr: data_addresses[1].address,
+    amount: 300n,
+    fee: 15n,
+    last_valid_epoch_progress: 700n,
+    ordinal: 3n,
+    snapshot_hash: data_global_snapshots[1].hash,
+    round_id: "33333333-3333-3333-3333-333333333333",
+    created_at: new Date("2024-01-03T10:00:00Z"),
+    updated_at: new Date("2024-01-03T10:00:00Z"),
+  },
+  {
+    hash: "allowSpendHash4",
+    source_addr: data_addresses[2].address,
+    destination_addr: data_addresses[3].address,
+    amount: 300n,
+    fee: 15n,
+    last_valid_epoch_progress: 700n,
+    ordinal: 4n,
+    snapshot_hash: data_global_snapshots[0].hash,
+    round_id: "33333333-3333-3333-3333-333333333333",
+    created_at: new Date("2024-01-03T10:00:00Z"),
+    updated_at: new Date("2024-01-03T10:00:00Z"),
+  },
+];
+
+export const data_dag_spend_transactions = [
+  {
+    hash: "spendTxHash1",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 1000n,
+    allow_spend_ref: data_dag_allow_spends[0].hash,
+    snapshot_hash: data_global_snapshots[2].hash,
+    created_at: new Date("2024-01-05T10:00:00Z"),
+    updated_at: new Date("2024-01-05T10:00:00Z"),
+  },
+];
+
+export const data_dag_expired_spend_transactions = [
+  {
+    hash: "expiredSpendTxHash1",
+    source_addr: data_addresses[2].address,
+    amount: 3000n,
+    allow_spend_ref: data_dag_allow_spends[1].hash,
+    snapshot_hash: data_global_snapshots[2].hash,
+    created_at: new Date("2024-01-10T10:00:00Z"),
+    updated_at: new Date("2024-01-10T10:00:00Z"),
+  },
+];
+
+export const data_metagraph_allow_spends = [
+  {
+    metagraph_id: data_metagraphs[0].id,
+    hash: "metaAllowSpendHash1",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 500n,
+    fee: 3n,
+    last_valid_epoch_progress: 50n,
+    ordinal: 1n,
+    snapshot_hash: data_metagraph_snapshots[0].hash,
+    round_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    created_at: new Date("2024-01-01T11:00:00Z"),
+    updated_at: new Date("2024-01-01T11:00:00Z"),
+  },
+  {
+    metagraph_id: data_metagraphs[0].id,
+    hash: "metaAllowSpendHash2",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 500n,
+    fee: 3n,
+    last_valid_epoch_progress: 50n,
+    ordinal: 2n,
+    snapshot_hash: data_metagraph_snapshots[1].hash,
+    round_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    created_at: new Date("2024-01-01T11:00:00Z"),
+    updated_at: new Date("2024-01-01T11:00:00Z"),
+  },
+  {
+    metagraph_id: data_metagraphs[0].id,
+    hash: "metaAllowSpendHash3",
+    source_addr: data_addresses[2].address,
+    destination_addr: data_addresses[3].address,
+    amount: 750n,
+    fee: 4n,
+    last_valid_epoch_progress: 60n,
+    ordinal: 3n,
+    snapshot_hash: data_metagraph_snapshots[1].hash,
+    round_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    created_at: new Date("2024-01-02T11:00:00Z"),
+    updated_at: new Date("2024-01-02T11:00:00Z"),
+  },
+];
+
+export const data_metagraph_spend_transactions = [
+  {
+    metagraph_id: data_metagraphs[0].id,
+    hash: "metaSpendTxHash1",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 500n,
+    allow_spend_ref: data_metagraph_allow_spends[0].hash,
+    snapshot_hash: data_metagraph_snapshots[0].hash,
+    created_at: new Date("2024-01-03T11:00:00Z"),
+    updated_at: new Date("2024-01-03T11:00:00Z"),
+  },
+];
+
+export const data_metagraph_expired_spend_transactions = [
+  {
+    metagraph_id: data_metagraphs[0].id,
+    hash: "metaExpiredTxHash1",
+    source_addr: data_addresses[2].address,
+    amount: 750n,
+    allow_spend_ref: data_metagraph_allow_spends[2].hash,
+    snapshot_hash: data_metagraph_snapshots[1].hash,
+    created_at: new Date("2024-01-04T11:00:00Z"),
+    updated_at: new Date("2024-01-04T11:00:00Z"),
+  },
+];
+
+export const data_delegate_stake_create_events = [
+  {
+    hash: "stake-event-hash-001",
+    ordinal: 10001n,
+    source_addr: data_addresses[0].address,
+    node_id: "NODE_ABC123",
+    amount: 500000000000n,
+    fee: 500000n,
+    lock_reference_hash: data_dag_token_locks[0].hash,
+    parent_hash: "parent-hash-xyz",
+    global_snapshot_hash: data_global_snapshots[0].hash,
+  },
+  {
+    hash: "stake-event-hash-002",
+    ordinal: 10002n,
+    source_addr: data_addresses[0].address,
+    node_id: "NODE_ABC123",
+    amount: 3333300000000n,
+    fee: 500000n,
+    lock_reference_hash: data_dag_token_locks[1].hash,
+    parent_hash: "stake-event-hash-001",
+    global_snapshot_hash: data_global_snapshots[1].hash,
+  },
+  {
+    hash: "stake-event-hash-003",
+    ordinal: 10003n,
+    source_addr: data_addresses[0].address,
+    node_id: "NODE_ABC234",
+    amount: 2222222222n,
+    fee: 500000n,
+    lock_reference_hash: data_dag_token_locks[1].hash,
+    parent_hash: "stake-event-hash-001",
+    global_snapshot_hash: data_global_snapshots[1].hash,
+    transfer_from_hash: "stake-event-hash-002",
+  },
+];
+
+export const data_delegate_stake_withdraw_events = [
+  {
+    hash: "withdraw-event-hash-001",
+    source_addr: data_addresses[0].address,
+    stake_create_hash: data_delegate_stake_create_events[0].hash,
+    global_snapshot_hash: data_global_snapshots[1].hash,
+    unlock_epoch: 11000n,
+    is_completed: false,
+  },
+  {
+    hash: "withdraw-event-hash-002",
+    source_addr: data_addresses[0].address,
+    stake_create_hash: data_delegate_stake_create_events[1].hash,
+    global_snapshot_hash: data_global_snapshots[1].hash,
+    unlock_epoch: 8000n,
+    is_completed: true,
+  },
+];
+
+export const data_delegate_stake_rewards = [
+  {
+    global_snapshot_hash: data_global_snapshots[2].hash,
+    address: data_addresses[0].address,
+    node_id: "NODE_ABC123",
+    rewards: 2500000000n,
+    stake_create_hash: data_delegate_stake_create_events[0].hash,
+  },
+];
+
+export const data_metagraph_fee_transactions = [
+  {
+    metagraph_id: data_metagraphs[0].id,
+    metagraph_snapshot_hash: data_metagraph_snapshots[0].hash,
+    metagraph_snapshot_ordinal: data_metagraph_snapshots[0].ordinal,
+    hash: "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 90790983n,
+    data_update_ref:
+      "5056fdfbba0637dcecfc0b7fa3f441c745c852cf850c3bfc0dbc8a7410b8d722",
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+  {
+    metagraph_id: data_metagraphs[1].id,
+    metagraph_snapshot_hash: data_metagraph_snapshots[2].hash,
+    metagraph_snapshot_ordinal: data_metagraph_snapshots[2].ordinal,
+    hash: "39c990000000000000000000000000000000000000007654fc5ca9917cb7e72b",
+    source_addr: data_addresses[2].address,
+    destination_addr: data_addresses[3].address,
+    amount: 10090983n,
+    data_update_ref:
+      "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+];
+
 export async function seed() {
   await prisma.addresses.createMany({ data: data_addresses });
 
@@ -279,6 +528,71 @@ export async function seed() {
   await prisma.metagraph_token_unlocks.createMany({
     data: data_metagraph_token_unlocks,
   });
+
+  await prisma.metagraph_allow_spends.createMany({
+    data: data_metagraph_allow_spends,
+  });
+  await prisma.metagraph_spend_transactions.createMany({
+    data: data_metagraph_spend_transactions,
+  });
+  await prisma.metagraph_expired_spend_transactions.createMany({
+    data: data_metagraph_expired_spend_transactions,
+  });
+
+  await prisma.metagraph_fee_transactions.createMany({
+    data: data_metagraph_fee_transactions,
+  });
+
+  await prisma.dag_allow_spends.createMany({
+    data: data_dag_allow_spends,
+  });
+
+  await prisma.dag_spend_transactions.createMany({
+    data: data_dag_spend_transactions,
+  });
+
+  await prisma.dag_expired_spend_transactions.createMany({
+    data: data_dag_expired_spend_transactions,
+  });
+
+  await prisma.delegate_stake_create_events.createMany({
+    data: data_delegate_stake_create_events,
+  });
+
+  await prisma.delegate_stake_withdraw_events.createMany({
+    data: data_delegate_stake_withdraw_events,
+  });
+
+  await prisma.delegate_stake_rewards.createMany({
+    data: data_delegate_stake_rewards,
+  });
+
+  //generate views
+  //first drop the prisma generated tables
+  await prisma.$executeRawUnsafe("DROP TABLE dag_actions_view");
+  await prisma.$executeRawUnsafe("DROP TABLE metagraph_actions_view");
+  runSqlFromFile("./migrations/20250529/01_add_staking_to_actions.sql");
+}
+
+async function runSqlFromFile(filename: string) {
+  const filePath = path.resolve(__dirname, filename);
+  const sql = readFileSync(filePath, "utf-8");
+
+  const statements = sql
+    .split(/;\s*$/m) // splits on semicolon at end of line
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  try {
+    for (const stmt of statements) {
+      await prisma.$executeRawUnsafe(stmt);
+    }
+    console.log(`Executed ${statements.length} statements from: ${filename}`);
+  } catch (err) {
+    console.error(`Error executing SQL from: ${filename}`, err);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 export async function resetDatabase() {

@@ -33,6 +33,13 @@ components:
           type: string
           description: Reference to a parent transaction (e.g., token lock reference for token unlocks or allow spend reference for spend transactions)
           nullable: true
+        oneOf:
+          globalSnapshotOrdinal:
+            type: integer
+            description: Global snapshot ordinal if it's a DAG action
+          metagraphSnapshotOrdinal:
+            type: integer
+            description: Metagraph snapshot ordinal if it's a currency action
         timestamp:
           type: string
           description: The timestamp when the transaction was created
