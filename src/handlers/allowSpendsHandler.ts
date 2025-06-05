@@ -7,6 +7,7 @@ import {
   toCreatedAtOrdinalCursor,
 } from "../pagination";
 import { respond, handleError } from "../response";
+import { includes } from "lodash";
 
 const prisma = new PrismaClient();
 
@@ -21,6 +22,12 @@ const allowSpendResponse = (transaction) => ({
   fee: transaction.fee,
   snapshotHash: transaction.snapshot_hash,
   timestamp: transaction.created_at,
+  globalSnapshotHash:
+    transaction.global_snapshot?.hash ??
+    transaction.metagraph_snapshot?.global_snapshot?.hash,
+  globalSnapshotOrdinal:
+    transaction.global_snapshot?.ordinal ??
+    transaction.metagraph_snapshot?.global_snapshot?.ordinal,
 });
 
 const allowSpendResponses = (txs) => txs.map(allowSpendResponse);
@@ -34,6 +41,12 @@ const spendTransactionResponse = (transaction) => ({
   allowSpendHash: transaction.allow_spend_ref,
   snapshotHash: transaction.snapshot_hash,
   timestamp: transaction.created_at,
+  globalSnapshotHash:
+    transaction.global_snapshot?.hash ??
+    transaction.metagraph_snapshot?.global_snapshot?.hash,
+  globalSnapshotOrdinal:
+    transaction.global_snapshot?.ordinal ??
+    transaction.metagraph_snapshot?.global_snapshot?.ordinal,
 });
 
 const spendTransactionResponses = (txs) => txs.map(spendTransactionResponse);
@@ -46,6 +59,12 @@ const spendExpiredResponse = (transaction) => ({
   allowSpendHash: transaction.allow_spend_ref,
   snapshotHash: transaction.snapshot_hash,
   timestamp: transaction.created_at,
+  globalSnapshotHash:
+    transaction.global_snapshot?.hash ??
+    transaction.metagraph_snapshot?.global_snapshot?.hash,
+  globalSnapshotOrdinal:
+    transaction.global_snapshot?.ordinal ??
+    transaction.metagraph_snapshot?.global_snapshot?.ordinal,
 });
 
 const spendExpiredResponses = (txs) => txs.map(spendExpiredResponse);
@@ -74,6 +93,25 @@ const ifActiveMetagraphAllowSpend = (event) => {
     : {};
 };
 
+const dagInclude = {
+  global_snapshot: { select: { hash: true, ordinal: true } },
+};
+
+const metagraphInclude = {
+  metagraph_snapshot: {
+    select: {
+      hash: true,
+      ordinal: true,
+      global_snapshot: {
+        select: {
+          hash: true,
+          ordinal: true,
+        },
+      },
+    },
+  },
+};
+
 export const allowSpend = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -82,6 +120,7 @@ export const allowSpend = async (
 
     const allowSpend = await prisma.dag_allow_spends.findUnique({
       where: { hash },
+      include: dagInclude,
     });
 
     return respond(allowSpend, allowSpendResponse);
@@ -97,7 +136,11 @@ export const allowSpends = async (
     extractPagination(event),
     toCreatedAtOrdinalCursor,
     fromCreatedAtOrdinalCursor,
-    { where: ifActiveAllowSpend(event), orderBy: { created_at: "desc" } },
+    {
+      where: ifActiveAllowSpend(event),
+      include: dagInclude,
+      orderBy: { created_at: "desc" },
+    },
     prisma.dag_allow_spends.findMany,
     allowSpendResponses
   );
@@ -116,6 +159,7 @@ export const globalSnapshotAllowSpends = async (
       fromCreatedAtOrdinalCursor,
       {
         where: { global_snapshot: filter, ...ifActiveAllowSpend(event) },
+        include: dagInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.dag_allow_spends.findMany,
@@ -141,6 +185,7 @@ export const addressAllowSpends = async (
           OR: [{ source_addr: address }, { destination_addr: address }],
           ...ifActiveAllowSpend(event),
         },
+        include: dagInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.dag_allow_spends.findMany,
@@ -159,6 +204,7 @@ export const spendTransaction = async (
 
     const spend = await prisma.dag_spend_transactions.findUnique({
       where: { hash },
+      include: dagInclude,
     });
 
     return respond(spend, spendTransactionResponse);
@@ -175,7 +221,7 @@ export const spendTransactions = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { orderBy: { created_at: "desc" } },
+      { include: dagInclude, orderBy: { created_at: "desc" } },
       prisma.dag_spend_transactions.findMany,
       spendTransactionResponses
     );
@@ -199,6 +245,7 @@ export const globalSnapshotSpendTransactions = async (
         where: {
           dag_allow_spend: { global_snapshot: filter },
         },
+        include: dagInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.dag_spend_transactions.findMany,
@@ -223,6 +270,7 @@ export const addressSpendTransactions = async (
         where: {
           OR: [{ source_addr: address }, { destination_addr: address }],
         },
+        include: dagInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.dag_spend_transactions.findMany,
@@ -241,7 +289,7 @@ export const allowSpendExpirations = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { orderBy: { created_at: "desc" } },
+      { include: dagInclude, orderBy: { created_at: "desc" } },
       prisma.dag_expired_spend_transactions.findMany,
       spendExpiredResponses
     );
@@ -258,6 +306,7 @@ export const allowSpendExpiration = async (
 
     const expired = await prisma.dag_expired_spend_transactions.findUnique({
       where: { hash },
+      include: dagInclude,
     });
 
     return respond(expired, spendExpiredResponse);
@@ -281,6 +330,7 @@ export const globalSnapshotAllowSpendExpirations = async (
         where: {
           dag_allow_spend: { global_snapshot: filter },
         },
+        include: dagInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.dag_expired_spend_transactions.findMany,
@@ -308,6 +358,7 @@ export const addressAllowSpendExpirations = async (
             { dag_allow_spend: { destination_addr: address } },
           ],
         },
+        include: dagInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.dag_expired_spend_transactions.findMany,
@@ -330,6 +381,7 @@ export const currencyAllowSpends = async (
       fromCreatedAtOrdinalCursor,
       {
         where: { metagraph_id, ...ifActiveMetagraphAllowSpend(event) },
+        include: metagraphInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.metagraph_allow_spends.findMany,
@@ -348,6 +400,7 @@ export const currencyAllowSpend = async (
 
     const allowSpend = await prisma.metagraph_allow_spends.findUnique({
       where: { metagraph_id, hash },
+      include: metagraphInclude,
     });
 
     return respond(allowSpend, allowSpendResponse);
@@ -373,6 +426,7 @@ export const currencySnapshotAllowSpends = async (
           metagraph_snapshot: filter,
           ...ifActiveMetagraphAllowSpend(event),
         },
+        include: metagraphInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.metagraph_allow_spends.findMany,
@@ -399,6 +453,7 @@ export const currencyAddressAllowSpends = async (
           OR: [{ source_addr: address }, { destination_addr: address }],
           ...ifActiveMetagraphAllowSpend(event),
         },
+        include: metagraphInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.metagraph_allow_spends.findMany,
@@ -419,7 +474,11 @@ export const currencySpendTransactions = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { metagraph_id }, orderBy: { created_at: "desc" } },
+      {
+        where: { metagraph_id },
+        include: metagraphInclude,
+        orderBy: { created_at: "desc" },
+      },
       prisma.metagraph_spend_transactions.findMany,
       spendTransactionResponses
     );
@@ -436,6 +495,7 @@ export const currencySpendTransaction = async (
 
     const spend = await prisma.metagraph_spend_transactions.findUnique({
       where: { metagraph_id, hash },
+      include: metagraphInclude,
     });
 
     return respond(spend, spendTransactionResponse);
@@ -462,6 +522,7 @@ export const currencySnapshotSpendTransactions = async (
             metagraph_snapshot: filter,
           },
         },
+        include: metagraphInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.metagraph_spend_transactions.findMany,
@@ -486,6 +547,7 @@ export const currencyAddressSpendTransactions = async (
         where: {
           OR: [{ source_addr: address }, { destination_addr: address }],
         },
+        include: metagraphInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.metagraph_spend_transactions.findMany,
@@ -506,7 +568,11 @@ export const currencyAllowSpendExpirations = async (
       extractPagination(event),
       toCreatedAtOrdinalCursor,
       fromCreatedAtOrdinalCursor,
-      { where: { metagraph_id }, orderBy: { created_at: "desc" } },
+      {
+        where: { metagraph_id },
+        include: metagraphInclude,
+        orderBy: { created_at: "desc" },
+      },
       prisma.metagraph_expired_spend_transactions.findMany,
       spendExpiredResponses
     );
@@ -524,6 +590,7 @@ export const currencyAllowSpendExpiration = async (
     const expired =
       await prisma.metagraph_expired_spend_transactions.findUnique({
         where: { metagraph_id, hash },
+        include: metagraphInclude,
       });
 
     return respond(expired, spendExpiredResponse);
@@ -550,6 +617,7 @@ export const currencySnapshotAllowSpendExpirations = async (
             metagraph_snapshot: filter,
           },
         },
+        include: metagraphInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.metagraph_expired_spend_transactions.findMany,
@@ -578,6 +646,7 @@ export const currencyAddressAllowSpendExpirations = async (
             { metagraph_allow_spend: { destination_addr: address } },
           ],
         },
+        include: metagraphInclude,
         orderBy: { created_at: "desc" },
       },
       prisma.metagraph_expired_spend_transactions.findMany,

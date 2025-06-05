@@ -193,6 +193,8 @@ const validateTransaction = (tx, expected) => {
   expect(tx.snapshotOrdinal).toBe(Number(dbSnapshot.ordinal));
   expect(tx.transactionOriginal).toEqual(expected.transaction_original);
   expect(+new Date(tx.timestamp)).toBe(+new Date(expected.created_at));
+  expect(tx.globalSnapshotHash).toBeDefined();
+  expect(tx.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateFeeTransaction = (tx, expected) => {
@@ -207,6 +209,8 @@ const validateFeeTransaction = (tx, expected) => {
   expect(tx.snapshotHash).toBe(dbSnapshot.hash);
   expect(tx.snapshotOrdinal).toBe(Number(dbSnapshot.ordinal));
   expect(+new Date(tx.timestamp)).toBe(+new Date(expected.created_at));
+  expect(tx.globalSnapshotHash).toBeDefined();
+  expect(tx.globalSnapshotOrdinal).toBeDefined();
 };
 
 describe("Metagraph Handler Integration Tests", () => {

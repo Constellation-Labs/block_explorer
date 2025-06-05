@@ -45,6 +45,8 @@ const validateCreateStake = (tx) => {
   expect(tx.fee).toBeBigInt(match.fee);
   expect(tx.timestamp).toBeDefined();
   expect(tx.type).toBe(match.transfer_from_hash ? "transfer" : "create");
+  expect(tx.globalSnapshotHash).toBeDefined();
+  expect(tx.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateWithdrawStake = (tx) => {
@@ -58,6 +60,8 @@ const validateWithdrawStake = (tx) => {
     match.is_completed ? "withdrawalComplete" : "pendingWithdrawal"
   );
   expect(tx.timestamp).toBeDefined();
+  expect(tx.globalSnapshotHash).toBeDefined();
+  expect(tx.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateStakingPosition = (tx) => {

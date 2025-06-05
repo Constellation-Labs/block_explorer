@@ -65,6 +65,11 @@ export const transactionResponse = (transaction) => {
     snapshotOrdinal: snapshot.ordinal,
     transactionOriginal: transaction.transaction_original,
     timestamp: transaction.created_at,
+    globalSnapshotHash:
+      transaction.metagraph_snapshot?.global_snapshot.hash ?? snapshot.hash,
+    globalSnapshotOrdinal:
+      transaction.metagraph_snapshot?.global_snapshot.ordinal ??
+      snapshot.ordinal,
   };
 };
 

@@ -69,6 +69,8 @@ const validateAction = (action) => {
   if (action.currencyId !== null) {
     expect(typeof action.currencyId).toBe("string");
   }
+  expect(action.globalSnapshotHash).toBeDefined();
+  expect(action.globalSnapshotOrdinal).toBeDefined();
 };
 
 describe("actionsHandler", () => {

@@ -64,6 +64,19 @@ const mgIdHashFromCursor = (row) => ({
   hash: row.hash,
 });
 
+const includeGlobalSnapshotOrdinalFromMetagraph = {
+  metagraph_snapshot: {
+    select: {
+      global_snapshot: {
+        select: {
+          hash: true,
+          ordinal: true,
+        },
+      },
+    },
+  },
+};
+
 const metagraphSnapshotWhere = async (metagraph_id, term) => {
   if (term == "latest") {
     const latestSnapshotHash = (await latestMetagraphSnapshot(metagraph_id))
@@ -233,7 +246,18 @@ const metagraphTransactionsQuery = async (
     const query = {
       ...baseQuery,
       include: {
-        metagraph_snapshot: { select: { hash: true, ordinal: true } },
+        metagraph_snapshot: {
+          select: {
+            hash: true,
+            ordinal: true,
+            global_snapshot: {
+              select: {
+                hash: true,
+                ordinal: true,
+              },
+            },
+          },
+        },
       },
       orderBy: [
         { metagraph_id: "desc" },
@@ -471,7 +495,18 @@ export const currencyFeeTransaction = async (
         },
       },
       include: {
-        metagraph_snapshot: { select: { hash: true, ordinal: true } },
+        metagraph_snapshot: {
+          select: {
+            hash: true,
+            ordinal: true,
+            global_snapshot: {
+              select: {
+                hash: true,
+                ordinal: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -489,7 +524,18 @@ const metagraphFeeTransactionsQuery = async (
     const query = {
       ...baseQuery,
       include: {
-        metagraph_snapshot: { select: { hash: true, ordinal: true } },
+        metagraph_snapshot: {
+          select: {
+            hash: true,
+            ordinal: true,
+            global_snapshot: {
+              select: {
+                hash: true,
+                ordinal: true,
+              },
+            },
+          },
+        },
       },
       orderBy: [{ metagraph_id: "asc" }, { hash: "asc" }],
     };
@@ -522,6 +568,7 @@ export const currencyFeeTransactions = async (
       where: {
         metagraph_id: metagraph_id,
       },
+      include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
 
     return metagraphFeeTransactionsQuery(where, event);
@@ -547,6 +594,7 @@ export const currencySnapshotFeeTransactions = async (
           ...mgSnapshotWhere,
         },
       },
+      include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
 
     return metagraphFeeTransactionsQuery(where, event);
@@ -568,6 +616,7 @@ export const currencyFeeTransactionsByAddress = async (
         metagraph_id: metagraph_id,
         OR: [{ source_addr: address }, { destination_addr: address }],
       },
+      include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
     return metagraphFeeTransactionsQuery(where, event);
   } catch (error) {
@@ -588,6 +637,7 @@ export const currencyFeeTransactionsBySource = async (
         metagraph_id: metagraph_id,
         source_addr: address,
       },
+      include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
     return metagraphFeeTransactionsQuery(where, event);
   } catch (error) {
@@ -608,6 +658,7 @@ export const currencyFeeTransactionsByDestination = async (
         metagraph_id: metagraph_id,
         destination_addr: address,
       },
+      include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
     return metagraphFeeTransactionsQuery(where, event);
   } catch (error) {

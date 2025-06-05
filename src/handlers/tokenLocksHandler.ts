@@ -25,6 +25,8 @@ const dagTokenLockResponse = (transaction) => ({
   ...commonTokenLockResponse(transaction),
   unlockedAtOrdinal:
     transaction.dag_token_unlock?.global_snapshot.ordinal ?? null,
+  globalSnapshotHash: transaction.snapshot_hash,
+  globalSnapshotOrdinal: transaction.global_snapshot.ordinal,
 });
 
 const dagTokenLockResponses = (txs) => txs.map(dagTokenLockResponse);
@@ -33,6 +35,9 @@ const metagraphTokenLockResponse = (transaction) => ({
   ...commonTokenLockResponse(transaction),
   unlockedAtOrdinal:
     transaction.metagraph_token_unlock?.metagraph_snapshot.ordinal ?? null,
+  metagraphSnapshotOrdinal: transaction.metagraph_snapshot.ordinal,
+  globalSnapshotHash: transaction.metagraph_snapshot.global_snapshot.hash,
+  globalSnapshotOrdinal: transaction.metagraph_snapshot.global_snapshot.ordinal,
 });
 
 const metagraphTokenLockResponses = (txs) =>
@@ -49,6 +54,7 @@ const commonTokenUnlockResponse = (transaction) => ({
 
 const dagTokenUnlockResponse = (transaction) => ({
   ...commonTokenUnlockResponse(transaction),
+  globalSnapshotHash: transaction.snapshot_hash,
   globalSnapshotOrdinal: transaction.global_snapshot.ordinal,
 });
 
@@ -57,6 +63,8 @@ const dagTokenUnlockResponses = (txs) => txs.map(dagTokenUnlockResponse);
 const metagraphTokenUnlockResponse = (transaction) => ({
   ...commonTokenUnlockResponse(transaction),
   metagraphSnapshotOrdinal: transaction.metagraph_snapshot.ordinal,
+  globalSnapshotHash: transaction.metagraph_snapshot.global_snapshot.hash,
+  globalSnapshotOrdinal: transaction.metagraph_snapshot.global_snapshot.ordinal,
 });
 
 const metagraphTokenUnlockResponses = (txs) =>
@@ -83,6 +91,20 @@ const includeMetagraphSnapshotOrdinal = {
 const includeMetagraphUnlockOrdinal = {
   metagraph_token_unlock: {
     include: includeMetagraphSnapshotOrdinal,
+  },
+};
+
+const includeGlobalSnapshotOrdinalFromMetagraph = {
+  metagraph_snapshot: {
+    select: {
+      ordinal: true,
+      global_snapshot: {
+        select: {
+          hash: true,
+          ordinal: true,
+        },
+      },
+    },
   },
 };
 
@@ -113,7 +135,10 @@ export const tokenLocks = async (
     fromCreatedAtOrdinalCursor,
     {
       where: ifActiveDagTokenLock(event),
-      include: includeDagUnlockOrdinal,
+      include: {
+        ...includeDagUnlockOrdinal,
+        ...includeDagGlobalSnapshotOrdinal,
+      },
       orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
     },
     prisma.dag_token_locks.findMany,
@@ -129,7 +154,10 @@ export const tokenLock = async (
 
     const lock = await prisma.dag_token_locks.findUnique({
       where: { hash },
-      include: includeDagUnlockOrdinal,
+      include: {
+        ...includeDagUnlockOrdinal,
+        ...includeDagGlobalSnapshotOrdinal,
+      },
     });
 
     return respond(lock, dagTokenLockResponse);
@@ -154,7 +182,10 @@ export const globalSnapshotTokenLocks = async (
           global_snapshot: filter,
           ...ifActiveDagTokenLock(event),
         },
-        include: includeDagUnlockOrdinal,
+        include: {
+          ...includeDagUnlockOrdinal,
+          ...includeDagGlobalSnapshotOrdinal,
+        },
         orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
       },
       prisma.dag_token_locks.findMany,
@@ -177,7 +208,10 @@ export const addressTokenLocks = async (
       fromCreatedAtOrdinalCursor,
       {
         where: { source_addr: address, ...ifActiveDagTokenLock(event) },
-        include: includeDagUnlockOrdinal,
+        include: {
+          ...includeDagUnlockOrdinal,
+          ...includeDagGlobalSnapshotOrdinal,
+        },
         orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
       },
       prisma.dag_token_locks.findMany,
@@ -290,7 +324,10 @@ export const metagraphTokenLocks = async (
     fromCreatedAtOrdinalCursor,
     {
       where: { metagraph_id, ...ifActiveMetagraphTokenLock(event) },
-      include: includeMetagraphUnlockOrdinal,
+      include: {
+        ...includeMetagraphUnlockOrdinal,
+        ...includeGlobalSnapshotOrdinalFromMetagraph,
+      },
       orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
     },
     prisma.metagraph_token_locks.findMany,
@@ -306,9 +343,11 @@ export const metagraphTokenLock = async (
 
     const lock = await prisma.metagraph_token_locks.findUnique({
       where: { metagraph_id, hash },
-      include: includeMetagraphUnlockOrdinal,
+      include: {
+        ...includeMetagraphUnlockOrdinal,
+        ...includeGlobalSnapshotOrdinalFromMetagraph,
+      },
     });
-
     return respond(lock, metagraphTokenLockResponse);
   } catch (error) {
     return handleError(error);
@@ -331,7 +370,10 @@ export const metagraphSnapshotTokenLocks = async (
           metagraph_id,
           metagraph_snapshot: filter,
         },
-        include: includeMetagraphUnlockOrdinal,
+        include: {
+          ...includeMetagraphUnlockOrdinal,
+          ...includeGlobalSnapshotOrdinalFromMetagraph,
+        },
         orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
       },
       prisma.metagraph_token_locks.findMany,
@@ -354,7 +396,10 @@ export const metagraphAddressTokenLocks = async (
       fromCreatedAtOrdinalCursor,
       {
         where: { metagraph_id, source_addr: address },
-        include: includeMetagraphUnlockOrdinal,
+        include: {
+          ...includeMetagraphUnlockOrdinal,
+          ...includeGlobalSnapshotOrdinalFromMetagraph,
+        },
         orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
       },
       prisma.metagraph_token_locks.findMany,
@@ -375,7 +420,10 @@ export const metagraphTokenUnlocks = async (
     fromCreatedAtOrdinalCursor,
     {
       where: { metagraph_id },
-      include: includeMetagraphSnapshotOrdinal,
+      include: {
+        ...includeMetagraphSnapshotOrdinal,
+        ...includeGlobalSnapshotOrdinalFromMetagraph,
+      },
       orderBy: [
         { metagraph_snapshot: { ordinal: "desc" } },
         { created_at: "desc" },
@@ -394,7 +442,10 @@ export const metagraphTokenUnlock = async (
 
     const unlock = await prisma.metagraph_token_unlocks.findUnique({
       where: { metagraph_id, hash },
-      include: includeMetagraphSnapshotOrdinal,
+      include: {
+        ...includeMetagraphSnapshotOrdinal,
+        ...includeGlobalSnapshotOrdinalFromMetagraph,
+      },
     });
 
     return respond(unlock, metagraphTokenUnlockResponse);
@@ -419,7 +470,10 @@ export const metagraphSnapshotTokenUnlocks = async (
           metagraph_id,
           metagraph_snapshot: filter,
         },
-        include: includeMetagraphSnapshotOrdinal,
+        include: {
+          ...includeMetagraphSnapshotOrdinal,
+          ...includeGlobalSnapshotOrdinalFromMetagraph,
+        },
         orderBy: [
           { metagraph_snapshot: { ordinal: "desc" } },
           { created_at: "desc" },
@@ -445,7 +499,10 @@ export const metagraphAddressTokenUnlocks = async (
       fromCreatedAtOrdinalCursor,
       {
         where: { metagraph_id, source_addr: address },
-        include: includeMetagraphSnapshotOrdinal,
+        include: {
+          ...includeMetagraphSnapshotOrdinal,
+          ...includeGlobalSnapshotOrdinalFromMetagraph,
+        },
         orderBy: [
           { metagraph_snapshot: { ordinal: "desc" } },
           { created_at: "desc" },
