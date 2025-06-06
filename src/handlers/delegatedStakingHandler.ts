@@ -76,15 +76,13 @@ const delegateStakeWithdrawResponse = (event) => ({
 const delegateStakeWithdrawResponses = (txs) =>
   txs.map(delegateStakeWithdrawResponse);
 
-const totalRewards = (rs) =>
-  (rs ?? []).reduce((sum, r) => sum + r.rewards, BigInt(0));
-
 const completedAmount = (change) => {
   const withdrawal = change.withdrawal_event;
   if (change.withdrawal_event?.is_complete) {
     const createEvent = withdrawal.delegate_stake_create_even;
     return (
-      createEvent.amount + totalRewards(createEvent.delegate_stake_rewards)
+      createEvent.amount +
+      createEvent.delegate_stake_total_rewards?.delegate_stake_total_rewards
     );
   } else {
     return 0;
@@ -101,7 +99,8 @@ const delegateStakePositionResponse = (change) => {
     status: stakeStatus(change),
     stakeHash: change.hash,
     lockAmount: change.amount,
-    rewardsAccrued: totalRewards(change.delegate_stake_rewards),
+    rewardsAccrued:
+      change.delegate_stake_total_rewards?.delegate_stake_total_rewards ?? 0,
     withdrawnAmount: completedAmount(change),
     transferedFromHash: change.delegated_from?.hash ?? null,
     transferedToHash: change.delegated_to?.hash ?? null,
@@ -330,7 +329,7 @@ export const stakingPositions = async (
         },
         include: {
           delegate_stake_withdraw_events: true,
-          delegate_stake_rewards: true,
+          delegate_stake_total_rewards: true,
           delegated_to: true,
           delegated_from: true,
         },
