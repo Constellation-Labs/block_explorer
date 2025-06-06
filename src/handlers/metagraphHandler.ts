@@ -441,7 +441,7 @@ export const currencyBalanceByAddress = async (
       metagraph_id,
       balance,
       address,
-      ordinal
+      ordinalNbr
     );
 
     return respond(balanceOrZero, balanceResponse);
