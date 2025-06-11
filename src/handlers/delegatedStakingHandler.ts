@@ -112,7 +112,9 @@ const delegateStakePositionResponse = (change) => {
 };
 
 const delegateStakePositionResponses = (txs) =>
-  txs.map(delegateStakePositionResponse);
+  txs.map((tx) =>
+    delegateStakePositionResponse(tx.delegate_stake_create_event)
+  );
 
 const statusFilter = (event) => {
   const statusParam =
@@ -297,21 +299,6 @@ export const stakingPositions = async (
     const nodeId = event.queryStringParameters?.nodeId;
     const nodeIdWhere = nodeId ? { node_id: nodeId } : {};
 
-    const maxOrdinals = await prisma.delegate_stake_create_events.groupBy({
-      by: ["source_addr", "node_id"],
-      _max: {
-        ordinal: true,
-      },
-    });
-
-    const whereConditions = maxOrdinals.map(
-      ({ source_addr, node_id, _max }) => ({
-        source_addr,
-        node_id,
-        ordinal: _max.ordinal!,
-      })
-    );
-
     const addressFilter = address?.trim()
       ? { source_addr: address.trim() }
       : {};
@@ -322,20 +309,25 @@ export const stakingPositions = async (
       hashCursor,
       {
         where: {
-          OR: whereConditions,
-          ...statusWhere,
-          ...nodeIdWhere,
-          ...addressFilter,
+          delegate_stake_create_event: {
+            ...statusWhere,
+            ...nodeIdWhere,
+            ...addressFilter,
+          },
         },
         include: {
-          delegate_stake_withdraw_events: true,
-          delegate_stake_total_rewards: true,
-          delegated_to: true,
-          delegated_from: true,
+          delegate_stake_create_event: {
+            include: {
+              delegate_stake_withdraw_events: true,
+              delegate_stake_total_rewards: true,
+              delegated_to: true,
+              delegated_from: true,
+            },
+          },
         },
         orderBy: [{ source_addr: "asc" }, { node_id: "asc" }],
       },
-      prisma.delegate_stake_create_events.findMany,
+      prisma.delegate_stake_create_events_latest_view.findMany,
       delegateStakePositionResponses
     );
   } catch (error) {

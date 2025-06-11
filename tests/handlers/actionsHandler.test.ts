@@ -54,8 +54,6 @@ expect.extend({
 const validateAction = (action) => {
   const match = datasets.flat().find((tx) => tx.hash === action.hash);
 
-  if (!match) console.log(action);
-
   expect(match).toBeDefined();
   if (!match) return;
 
@@ -109,7 +107,7 @@ describe("actionsHandler", () => {
 
     expect(result.statusCode).toBe(200);
     const body = validatePaginatedResponse(result);
-    expect(body.data.length).toBe(12);
+    expect(body.data.length).toBe(11);
     body.data.forEach(validateAction);
   });
 

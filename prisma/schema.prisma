@@ -595,8 +595,9 @@ model delegate_stake_create_events {
   delegated_to                                       delegate_stake_create_events?     @relation(name: "delegation_self", fields: [transfer_from_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction)
   delegate_stake_withdraw_events                     delegate_stake_withdraw_events[]
   delegate_stake_rewards                             delegate_stake_rewards[]
-  delegate_stake_total_rewards                       delegate_stake_total_rewards_view @relation(fields: [hash], references: [stake_create_hash])
-  
+  delegate_stake_total_rewards                       delegate_stake_total_rewards_view?
+
+  latest_view delegate_stake_create_events_latest_view? @relation(name: "event_fk")
 
   @@index([global_snapshot_hash])
   @@index([source_addr])
@@ -638,5 +639,14 @@ model delegate_stake_total_rewards_view {
   stake_create_hash            String @id
   delegate_stake_total_rewards BigInt
 
-  delegate_stake_create_events delegate_stake_create_events[]
+  delegate_stake_create_events delegate_stake_create_events  @relation(fields: [stake_create_hash], references: [hash])
+}
+
+model delegate_stake_create_events_latest_view {
+    hash                 String   @id @db.VarChar
+    ordinal              BigInt
+    source_addr          String   @db.VarChar
+    node_id              String   @db.VarChar
+
+    delegate_stake_create_event delegate_stake_create_events @relation(name: "event_fk", fields: [hash], references: [hash], onDelete: NoAction, onUpdate: NoAction)
 }

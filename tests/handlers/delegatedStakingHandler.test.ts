@@ -76,13 +76,13 @@ const validateStakingPosition = (tx) => {
 
 describe("Delegated Stake Handler Integration Tests", () => {
   describe("delegatedStakes", () => {
-    it("should return a list of delegated stakes", async () => {
+    it("should return a list of delegated stakes with default filtering", async () => {
       const event = createAPIGatewayEvent({}, { limit: "10" });
       const response = await delegatedStakes(event);
       expect(response.statusCode).toBe(200);
 
       const body = validatePaginatedResponse(response);
-      expect(body.data.length).toBeGreaterThan(0);
+      expect(body.data.length).toBe(1);
       body.data.forEach(validateCreateStake);
     });
 
@@ -91,15 +91,16 @@ describe("Delegated Stake Handler Integration Tests", () => {
         {},
         {
           limit: "10",
-          status: "transfered,active",
+          status: "transfered,active,pendingWithdrawal",
         }
       );
       const response = await delegatedStakes(event);
       expect(response.statusCode).toBe(200);
 
       const body = validatePaginatedResponse(response);
+      expect(body.data.length).toBe(2);
       body.data.forEach((tx) => {
-        expect(["transfered", "active"]).toContain(tx.status);
+        expect(["transfered", "active","pendingWithdrawal"]).toContain(tx.status);
       });
     });
   });
