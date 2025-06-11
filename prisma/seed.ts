@@ -157,6 +157,7 @@ export const data_metagraph_snapshots = [
 export const data_dag_token_locks = [
   {
     hash: `token-lock-hash-001`,
+    currency_id: "currency-1",
     source_addr: data_addresses[0].address,
     amount: 1200n,
     ordinal: 1n,
@@ -166,6 +167,7 @@ export const data_dag_token_locks = [
   },
   {
     hash: `token-lock-hash-002`,
+    currency_id: "currency-2",
     source_addr: data_addresses[0].address,
     amount: 1000n,
     ordinal: 2n,
@@ -175,6 +177,7 @@ export const data_dag_token_locks = [
   },
   {
     hash: `token-lock-hash-003`,
+    currency_id: "currency-3",
     source_addr: data_addresses[0].address,
     amount: 1200n,
     ordinal: 3n,
@@ -188,6 +191,7 @@ export const data_dag_token_locks = [
 export const data_dag_token_unlocks = [
   {
     hash: "token-unlock-hash-0010",
+    currency_id: data_dag_token_locks[0].currency_id,
     source_addr: data_addresses[0].address,
     amount: 1000n,
     lock_reference_hash: data_dag_token_locks[0].hash,
@@ -199,6 +203,7 @@ export const data_dag_token_unlocks = [
 export const data_metagraph_token_locks = [
   {
     hash: "metagraph-token-lock-hash-0010",
+    currency_id: "currency-1",
     metagraph_id: data_metagraphs[0].id,
     source_addr: data_addresses[0].address,
     amount: 3000n,
@@ -209,6 +214,7 @@ export const data_metagraph_token_locks = [
   },
   {
     hash: "metagraph-token-lock-hash-0020",
+    currency_id: "currency-2",
     metagraph_id: data_metagraphs[0].id,
     source_addr: data_addresses[0].address,
     amount: 4000n,
@@ -219,6 +225,7 @@ export const data_metagraph_token_locks = [
   },
   {
     hash: "metagraph-token-lock-hash-0030",
+    currency_id: "currency-3",
     metagraph_id: data_metagraphs[0].id,
     source_addr: data_addresses[0].address,
     amount: 4000n,
@@ -234,6 +241,7 @@ export const data_metagraph_token_unlocks = [
   {
     hash: "metagraph-token-unlock-hash-001",
     metagraph_id: data_metagraphs[0].id,
+    currency_id: data_metagraph_token_locks[0].currency_id,
     source_addr: data_addresses[0].address,
     amount: 3000n,
     lock_reference_hash: data_metagraph_token_locks[0].hash,
@@ -242,6 +250,7 @@ export const data_metagraph_token_unlocks = [
   {
     hash: "metagraph-token-unlock-hash-002",
     metagraph_id: data_metagraphs[0].id,
+    currency_id: data_metagraph_token_locks[2].currency_id,
     source_addr: data_addresses[0].address,
     amount: 3000n,
     lock_reference_hash: data_metagraph_token_locks[2].hash,
@@ -252,6 +261,7 @@ export const data_metagraph_token_unlocks = [
 export const data_dag_allow_spends = [
   {
     hash: "allowSpendHash1",
+    currency_id: "currency-1",
     source_addr: data_addresses[0].address,
     destination_addr: data_addresses[1].address,
     amount: 1000n,
@@ -265,6 +275,7 @@ export const data_dag_allow_spends = [
   },
   {
     hash: "allowSpendHash2",
+    currency_id: "currency-2",
     source_addr: data_addresses[0].address,
     destination_addr: data_addresses[2].address,
     amount: 2000n,
@@ -278,6 +289,7 @@ export const data_dag_allow_spends = [
   },
   {
     hash: "allowSpendHash3",
+    currency_id: "currency-1",
     source_addr: data_addresses[2].address,
     destination_addr: data_addresses[1].address,
     amount: 300n,
@@ -291,6 +303,7 @@ export const data_dag_allow_spends = [
   },
   {
     hash: "allowSpendHash4",
+    currency_id: "currency-2",
     source_addr: data_addresses[2].address,
     destination_addr: data_addresses[3].address,
     amount: 300n,
@@ -307,6 +320,7 @@ export const data_dag_allow_spends = [
 export const data_dag_spend_transactions = [
   {
     hash: "spendTxHash1",
+    currency_id: data_dag_allow_spends[0].currency_id,
     source_addr: data_addresses[0].address,
     destination_addr: data_addresses[1].address,
     amount: 1000n,
@@ -320,6 +334,7 @@ export const data_dag_spend_transactions = [
 export const data_dag_expired_spend_transactions = [
   {
     hash: "expiredSpendTxHash1",
+    currency_id: data_dag_allow_spends[1].currency_id,
     source_addr: data_addresses[2].address,
     amount: 3000n,
     allow_spend_ref: data_dag_allow_spends[1].hash,
@@ -333,6 +348,7 @@ export const data_metagraph_allow_spends = [
   {
     metagraph_id: data_metagraphs[0].id,
     hash: "metaAllowSpendHash1",
+    currency_id: "currency-1",
     source_addr: data_addresses[0].address,
     destination_addr: data_addresses[1].address,
     amount: 500n,
@@ -347,6 +363,7 @@ export const data_metagraph_allow_spends = [
   {
     metagraph_id: data_metagraphs[0].id,
     hash: "metaAllowSpendHash2",
+    currency_id: "currency-2",
     source_addr: data_addresses[0].address,
     destination_addr: data_addresses[1].address,
     amount: 500n,
@@ -361,6 +378,7 @@ export const data_metagraph_allow_spends = [
   {
     metagraph_id: data_metagraphs[0].id,
     hash: "metaAllowSpendHash3",
+    currency_id: "currency-3",
     source_addr: data_addresses[2].address,
     destination_addr: data_addresses[3].address,
     amount: 750n,
@@ -378,6 +396,7 @@ export const data_metagraph_spend_transactions = [
   {
     metagraph_id: data_metagraphs[0].id,
     hash: "metaSpendTxHash1",
+    currency_id: data_metagraph_allow_spends[0].currency_id,
     source_addr: data_addresses[0].address,
     destination_addr: data_addresses[1].address,
     amount: 500n,
@@ -392,6 +411,7 @@ export const data_metagraph_expired_spend_transactions = [
   {
     metagraph_id: data_metagraphs[0].id,
     hash: "metaExpiredTxHash1",
+    currency_id: data_metagraph_allow_spends[2].currency_id,
     source_addr: data_addresses[2].address,
     amount: 750n,
     allow_spend_ref: data_metagraph_allow_spends[2].hash,
@@ -610,7 +630,7 @@ export async function seed() {
     "DROP TABLE delegate_stake_total_rewards_view"
   );
   await prisma.$executeRawUnsafe("DROP TABLE token_lock_total_rewards_view");
-  runSqlFromFile("./migrations/20250529/01_add_staking_to_actions.sql");
+  runSqlFromFile("./migrations/20250609/02_add_staking_to_actions.sql");
   runSqlFromFile("./migrations/20250606/01_total_rewards_view.sql");
 }
 
