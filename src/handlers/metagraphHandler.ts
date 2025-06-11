@@ -427,7 +427,6 @@ export const currencyBalanceByAddress = async (
     const ordinalCondition = isFinite(ordinalNbr)
       ? { snapshot_ordinal: { lte: ordinalNbr } }
       : {};
-
     const balance = await prisma.metagraph_balance_changes.findFirst({
       where: {
         metagraph_id,
@@ -436,14 +435,12 @@ export const currencyBalanceByAddress = async (
       },
       orderBy: { snapshot_ordinal: "desc" },
     });
-
     const balanceOrZero = await balanceOrZeroFn(
       metagraph_id,
       balance,
       address,
       ordinalNbr
     );
-
     return respond(balanceOrZero, balanceResponse);
   } catch (error) {
     return handleError(error);

@@ -247,7 +247,7 @@ model dag_transactions {
   block_hash                                             String           @db.VarChar
   dag_blocks                                             dag_blocks       @relation(fields: [block_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_transaction_dag_block_fk")
   snapshot_hash                                          String           @db.VarChar
-  transaction_original       Json?
+  transaction_original                                   Json?
   global_snapshot                                        global_snapshots @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_dag_transactions_global_snapshot_fk")
   addresses_dag_transactions_destination_addrToaddresses addresses        @relation("dag_transactions_destination_addrToaddresses", fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_transactions_destination_addr_fk")
   addresses_dag_transactions_source_addrToaddresses      addresses        @relation("dag_transactions_source_addrToaddresses", fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_transactions_source_addr_fk")
@@ -505,7 +505,7 @@ model metagraph_transactions {
   ordinal                                                      BigInt
   block_hash                                                   String              @db.VarChar
   snapshot_hash                                                String              @db.VarChar
-  transaction_original       Json?
+  transaction_original                                         Json?
   metagraph_snapshot                                           metagraph_snapshots @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_transactions_metagraph_snapshot_fk")
   metagraphs                                                   metagraphs          @relation(fields: [metagraph_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_id_fk")
   metagraph_blocks                                             metagraph_blocks    @relation(fields: [metagraph_id, block_hash], references: [metagraph_id, hash], onDelete: Cascade, onUpdate: NoAction, map: "metagraph_transaction_metagraph_block_fk")
@@ -588,13 +588,15 @@ model delegate_stake_create_events {
   created_at           DateTime @default(now()) @db.Timestamp(6)
   updated_at           DateTime @default(now()) @db.Timestamp(6)
 
-  global_snapshots               global_snapshots                 @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
-  addresses                      addresses                        @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction)
-  dag_token_lock                 dag_token_locks                  @relation(fields: [lock_reference_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
-  delegated_from                 delegate_stake_create_events?    @relation(name: "delegation_self")
-  delegated_to                   delegate_stake_create_events?    @relation(name: "delegation_self", fields: [transfer_from_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction)
-  delegate_stake_withdraw_events delegate_stake_withdraw_events[]
-  delegate_stake_rewards         delegate_stake_rewards[]
+  global_snapshots                                   global_snapshots                  @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
+  addresses                                          addresses                         @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction)
+  dag_token_lock                                     dag_token_locks                   @relation(fields: [lock_reference_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
+  delegated_from                                     delegate_stake_create_events?     @relation(name: "delegation_self")
+  delegated_to                                       delegate_stake_create_events?     @relation(name: "delegation_self", fields: [transfer_from_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction)
+  delegate_stake_withdraw_events                     delegate_stake_withdraw_events[]
+  delegate_stake_rewards                             delegate_stake_rewards[]
+  delegate_stake_total_rewards                       delegate_stake_total_rewards_view @relation(fields: [hash], references: [stake_create_hash])
+  
 
   @@index([global_snapshot_hash])
   @@index([source_addr])
@@ -630,4 +632,11 @@ model delegate_stake_rewards {
   stake_create     delegate_stake_create_events @relation(fields: [stake_create_hash], references: [hash])
 
   @@unique([global_snapshot_hash, address, node_id, rewards], map: "delegate_stake_rewards_changes_unique")
+}
+
+model delegate_stake_total_rewards_view {
+  stake_create_hash            String @id
+  delegate_stake_total_rewards BigInt
+
+  delegate_stake_create_events delegate_stake_create_events[]
 }
