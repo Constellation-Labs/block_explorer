@@ -34,12 +34,12 @@ const transactionFilter = (event): TransactionType[] => {
   return filtered.length > 0 ? filtered : actionsTransactions;
 };
 
-const currencyId = (transaction) =>
-  transaction.metagraph_snapshot?.metagraph_id ?? null;
-
 const actionResponse = (transaction) => ({
   type: transaction.transaction_type,
-  currencyId: currencyId(transaction),
+  currencyId:
+    transaction.currency_id ??
+    transaction.metagraph_snapshot?.metagraph_id ??
+    null,
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,

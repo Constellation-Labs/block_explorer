@@ -11,7 +11,7 @@ import { respond, handleError } from "../response";
 const prisma = new PrismaClient();
 
 const allowSpendResponse = (transaction) => ({
-  currencyId: transaction.currencyId,
+  currencyId: transaction.currency_id,
   hash: transaction.hash,
   ordinal: transaction.ordinal,
   amount: transaction.amount,
@@ -26,7 +26,7 @@ const allowSpendResponse = (transaction) => ({
 const allowSpendResponses = (txs) => txs.map(allowSpendResponse);
 
 const spendTransactionResponse = (transaction) => ({
-  currencyId: transaction.currencyId,
+  currencyId: transaction.currency_id,
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,
@@ -39,7 +39,7 @@ const spendTransactionResponse = (transaction) => ({
 const spendTransactionResponses = (txs) => txs.map(spendTransactionResponse);
 
 const spendExpiredResponse = (transaction) => ({
-  currencyId: transaction.currencyId,
+  currencyId: transaction.currency_id,
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,

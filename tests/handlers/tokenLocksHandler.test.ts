@@ -25,6 +25,7 @@ const validateDagTokenLock = (lock) => {
   if (!match) return;
 
   expect(lock.hash).toBe(match.hash);
+  expect(lock.currencyId).toBe(match.currency_id);
   expect(lock.source).toBe(match.source_addr);
   expect(Number(lock.amount)).toBe(Number(match.amount));
   expect(Number(lock.ordinal)).toBe(Number(match.ordinal));
@@ -39,6 +40,7 @@ const validateDagTokenUnlock = (unlock) => {
   if (!match) return;
 
   expect(unlock.hash).toBe(match.hash);
+  expect(unlock.currencyId).toBe(match.currency_id);
   expect(unlock.source).toBe(match.source_addr);
   expect(Number(unlock.amount)).toBe(Number(match.amount));
   expect(unlock.tokenLockRef).toBe(match.lock_reference_hash);
@@ -52,6 +54,7 @@ const validateMetagraphTokenLock = (lock) => {
   if (!match) return;
 
   expect(lock.hash).toBe(match.hash);
+  expect(lock.currencyId).toBe(match.currency_id);
   expect(lock.source).toBe(match.source_addr);
   expect(Number(lock.amount)).toBe(Number(match.amount));
   expect(Number(lock.ordinal)).toBe(Number(match.ordinal));
@@ -68,6 +71,7 @@ const validateMetagraphTokenUnlock = (unlock) => {
   if (!match) return;
 
   expect(unlock.hash).toBe(match.hash);
+  expect(unlock.currencyId).toBe(match.currency_id);
   expect(unlock.source).toBe(match.source_addr);
   expect(Number(unlock.amount)).toBe(Number(match.amount));
   expect(unlock.tokenLockRef).toBe(match.lock_reference_hash);
