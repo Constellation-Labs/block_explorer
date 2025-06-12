@@ -35,7 +35,8 @@ const latestWithdrawEvents = (
 const withdrawalStatus = (isCompleted) =>
   isCompleted ? "withdrawalComplete" : "pendingWithdrawal";
 
-const createStatus = (ce) => (ce.transfer_from_hash ? "transfered" : "active");
+const createStatus = (ce) =>
+  ce.delegated_to == null ? "active" : "transfered";
 
 const stakeStatus = (event) => {
   const withdrawalEvents = event.delegate_stake_withdraw_events;
@@ -112,9 +113,7 @@ const delegateStakePositionResponse = (change) => {
 };
 
 const delegateStakePositionResponses = (txs) =>
-  txs.map((tx) =>
-    delegateStakePositionResponse(tx.delegate_stake_create_event)
-  );
+  txs.map(delegateStakePositionResponse);
 
 const statusFilter = (event) => {
   const statusParam =
@@ -127,7 +126,7 @@ const buildStatusWhereQuery = (statuses) => {
 
   if (statuses.includes("active")) {
     statusFilters.push({
-      transfer_from_hash: null,
+      delegated_to: null,
       delegate_stake_withdraw_events: {
         none: {},
       },
@@ -136,8 +135,8 @@ const buildStatusWhereQuery = (statuses) => {
 
   if (statuses.includes("transfered")) {
     statusFilters.push({
-      transfer_from_hash: {
-        not: null,
+      delegated_to: {
+        isNot: null,
       },
       delegate_stake_withdraw_events: {
         none: {},
@@ -309,25 +308,19 @@ export const stakingPositions = async (
       hashCursor,
       {
         where: {
-          delegate_stake_create_event: {
-            ...statusWhere,
-            ...nodeIdWhere,
-            ...addressFilter,
-          },
+          ...statusWhere,
+          ...nodeIdWhere,
+          ...addressFilter,
         },
         include: {
-          delegate_stake_create_event: {
-            include: {
-              delegate_stake_withdraw_events: true,
-              delegate_stake_total_rewards: true,
-              delegated_to: true,
-              delegated_from: true,
-            },
-          },
+          delegate_stake_withdraw_events: true,
+          delegate_stake_total_rewards: true,
+          delegated_to: true,
+          delegated_from: true,
         },
         orderBy: [{ source_addr: "asc" }, { node_id: "asc" }],
       },
-      prisma.delegate_stake_create_events_latest_view.findMany,
+      prisma.delegate_stake_create_events.findMany,
       delegateStakePositionResponses
     );
   } catch (error) {

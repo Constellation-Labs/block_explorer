@@ -591,8 +591,8 @@ model delegate_stake_create_events {
   global_snapshots                                   global_snapshots                  @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
   addresses                                          addresses                         @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction)
   dag_token_lock                                     dag_token_locks                   @relation(fields: [lock_reference_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction)
-  delegated_from                                     delegate_stake_create_events?     @relation(name: "delegation_self")
-  delegated_to                                       delegate_stake_create_events?     @relation(name: "delegation_self", fields: [transfer_from_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction)
+  delegated_from                                     delegate_stake_create_events?     @relation(name: "delegation_self", fields: [transfer_from_hash], references: [hash], onDelete: NoAction, onUpdate: NoAction)
+  delegated_to                                       delegate_stake_create_events?     @relation(name: "delegation_self")
   delegate_stake_withdraw_events                     delegate_stake_withdraw_events[]
   delegate_stake_rewards                             delegate_stake_rewards[]
   delegate_stake_total_rewards                       delegate_stake_total_rewards_view?
