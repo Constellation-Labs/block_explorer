@@ -433,8 +433,19 @@ export const data_delegate_stake_create_events = [
     fee: 500000n,
     lock_reference_hash: data_dag_token_locks[1].hash,
     parent_hash: "stake-event-hash-001",
-    global_snapshot_hash: data_global_snapshots[1].hash,
+    global_snapshot_hash: data_global_snapshots[2].hash,
     transfer_from_hash: "stake-event-hash-002",
+  },
+  {
+    hash: "stake-event-hash-004",
+    ordinal: 10011n,
+    source_addr: data_addresses[2].address,
+    node_id: "NODE_ABC444",
+    amount: 600000000000n,
+    fee: 500000n,
+    lock_reference_hash: data_dag_token_locks[2].hash,
+    parent_hash: "parent-hash-xyz1",
+    global_snapshot_hash: data_global_snapshots[2].hash,
   },
 ];
 
@@ -450,8 +461,8 @@ export const data_delegate_stake_withdraw_events = [
   {
     hash: "withdraw-event-hash-002",
     source_addr: data_addresses[0].address,
-    stake_create_hash: data_delegate_stake_create_events[1].hash,
-    global_snapshot_hash: data_global_snapshots[1].hash,
+    stake_create_hash: data_delegate_stake_create_events[2].hash,
+    global_snapshot_hash: data_global_snapshots[2].hash,
     unlock_epoch: 8000n,
     is_completed: true,
   },
@@ -459,11 +470,32 @@ export const data_delegate_stake_withdraw_events = [
 
 export const data_delegate_stake_rewards = [
   {
+    global_snapshot_hash: data_global_snapshots[0].hash,
+    address: data_addresses[0].address,
+    node_id: data_delegate_stake_create_events[0].node_id,
+    rewards: 1000n,
+    stake_create_hash: data_delegate_stake_create_events[0].hash,
+  },
+  {
+    global_snapshot_hash: data_global_snapshots[1].hash,
+    address: data_addresses[0].address,
+    node_id: data_delegate_stake_create_events[0].node_id,
+    rewards: 1000n,
+    stake_create_hash: data_delegate_stake_create_events[0].hash,
+  },
+  {
+    global_snapshot_hash: data_global_snapshots[1].hash,
+    address: data_addresses[1].address,
+    node_id: data_delegate_stake_create_events[1].node_id,
+    rewards: 2000n,
+    stake_create_hash: data_delegate_stake_create_events[1].hash,
+  },
+  {
     global_snapshot_hash: data_global_snapshots[2].hash,
     address: data_addresses[0].address,
-    node_id: "NODE_ABC123",
-    rewards: 2500000000n,
-    stake_create_hash: data_delegate_stake_create_events[0].hash,
+    node_id: data_delegate_stake_create_events[2].node_id,
+    rewards: 3000n,
+    stake_create_hash: data_delegate_stake_create_events[2].hash,
   },
 ];
 
@@ -497,6 +529,11 @@ export const data_metagraph_fee_transactions = [
 ];
 
 export async function seed() {
+  //prisma is annoying and gereates an fk to the view
+  await prisma.$executeRawUnsafe(
+    "ALTER TABLE delegate_stake_create_events  DROP CONSTRAINT delegate_stake_create_events_lock_reference_hash_fkey"
+  );
+
   await prisma.addresses.createMany({ data: data_addresses });
 
   await prisma.global_snapshots.createMany({
@@ -569,9 +606,12 @@ export async function seed() {
   //first drop the prisma generated tables
   await prisma.$executeRawUnsafe("DROP TABLE dag_actions_view");
   await prisma.$executeRawUnsafe("DROP TABLE metagraph_actions_view");
-  await prisma.$executeRawUnsafe("DROP TABLE delegate_stake_create_events_latest_view");
+  await prisma.$executeRawUnsafe(
+    "DROP TABLE delegate_stake_total_rewards_view"
+  );
+  await prisma.$executeRawUnsafe("DROP TABLE token_lock_total_rewards_view");
   runSqlFromFile("./migrations/20250529/01_add_staking_to_actions.sql");
-  runSqlFromFile("./migrations/20250611/01_delegate_stake_create_events_latest_view.sql");
+  runSqlFromFile("./migrations/20250606/01_total_rewards_view.sql");
 }
 
 async function runSqlFromFile(filename: string) {

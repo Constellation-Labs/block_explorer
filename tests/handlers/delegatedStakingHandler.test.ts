@@ -67,11 +67,26 @@ const validateStakingPosition = (tx) => {
   expect(tx.address).toBe(match.source_addr);
   expect(tx.nodeId).toBe(match.node_id);
   expect(tx.lockAmount).toBeBigInt(match.amount);
+  //rewards for this staking event
   expect(tx.rewardsAccrued).toBeBigInt(
     data_delegate_stake_rewards
       .filter((r) => r.stake_create_hash === match.hash)
       .reduce((sum, r) => sum + r.rewards, BigInt(0))
   );
+  //total amount including rewards of transferred events
+  if (tx.withdrawalCompletedAt != null) {
+    expect(tx.withdrawnAmount).toBeBigInt(
+      data_delegate_stake_rewards
+        .filter((r) =>
+          data_delegate_stake_create_events.some(
+            (event) =>
+              event.lock_reference_hash === match.lock_reference_hash &&
+              event.hash === r.stake_create_hash
+          )
+        )
+        .reduce((sum, r) => sum + r.rewards, BigInt(0))
+    );
+  }
 };
 
 describe("Delegated Stake Handler Integration Tests", () => {
@@ -82,7 +97,7 @@ describe("Delegated Stake Handler Integration Tests", () => {
       expect(response.statusCode).toBe(200);
 
       const body = validatePaginatedResponse(response);
-      expect(body.data.length).toBe(1);
+      expect(body.data.length).toBe(2);
       body.data.forEach(validateCreateStake);
     });
 
@@ -91,16 +106,21 @@ describe("Delegated Stake Handler Integration Tests", () => {
         {},
         {
           limit: "10",
-          status: "transfered,active,pendingWithdrawal",
+          status: "transferred,active,pendingWithdrawal,withdrawalComplete",
         }
       );
       const response = await delegatedStakes(event);
       expect(response.statusCode).toBe(200);
 
       const body = validatePaginatedResponse(response);
-      expect(body.data.length).toBe(2);
+      expect(body.data.length).toBe(4);
       body.data.forEach((tx) => {
-        expect(["transfered", "active","pendingWithdrawal"]).toContain(tx.status);
+        expect([
+          "transferred",
+          "active",
+          "pendingWithdrawal",
+          "withdrawalComplete",
+        ]).toContain(tx.status);
       });
     });
   });
@@ -177,6 +197,7 @@ describe("Delegated Stake Handler Integration Tests", () => {
       expect(response.statusCode).toBe(200);
 
       const body = validatePaginatedResponse(response);
+      expect(body.data.length).toBe(2);
       body.data.forEach(validateStakingPosition);
     });
 
@@ -185,15 +206,16 @@ describe("Delegated Stake Handler Integration Tests", () => {
         {},
         {
           limit: "10",
-          status: "active,pendingWithdrawal",
+          status: "pendingWithdrawal",
         }
       );
       const response = await stakingPositions(event);
       expect(response.statusCode).toBe(200);
 
       const body = validatePaginatedResponse(response);
+      expect(body.data.length).toBe(1);
       body.data.forEach((tx) => {
-        expect(["active", "pendingWithdrawal"]).toContain(tx.status);
+        expect(["pendingWithdrawal"]).toContain(tx.status);
       });
     });
 

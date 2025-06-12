@@ -36,8 +36,8 @@ components:
         lockAmount: { type: string, description: "BigInt represented as a string" }
         rewardsAccrued: { type: string, description: "BigInt represented as a string" }
         withdrawnAmount: { type: string, description: "BigInt represented as a string" }
-        transferedFromHash: { type: string, nullable: true }
-        transferedToHash: { type: string, nullable: true }
+        transferredFromHash: { type: string, nullable: true }
+        transferredToHash: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }
         transferredAt: { type: string, format: date-time, nullable: true }
         withdrawalStartedAt: { type: string, format: date-time, nullable: true }
