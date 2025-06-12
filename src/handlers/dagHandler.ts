@@ -54,7 +54,7 @@ export const globalSnapshots = async (
     fromCreatedAtOrdinalCursor,
     {
       include: { dag_blocks: true },
-      orderBy: { ordinal: "desc" },
+      orderBy: [{ created_at: "desc" }, { ordinal: "desc" }],
     },
     prisma.global_snapshots.findMany,
     globalSnapshotsResponse
@@ -117,7 +117,10 @@ export const globalSnapshotRewards = async (
       fromCursor,
       {
         where: { global_snapshot: { ...gsWhere } },
-        orderBy: [{ destination_addr: "asc" }],
+        orderBy: [
+          { global_snapshot_hash: "desc" },
+          { destination_addr: "asc" },
+        ],
       },
       prisma.dag_reward_transactions.findMany,
       rewardsResponse
@@ -146,7 +149,7 @@ export const globalSnapshotTransactions = async (
       include: {
         global_snapshot: { select: { hash: true, ordinal: true } },
       },
-      orderBy: { created_at: "desc" },
+      orderBy: [{ created_at: "desc" }, { ordinal: "desc" }],
     };
 
     return await paginatedQuery(
@@ -192,7 +195,7 @@ const dagTransactionsQuery = async (
       include: {
         global_snapshot: { select: { hash: true, ordinal: true } },
       },
-      orderBy: [{ created_at: "desc" }],
+      orderBy: [{ created_at: "desc" }, { hash: "desc" }],
     };
 
     const toCursor = (row) => ({
