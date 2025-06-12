@@ -41,6 +41,29 @@ const latestMetagraphSnapshot = async (metagraph_id) => {
   });
 };
 
+const mgIdOrdinalToCursor = (row) => ({
+  metagraph_id_ordinal: {
+    ...toOrdinalCursor(row),
+    metagraph_id: row.metagraph_id,
+  },
+});
+
+const mgIdOrdinalFromCursor = (row) => ({
+  ...fromOrdinalCursor(row),
+  metagraph_id: row.metagraph_id,
+});
+
+const mgIdHashToCursor = (row) => ({
+  metagraph_id_hash: {
+    metagraph_id: row.metagraph_id,
+    hash: row.hash,
+  },
+});
+const mgIdHashFromCursor = (row) => ({
+  metagraph_id: row.metagraph_id,
+  hash: row.hash,
+});
+
 const metagraphSnapshotWhere = async (metagraph_id, term) => {
   if (term == "latest") {
     const latestSnapshotHash = (await latestMetagraphSnapshot(metagraph_id))
@@ -79,26 +102,14 @@ export const currencySnapshots = async (
       return notFoundResponse("metagraph");
     }
 
-    const toCursor = (row) => ({
-      metagraph_id_ordinal: {
-        ...toOrdinalCursor(row),
-        metagraph_id: row.metagraph_id,
-      },
-    });
-
-    const fromCursor = (row) => ({
-      ...fromOrdinalCursor(row),
-      metagraph_id: row.metagraph_id,
-    });
-
     return await paginatedQuery(
       extractPagination(event),
-      toCursor,
-      fromCursor,
+      mgIdOrdinalToCursor,
+      mgIdOrdinalFromCursor,
       {
         where: { metagraph_id },
         include: { metagraph_blocks: true },
-        orderBy: { ordinal: "desc" },
+        orderBy: [{ metagraph_id: "desc" }, { ordinal: "desc" }],
       },
       prisma.metagraph_snapshots.findMany,
       metagraphSnapshotsResponse
@@ -114,26 +125,14 @@ export const currencySnapshotsByOwnerAddress = async (
   try {
     const { address } = event.pathParameters || {};
 
-    const toCursor = (row) => ({
-      ...toCreatedAtOrdinalCursor(row),
-      metagraph_id: row.metagraph_id,
-      hash: row.hash,
-    });
-
-    const fromCursor = (row) => ({
-      ...fromCreatedAtOrdinalCursor(row),
-      metagraph_id: row.metagraph_id,
-      hash: row.hash,
-    });
-
     return await paginatedQuery(
       extractPagination(event),
-      toCursor,
-      fromCursor,
+      mgIdOrdinalToCursor,
+      mgIdOrdinalFromCursor,
       {
         where: { owner_address: address },
         include: { metagraph_blocks: true },
-        orderBy: { ordinal: "desc" },
+        orderBy: [{ metagraph_id: "desc" }, { ordinal: "desc" }],
       },
       prisma.metagraph_snapshots.findMany,
       metagraphSnapshotsResponse
@@ -188,15 +187,23 @@ export const currencySnapshotRewards = async (
 
     const mgSnapshotWhere = await metagraphSnapshotWhere(metagraph_id, term);
 
-    const cursor = (row) => ({
+    const nextToCursor = (row) => ({
+      metagraph_id_metagraph_snapshot_hash_destination_addr: {
+        metagraph_id: row.metagraph_id,
+        metagraph_snapshot_hash: row.metagraph_snapshot_hash,
+        destination_addr: row.destination_addr,
+      },
+    });
+    const cursorToNext = (row) => ({
       metagraph_id: row.metagraph_id,
-      hash: row.hash,
+      metagraph_snapshot_hash: row.metagraph_snapshot_hash,
+      destination_addr: row.destination_addr,
     });
 
     return await paginatedQuery(
       extractPagination(event),
-      cursor,
-      cursor,
+      nextToCursor,
+      cursorToNext,
       {
         where: {
           metagraph_snapshot: {
@@ -228,18 +235,17 @@ const metagraphTransactionsQuery = async (
       include: {
         metagraph_snapshot: { select: { hash: true, ordinal: true } },
       },
-      orderBy: [{ created_at: "desc" }],
+      orderBy: [
+        { metagraph_id: "desc" },
+        { hash: "desc" },
+        { created_at: "desc" },
+      ],
     };
-
-    const cursor = (row) => ({
-      metagraph_id: row.metagraph_id,
-      hash: row.hash,
-    });
 
     return await paginatedQuery(
       extractPagination(event),
-      cursor,
-      cursor,
+      mgIdHashToCursor,
+      mgIdHashFromCursor,
       query,
       prisma.metagraph_transactions.findMany,
       metagraphTransactionsResponse
@@ -485,7 +491,7 @@ const metagraphFeeTransactionsQuery = async (
       include: {
         metagraph_snapshot: { select: { hash: true, ordinal: true } },
       },
-      orderBy: { hash: "asc" },
+      orderBy: [{ metagraph_id: "asc" }, { hash: "asc" }],
     };
 
     const cursor = (row) => ({
@@ -619,7 +625,7 @@ export const metagraphs = async (
       extractPagination(event),
       cursor,
       cursor,
-      {},
+      { orderBy: { id: "asc" } },
       prisma.metagraphs.findMany,
       metagraphsResponse
     );
