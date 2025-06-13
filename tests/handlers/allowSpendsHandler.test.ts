@@ -33,6 +33,8 @@ const validateDagAllowSpend = (entry) => {
   expect(Number(entry.ordinal)).toBe(Number(match.ordinal));
   expect(entry.snapshotHash).toBe(match.snapshot_hash);
   expect(entry.timestamp).toBeDefined();
+  expect(entry.globalSnapshotHash).toBeDefined();
+  expect(entry.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateDagSpendTransaction = (entry) => {
@@ -46,6 +48,8 @@ const validateDagSpendTransaction = (entry) => {
   expect(entry.allowSpendHash).toBe(match.allow_spend_ref);
   expect(entry.snapshotHash).toBe(match.snapshot_hash);
   expect(entry.timestamp).toBeDefined();
+  expect(entry.globalSnapshotHash).toBeDefined();
+  expect(entry.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateDagExpiredSpend = (entry) => {
@@ -60,6 +64,8 @@ const validateDagExpiredSpend = (entry) => {
   expect(entry.allowSpendHash).toBe(match.allow_spend_ref);
   expect(entry.snapshotHash).toBe(match.snapshot_hash);
   expect(entry.timestamp).toBeDefined();
+  expect(entry.globalSnapshotHash).toBeDefined();
+  expect(entry.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateMgAllowSpend = (entry) => {
@@ -73,6 +79,8 @@ const validateMgAllowSpend = (entry) => {
   expect(entry.destination).toBe(match.destination_addr);
   expect(Number(entry.fee)).toBe(Number(match.fee));
   expect(entry.timestamp).toBeDefined();
+  expect(entry.globalSnapshotHash).toBeDefined();
+  expect(entry.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateMgSpendTransaction = (entry) => {
@@ -85,6 +93,8 @@ const validateMgSpendTransaction = (entry) => {
   expect(entry.allowSpendHash).toBe(match.allow_spend_ref);
   expect(entry.snapshotHash).toBe(match.snapshot_hash);
   expect(entry.timestamp).toBeDefined();
+  expect(entry.globalSnapshotHash).toBeDefined();
+  expect(entry.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateMgExpiredSpend = (entry) => {
@@ -97,6 +107,8 @@ const validateMgExpiredSpend = (entry) => {
   expect(entry.allowSpendHash).toBe(match.allow_spend_ref);
   expect(entry.snapshotHash).toBe(match.snapshot_hash);
   expect(entry.timestamp).toBeDefined();
+  expect(entry.globalSnapshotHash).toBeDefined();
+  expect(entry.globalSnapshotOrdinal).toBeDefined();
 };
 
 describe("AllowSpends Handler Integration Tests", () => {

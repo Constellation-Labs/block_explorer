@@ -8,11 +8,11 @@ const prisma = new PrismaClient();
 
 const allowedTypes = [
   "AllowSpend",
+  "SpendTransaction",
+  "ExpiredAllowSpend",
   "TokenLock",
   "TokenUnlock",
-  "SpendTransaction",
   "FeeTransaction",
-  "ExpiredSpendTransaction",
   "DelegateStakeCreate",
   "DelegateStakeWithdraw",
 ] as const;
@@ -47,19 +47,13 @@ const actionResponse = (transaction) => ({
   unlockEpoch: transaction.unlock_epoch ?? null,
   parentHash: transaction.parent_hash ?? null,
   timestamp: transaction.created_at,
-  globalSnapshotOrdinal: transaction.global_snapshot?.ordinal,
-  metagraphSnapshotOrdinal: transaction.metagraph_snapshot?.ordinal,
+  globalSnapshotHash: transaction.global_snapshot_hash,
+  metagraphSnapshotHash: transaction.metagraph_snapshot_hash,
+  globalSnapshotOrdinal: transaction.global_snapshot_ordinal,
+  metagraphSnapshotOrdinal: transaction.metagraph_snapshot_ordinal,
 });
 
 export const actionsResponse = (ts) => ts.map(actionResponse);
-
-const dagInclude = {
-  global_snapshot: { select: { hash: true, ordinal: true } },
-};
-
-const metagraphInclude = {
-  metagraph_snapshot: { select: { hash: true, ordinal: true } },
-};
 
 export const dagActions = async (
   event: APIGatewayProxyEvent
@@ -72,7 +66,6 @@ export const dagActions = async (
     hashCursor,
     {
       where: { transaction_type: { in: selectedTransactions } },
-      include: dagInclude,
       orderBy: [{ created_at: "desc" }, { hash: "desc" }],
     },
     prisma.dag_actions_view.findMany,
@@ -98,7 +91,6 @@ export const globalSnapshotActions = async (
           global_snapshot: filter,
           transaction_type: { in: selectedTransactions },
         },
-        include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.dag_actions_view.findMany,
@@ -135,7 +127,6 @@ export const dagAddressActions = async (
           ],
           transaction_type: { in: selectedTransactions },
         },
-        include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.dag_actions_view.findMany,
@@ -163,7 +154,6 @@ export const currencyActions = async (
           metagraph_snapshot: { metagraph_id },
           transaction_type: { in: selectedTransactions },
         },
-        include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_actions_view.findMany,
@@ -192,7 +182,6 @@ export const currencySnapshotActions = async (
           metagraph_snapshot: { metagraph_id, ...filter },
           transaction_type: { in: selectedTransactions },
         },
-        include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_actions_view.findMany,
@@ -231,7 +220,6 @@ export const currencyAddressActions = async (
           ],
           transaction_type: { in: selectedTransactions },
         },
-        include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_actions_view.findMany,

@@ -54,6 +54,8 @@ const delegateStakeCreateResponse = (event) => ({
   type: event.transfer_from_hash ? "transfer" : "create",
   status: stakeStatus(event),
   timestamp: event.created_at,
+  globalSnapshotHash: event.global_snapshot_hash,
+  globalSnapshotOrdinal: event.global_snapshot?.ordinal,
 });
 
 const delegateStakeCreateResponses = (txs) =>
@@ -63,10 +65,11 @@ const delegateStakeWithdrawResponse = (event) => ({
   hash: event.hash,
   source: event.source_addr,
   stake: event.delegate_stake_create_event,
-  globalSnapshotHash: event.global_snapshot_hash,
   unlockEpoch: event.unlock_epoch,
   status: withdrawalStatus(event.is_completed),
   timestamp: event.created_at,
+  globalSnapshotHash: event.global_snapshot_hash,
+  globalSnapshotOrdinal: event.global_snapshot?.ordinal,
 });
 
 const delegateStakeWithdrawResponses = (txs) =>
@@ -175,6 +178,7 @@ export const delegatedStakes = async (
         delegate_stake_withdraw_events: true,
         delegated_to: true,
         delegated_from: true,
+        global_snapshot: { select: { ordinal: true } },
       },
       orderBy: [{ ordinal: "desc" }],
     },
@@ -193,6 +197,7 @@ export const delegatedStake = async (event) => {
         delegate_stake_withdraw_events: true,
         delegated_to: true,
         delegated_from: true,
+        global_snapshot: { select: { ordinal: true } },
       },
     });
 
@@ -221,6 +226,7 @@ export const addressDelegatedStakes = async (event) => {
         delegate_stake_withdraw_events: true,
         delegated_to: true,
         delegated_from: true,
+        global_snapshot: { select: { ordinal: true } },
       },
       orderBy: [{ ordinal: "desc" }],
     },
@@ -235,7 +241,10 @@ export const delegatedStakeWithdrawals = async (event) => {
     hashCursor,
     hashCursor,
     {
-      include: { delegate_stake_create_event: true },
+      include: {
+        delegate_stake_create_event: true,
+        global_snapshot: { select: { ordinal: true } },
+      },
       orderBy: [{ created_at: "desc" }],
     },
     prisma.delegate_stake_withdraw_events.findMany,
@@ -249,7 +258,10 @@ export const delegatedStakeWithdrawal = async (event) => {
 
     const withdrawal = await prisma.delegate_stake_withdraw_events.findUnique({
       where: { hash },
-      include: { delegate_stake_create_event: true },
+      include: {
+        delegate_stake_create_event: true,
+        global_snapshot: { select: { ordinal: true } },
+      },
     });
 
     return respond(withdrawal, delegateStakeWithdrawResponse);
@@ -268,7 +280,10 @@ export const addressDelegatedStakeWithdrawals = async (event) => {
       where: {
         source_addr: address,
       },
-      include: { delegate_stake_create_event: true },
+      include: {
+        delegate_stake_create_event: true,
+        global_snapshot: { select: { ordinal: true } },
+      },
       orderBy: [{ created_at: "desc" }],
     },
     prisma.delegate_stake_withdraw_events.findMany,

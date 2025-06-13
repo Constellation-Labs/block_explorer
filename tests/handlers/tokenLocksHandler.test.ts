@@ -31,6 +31,8 @@ const validateDagTokenLock = (lock) => {
   expect(Number(lock.unlockEpoch)).toBe(Number(match.unlock_epoch));
   expect(lock.timestamp).toBeDefined();
   expect(lock.unlockedAtOrdinal).toBeDefined(); // This could be null if not unlocked
+  expect(lock.globalSnapshotHash).toBeDefined();
+  expect(lock.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateDagTokenUnlock = (unlock) => {
@@ -42,6 +44,7 @@ const validateDagTokenUnlock = (unlock) => {
   expect(unlock.source).toBe(match.source_addr);
   expect(Number(unlock.amount)).toBe(Number(match.amount));
   expect(unlock.tokenLockRef).toBe(match.lock_reference_hash);
+  expect(unlock.globalSnapshotHash).toBeDefined();
   expect(unlock.globalSnapshotOrdinal).toBeDefined();
   expect(unlock.timestamp).toBeDefined();
 };
@@ -58,6 +61,8 @@ const validateMetagraphTokenLock = (lock) => {
   expect(Number(lock.unlockEpoch)).toBe(Number(match.unlock_epoch));
   expect(lock.timestamp).toBeDefined();
   expect(lock.unlockedAtOrdinal).toBeDefined(); // This could be null if not unlocked
+  expect(lock.globalSnapshotHash).toBeDefined();
+  expect(lock.globalSnapshotOrdinal).toBeDefined();
 };
 
 const validateMetagraphTokenUnlock = (unlock) => {
@@ -72,6 +77,8 @@ const validateMetagraphTokenUnlock = (unlock) => {
   expect(Number(unlock.amount)).toBe(Number(match.amount));
   expect(unlock.tokenLockRef).toBe(match.lock_reference_hash);
   expect(unlock.metagraphSnapshotOrdinal).toBeDefined();
+  expect(unlock.globalSnapshotHash).toBeDefined();
+  expect(unlock.globalSnapshotOrdinal).toBeDefined();
   expect(unlock.timestamp).toBeDefined();
 };
 
