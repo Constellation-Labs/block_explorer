@@ -394,7 +394,7 @@ describe("Metagraph Handler Integration Tests", () => {
   test("currencyFeeTransaction returns expected result", async () => {
     const event = createAPIGatewayEvent({
       identifier: data_metagraphs[0].id,
-      hash: data_metagraph_transactions[0].hash,
+      hash: data_metagraph_fee_transactions[0].hash,
     });
 
     const result = (await metagraphHandler.currencyFeeTransaction(

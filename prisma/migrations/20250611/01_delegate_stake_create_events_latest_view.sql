@@ -1,0 +1,12 @@
+CREATE INDEX CONCURRENTLY idx_delegate_stake_events_ord_desc ON delegate_stake_create_events (source_addr, node_id, ordinal DESC);
+
+CREATE INDEX CONCURRENTLY idx_withdraw_stake_hash_completed ON public.delegate_stake_withdraw_events(stake_create_hash, is_completed);
+CREATE INDEX CONCURRENTLY idx_create_events_hash ON public.delegate_stake_create_events(hash);
+
+CREATE INDEX CONCURRENTLY idx_withdraw_stake_hash ON delegate_stake_withdraw_events(stake_create_hash);
+CREATE INDEX CONCURRENTLY idx_create_transfer_from_hash ON delegate_stake_create_events(transfer_from_hash);
+
+CREATE INDEX idx_create_events_hash_lock ON delegate_stake_create_events(hash, lock_reference_hash);
+
+CREATE INDEX idx_dswe_completed_hash ON delegate_stake_withdraw_events(stake_create_hash)
+WHERE is_completed;

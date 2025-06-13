@@ -416,8 +416,8 @@ export const data_delegate_stake_create_events = [
   {
     hash: "stake-event-hash-002",
     ordinal: 10002n,
-    source_addr: data_addresses[0].address,
-    node_id: "NODE_ABC123",
+    source_addr: data_addresses[1].address,
+    node_id: "NODE_ABC234",
     amount: 3333300000000n,
     fee: 500000n,
     lock_reference_hash: data_dag_token_locks[1].hash,
@@ -429,12 +429,23 @@ export const data_delegate_stake_create_events = [
     ordinal: 10003n,
     source_addr: data_addresses[0].address,
     node_id: "NODE_ABC234",
-    amount: 2222222222n,
+    amount: 3333300000000n,
     fee: 500000n,
     lock_reference_hash: data_dag_token_locks[1].hash,
     parent_hash: "stake-event-hash-001",
-    global_snapshot_hash: data_global_snapshots[1].hash,
+    global_snapshot_hash: data_global_snapshots[2].hash,
     transfer_from_hash: "stake-event-hash-002",
+  },
+  {
+    hash: "stake-event-hash-004",
+    ordinal: 10011n,
+    source_addr: data_addresses[2].address,
+    node_id: "NODE_ABC444",
+    amount: 600000000000n,
+    fee: 500000n,
+    lock_reference_hash: data_dag_token_locks[2].hash,
+    parent_hash: "parent-hash-xyz1",
+    global_snapshot_hash: data_global_snapshots[2].hash,
   },
 ];
 
@@ -450,8 +461,8 @@ export const data_delegate_stake_withdraw_events = [
   {
     hash: "withdraw-event-hash-002",
     source_addr: data_addresses[0].address,
-    stake_create_hash: data_delegate_stake_create_events[1].hash,
-    global_snapshot_hash: data_global_snapshots[1].hash,
+    stake_create_hash: data_delegate_stake_create_events[2].hash,
+    global_snapshot_hash: data_global_snapshots[2].hash,
     unlock_epoch: 8000n,
     is_completed: true,
   },
@@ -459,11 +470,32 @@ export const data_delegate_stake_withdraw_events = [
 
 export const data_delegate_stake_rewards = [
   {
+    global_snapshot_hash: data_global_snapshots[0].hash,
+    address: data_addresses[0].address,
+    node_id: data_delegate_stake_create_events[0].node_id,
+    rewards: 1000n,
+    stake_create_hash: data_delegate_stake_create_events[0].hash,
+  },
+  {
+    global_snapshot_hash: data_global_snapshots[1].hash,
+    address: data_addresses[0].address,
+    node_id: data_delegate_stake_create_events[0].node_id,
+    rewards: 1000n,
+    stake_create_hash: data_delegate_stake_create_events[0].hash,
+  },
+  {
+    global_snapshot_hash: data_global_snapshots[1].hash,
+    address: data_addresses[1].address,
+    node_id: data_delegate_stake_create_events[1].node_id,
+    rewards: 2000n,
+    stake_create_hash: data_delegate_stake_create_events[1].hash,
+  },
+  {
     global_snapshot_hash: data_global_snapshots[2].hash,
     address: data_addresses[0].address,
-    node_id: "NODE_ABC123",
-    rewards: 2500000000n,
-    stake_create_hash: data_delegate_stake_create_events[0].hash,
+    node_id: data_delegate_stake_create_events[2].node_id,
+    rewards: 3000n,
+    stake_create_hash: data_delegate_stake_create_events[2].hash,
   },
 ];
 
@@ -472,7 +504,7 @@ export const data_metagraph_fee_transactions = [
     metagraph_id: data_metagraphs[0].id,
     metagraph_snapshot_hash: data_metagraph_snapshots[0].hash,
     metagraph_snapshot_ordinal: data_metagraph_snapshots[0].ordinal,
-    hash: "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
+    hash: "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b1",
     source_addr: data_addresses[0].address,
     destination_addr: data_addresses[1].address,
     amount: 90790983n,
@@ -485,18 +517,23 @@ export const data_metagraph_fee_transactions = [
     metagraph_id: data_metagraphs[1].id,
     metagraph_snapshot_hash: data_metagraph_snapshots[2].hash,
     metagraph_snapshot_ordinal: data_metagraph_snapshots[2].ordinal,
-    hash: "39c990000000000000000000000000000000000000007654fc5ca9917cb7e72b",
+    hash: "39c990000000000000000000000000000000000000007654fc5ca9917cb7e72b1",
     source_addr: data_addresses[2].address,
     destination_addr: data_addresses[3].address,
     amount: 10090983n,
     data_update_ref:
-      "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
+      "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b1",
     created_at: new Date("2025-04-02T00:00:02Z"),
     updated_at: new Date(),
   },
 ];
 
 export async function seed() {
+  //prisma is annoying and gereates an fk to the view
+  await prisma.$executeRawUnsafe(
+    "ALTER TABLE delegate_stake_create_events  DROP CONSTRAINT delegate_stake_create_events_lock_reference_hash_fkey"
+  );
+
   await prisma.addresses.createMany({ data: data_addresses });
 
   await prisma.global_snapshots.createMany({
@@ -528,7 +565,6 @@ export async function seed() {
   await prisma.metagraph_token_unlocks.createMany({
     data: data_metagraph_token_unlocks,
   });
-
   await prisma.metagraph_allow_spends.createMany({
     data: data_metagraph_allow_spends,
   });
@@ -554,7 +590,6 @@ export async function seed() {
   await prisma.dag_expired_spend_transactions.createMany({
     data: data_dag_expired_spend_transactions,
   });
-
   await prisma.delegate_stake_create_events.createMany({
     data: data_delegate_stake_create_events,
   });
@@ -571,7 +606,12 @@ export async function seed() {
   //first drop the prisma generated tables
   await prisma.$executeRawUnsafe("DROP TABLE dag_actions_view");
   await prisma.$executeRawUnsafe("DROP TABLE metagraph_actions_view");
+  await prisma.$executeRawUnsafe(
+    "DROP TABLE delegate_stake_total_rewards_view"
+  );
+  await prisma.$executeRawUnsafe("DROP TABLE token_lock_total_rewards_view");
   runSqlFromFile("./migrations/20250529/01_add_staking_to_actions.sql");
+  runSqlFromFile("./migrations/20250606/01_total_rewards_view.sql");
 }
 
 async function runSqlFromFile(filename: string) {

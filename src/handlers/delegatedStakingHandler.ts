@@ -5,12 +5,7 @@ import {
 } from "@prisma/client";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { extractPagination } from "../request-params";
-import {
-  paginatedQuery,
-  toOrdinalCursor,
-  fromOrdinalCursor,
-  hashCursor,
-} from "../pagination";
+import { paginatedQuery, hashCursor } from "../pagination";
 import { handleError, respond } from "../response";
 
 const prisma = new PrismaClient();
@@ -35,7 +30,8 @@ const latestWithdrawEvents = (
 const withdrawalStatus = (isCompleted) =>
   isCompleted ? "withdrawalComplete" : "pendingWithdrawal";
 
-const createStatus = (ce) => (ce.transfer_from_hash ? "transfered" : "active");
+const createStatus = (ce) =>
+  ce.delegated_to == null ? "active" : "transferred";
 
 const stakeStatus = (event) => {
   const withdrawalEvents = event.delegate_stake_withdraw_events;
@@ -77,13 +73,8 @@ const delegateStakeWithdrawResponses = (txs) =>
   txs.map(delegateStakeWithdrawResponse);
 
 const completedAmount = (change) => {
-  const withdrawal = change.withdrawal_event;
   if (change.withdrawal_event?.is_complete) {
-    const createEvent = withdrawal.delegate_stake_create_even;
-    return (
-      createEvent.amount +
-      createEvent.delegate_stake_total_rewards?.delegate_stake_total_rewards
-    );
+    return change.amount + change.total_rewards_view?.total_rewards;
   } else {
     return 0;
   }
@@ -102,8 +93,8 @@ const delegateStakePositionResponse = (change) => {
     rewardsAccrued:
       change.delegate_stake_total_rewards?.delegate_stake_total_rewards ?? 0,
     withdrawnAmount: completedAmount(change),
-    transferedFromHash: change.delegated_from?.hash ?? null,
-    transferedToHash: change.delegated_to?.hash ?? null,
+    transferredFromHash: change.delegated_from?.hash ?? null,
+    transferredToHash: change.delegated_to?.hash ?? null,
     createdAt: change.created_at,
     transferredAt: change.delegated_to?.created_at ?? null,
     withdrawalStartedAt: withdrawalCreate?.created_at ?? null,
@@ -125,17 +116,17 @@ const buildStatusWhereQuery = (statuses) => {
 
   if (statuses.includes("active")) {
     statusFilters.push({
-      transfer_from_hash: null,
+      delegated_to: null,
       delegate_stake_withdraw_events: {
         none: {},
       },
     });
   }
 
-  if (statuses.includes("transfered")) {
+  if (statuses.includes("transferred")) {
     statusFilters.push({
-      transfer_from_hash: {
-        not: null,
+      delegated_to: {
+        isNot: null,
       },
       delegate_stake_withdraw_events: {
         none: {},
@@ -297,21 +288,6 @@ export const stakingPositions = async (
     const nodeId = event.queryStringParameters?.nodeId;
     const nodeIdWhere = nodeId ? { node_id: nodeId } : {};
 
-    const maxOrdinals = await prisma.delegate_stake_create_events.groupBy({
-      by: ["source_addr", "node_id"],
-      _max: {
-        ordinal: true,
-      },
-    });
-
-    const whereConditions = maxOrdinals.map(
-      ({ source_addr, node_id, _max }) => ({
-        source_addr,
-        node_id,
-        ordinal: _max.ordinal!,
-      })
-    );
-
     const addressFilter = address?.trim()
       ? { source_addr: address.trim() }
       : {};
@@ -322,7 +298,6 @@ export const stakingPositions = async (
       hashCursor,
       {
         where: {
-          OR: whereConditions,
           ...statusWhere,
           ...nodeIdWhere,
           ...addressFilter,
@@ -330,6 +305,11 @@ export const stakingPositions = async (
         include: {
           delegate_stake_withdraw_events: true,
           delegate_stake_total_rewards: true,
+          total_rewards_view: {
+            select: {
+              total_rewards: true,
+            },
+          },
           delegated_to: true,
           delegated_from: true,
         },
