@@ -20,14 +20,14 @@ components:
     searchAfterParam:
       name: search_after
       in: query
-      description: Search after cursor (exclusive with search_before and next)
+      description: Search after hash (exclusive with search_before and next)
       schema:
         type: string
     
     searchBeforeParam:
       name: search_before
       in: query
-      description: Search before cursor (exclusive with search_after and next)
+      description: Search before hash (exclusive with search_after and next)
       schema:
         type: string
         

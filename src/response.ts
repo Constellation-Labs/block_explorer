@@ -46,8 +46,6 @@ export const rewardResponse = (reward) => ({
 export const dagTransactionsResponse = (ts) => ts.map(transactionResponse);
 
 export const transactionResponse = (transaction) => {
-  const snapshot =
-    transaction.metagraph_snapshot ?? transaction.global_snapshot ?? null;
   return {
     hash: transaction.hash,
     ordinal: transaction.ordinal,
@@ -61,15 +59,18 @@ export const transactionResponse = (transaction) => {
     },
     salt: transaction.salt,
     blockHash: transaction.block_hash,
-    snapshotHash: snapshot.hash,
-    snapshotOrdinal: snapshot.ordinal,
+    snapshotHash:
+      transaction.snapshot_hash ?? transaction.metagraph_snapshot_hash,
+    snapshotOrdinal:
+      transaction.snapshot_ordinal ?? transaction.metagraph_snapshot_ordinal,
     transactionOriginal: transaction.transaction_original,
     timestamp: transaction.created_at,
     globalSnapshotHash:
-      transaction.metagraph_snapshot?.global_snapshot.hash ?? snapshot.hash,
+      transaction.metagraph_snapshot?.global_snapshot.hash ??
+      transaction.snapshot_hash,
     globalSnapshotOrdinal:
       transaction.metagraph_snapshot?.global_snapshot.ordinal ??
-      snapshot.ordinal,
+      transaction.snapshot_ordinal,
   };
 };
 
@@ -161,6 +162,14 @@ export const missingParameterResponse = (
   statusCode: 400,
   body: JSON.stringify({
     message: `Missing parameter: ${param}`,
+    errors: [""],
+  }),
+});
+
+export const unsuportedRequest = (param: string): APIGatewayProxyResult => ({
+  statusCode: 400,
+  body: JSON.stringify({
+    message: `Unsuported request: ${param}`,
     errors: [""],
   }),
 });

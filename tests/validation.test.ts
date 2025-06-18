@@ -43,7 +43,9 @@ describe("extractPagination", () => {
     const result = () => extractPagination(event);
 
     expect(result).toThrow(Error);
-    expect(result).toThrow("search_after & search_before should be mutually exclusive");
+    expect(result).toThrow(
+      "search_after & search_before should be mutually exclusive"
+    );
   });
 
   it("should pass when searchAfter is provided but limit not", async () => {
@@ -54,14 +56,22 @@ describe("extractPagination", () => {
     );
 
     const result = await extractPagination(event);
-    expect(result).toEqual({searchDirection: "search_after", searchSince: "aa", size: NaN});
+    expect(result).toEqual({
+      searchDirection: "search_after",
+      searchSince: { hash: "aa" },
+      size: NaN,
+    });
   });
 
   it("should pass when limit is provided but searchAfter not", async () => {
     const event = pipe(baseEvent, setParam("address", "123"), setLimit("12"));
 
     const result = await extractPagination(event);
-    expect(result).toEqual({"searchDirection": undefined, "searchSince": undefined, "size": 12});
+    expect(result).toEqual({
+      searchDirection: undefined,
+      searchSince: undefined,
+      size: 12,
+    });
   });
 
   it("should pass returning event when both searchAfter and limit are provided", async () => {
@@ -73,7 +83,11 @@ describe("extractPagination", () => {
     );
 
     const result = await extractPagination(event);
-    expect(result).toEqual({"searchDirection": "search_after", "searchSince": "aa", "size": 2});
+    expect(result).toEqual({
+      searchDirection: "search_after",
+      searchSince: { hash: "aa" },
+      size: 2,
+    });
   });
 
   it("should pass returning event when both searchBefore and limit are provided", async () => {
@@ -86,6 +100,10 @@ describe("extractPagination", () => {
 
     const result = await extractPagination(event);
 
-    expect(result).toEqual({"searchDirection": "search_before", "searchSince": "aa", "size": 2});
+    expect(result).toEqual({
+      searchDirection: "search_before",
+      searchSince: { hash: "aa" },
+      size: 2,
+    });
   });
 });

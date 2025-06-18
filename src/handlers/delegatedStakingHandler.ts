@@ -328,7 +328,7 @@ export const stakingPositions = async (
           delegated_to: true,
           delegated_from: true,
         },
-        orderBy: [{ source_addr: "asc" }, { node_id: "asc" }],
+        orderBy: [{ source_addr: "desc" }, { node_id: "desc" }],
       },
       prisma.delegate_stake_create_events.findMany,
       delegateStakePositionResponses
