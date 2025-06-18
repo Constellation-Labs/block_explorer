@@ -12,6 +12,7 @@ import {
   respond,
   rewardsResponse,
   transactionResponse,
+  unsuportedRequest,
 } from "../response";
 import {
   fromCreatedAtOrdinalCursor,
@@ -92,6 +93,13 @@ export const globalSnapshotRewards = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    if (
+      event.queryStringParameters?.search_before !== undefined ||
+      event.queryStringParameters?.search_after !== undefined
+    ) {
+      return unsuportedRequest("search_before or search_after not supported");
+    }
+
     const { term } = event.pathParameters || {};
 
     if (term != "latest" && !(await globalSnapshotExists(term))) {
@@ -119,7 +127,7 @@ export const globalSnapshotRewards = async (
         where: { global_snapshot: { ...gsWhere } },
         orderBy: [
           { global_snapshot_hash: "desc" },
-          { destination_addr: "asc" },
+          { destination_addr: "desc" },
         ],
       },
       prisma.dag_reward_transactions.findMany,
@@ -195,16 +203,20 @@ const dagTransactionsQuery = async (
       include: {
         global_snapshot: { select: { hash: true, ordinal: true } },
       },
-      orderBy: [{ created_at: "desc" }, { hash: "desc" }],
+      orderBy: [
+        {
+          snapshot_ordinal: "desc",
+        },
+        { created_at: "desc" },
+        { hash: "desc" },
+      ],
     };
 
     const toCursor = (row) => ({
-      ...toCreatedAtOrdinalCursor(row),
       hash: row.hash,
     });
 
     const fromCursor = (row) => ({
-      ...fromCreatedAtOrdinalCursor(row),
       hash: row.hash,
     });
 
