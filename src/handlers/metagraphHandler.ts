@@ -373,10 +373,20 @@ export const currencyTransaction = async (
         hash: hash!,
       },
       include: {
-        metagraph_snapshot: { select: { hash: true, ordinal: true } },
+        metagraph_snapshot: {
+          select: {
+            hash: true,
+            ordinal: true,
+            global_snapshot: {
+              select: {
+                hash: true,
+                ordinal: true,
+              },
+            },
+          },
+        },
       },
     });
-
     return respond(transaction, transactionResponse);
   } catch (error) {
     return handleError(error);

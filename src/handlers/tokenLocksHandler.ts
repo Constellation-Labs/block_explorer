@@ -11,7 +11,7 @@ import { handleError, respond } from "../response";
 const prisma = new PrismaClient();
 
 const commonTokenLockResponse = (transaction) => ({
-  currencyId: transaction.currencyId,
+  currencyId: transaction.currency_id,
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,
@@ -44,7 +44,7 @@ const metagraphTokenLockResponses = (txs) =>
   txs.map(metagraphTokenLockResponse);
 
 const commonTokenUnlockResponse = (transaction) => ({
-  currencyId: transaction.currencyId,
+  currencyId: transaction.currency_id,
   hash: transaction.hash,
   amount: transaction.amount,
   source: transaction.source_addr,
