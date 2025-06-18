@@ -5,7 +5,12 @@ export type Pagination =
   | {
       size?: number;
       searchDirection: SearchDirection;
-      searchSince: any;
+      searchSince:
+        | { hash: string }
+        | { metagraph_id: string; hash: string }
+        | { metagraph_id_hash: { metagraph_id: string; hash: string } }
+        | { id: string }
+        | undefined;
     }
   | { size?: number }
   | { size?: number; next: any };
@@ -65,8 +70,16 @@ export const extractPagination = (event: APIGatewayEvent): Pagination => {
     };
   }
 
+  let searchSince;
+
+  if (searchAfter) {
+    searchSince = { hash: searchAfter };
+  } else if (searchBefore) {
+    searchSince = { hash: searchBefore };
+  }
+
   return {
-    searchSince: searchAfter || searchBefore,
+    searchSince,
     searchDirection:
       (searchAfter && SearchDirection.After) ||
       (searchBefore && SearchDirection.Before) ||

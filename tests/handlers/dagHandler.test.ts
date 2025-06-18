@@ -41,7 +41,8 @@ const data_dag_transactions = [
       "4a6d3aa5715e304b4b5f32d52f0c91e0909acf7c24b3ca9776324da68db2f30c",
     ordinal: 234n,
     block_hash: data_dag_blocks[0].hash,
-    snapshot_hash: data_dag_blocks[0].snapshot_hash,
+    snapshot_hash: data_global_snapshots[0].hash,
+    snapshot_ordinal: data_global_snapshots[0].ordinal,
     transaction_original: {
       fee: 1,
       salt: 8971636413389910,
@@ -68,7 +69,8 @@ const data_dag_transactions = [
       "1c53bc94c735d8d6eeaddc9f5cb446e7f79144c9aa5bba9479db8dee0ec1aa4c",
     ordinal: 3222n,
     block_hash: data_dag_blocks[1].hash,
-    snapshot_hash: data_dag_blocks[1].snapshot_hash,
+    snapshot_hash: data_global_snapshots[1].hash,
+    snapshot_ordinal: data_global_snapshots[1].ordinal,
     transaction_original: {
       fee: 1,
       salt: 8885443039669825,
@@ -95,7 +97,8 @@ const data_dag_transactions = [
       "6acc815979e9d1935cce65ba776fde1144c5fc0e97d3a9fe67d82d0e6e21977d",
     ordinal: 3222n,
     block_hash: data_dag_blocks[1].hash,
-    snapshot_hash: data_dag_blocks[1].snapshot_hash,
+    snapshot_hash: data_global_snapshots[1].hash,
+    snapshot_ordinal: data_global_snapshots[1].ordinal,
     transaction_original: {
       fee: 200000,
       salt: 8759543125914451,

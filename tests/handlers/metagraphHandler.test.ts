@@ -54,7 +54,8 @@ const data_metagraph_transactions = [
       "5056fdfbba0637dcecfc0b7fa3f441c745c852cf850c3bfc0dbc8a7410b8d722",
     ordinal: 12n,
     block_hash: data_metagraph_blocks[0].hash,
-    snapshot_hash: data_metagraph_blocks[0].metagraph_snapshot_hash,
+    snapshot_hash: data_metagraph_snapshots[0].hash,
+    snapshot_ordinal: data_metagraph_snapshots[0].ordinal,
     transaction_original: {
       fee: 200000,
       salt: 8729335446529965,
@@ -82,7 +83,8 @@ const data_metagraph_transactions = [
       "39c9909d3b00552beaa5487c38110267675ab212b3b97654fc5ca9917cb7e72b",
     ordinal: 123n,
     block_hash: data_metagraph_blocks[1].hash,
-    snapshot_hash: data_metagraph_blocks[1].metagraph_snapshot_hash,
+    snapshot_hash: data_metagraph_snapshots[1].hash,
+    snapshot_ordinal: data_metagraph_snapshots[1].ordinal,
     transaction_original: {
       fee: 20,
       salt: 8729335446529965,
@@ -110,7 +112,8 @@ const data_metagraph_transactions = [
       "39c9909d3b006666666666666666666666666666666666666c5ca9917cb7e72b",
     ordinal: 123n,
     block_hash: data_metagraph_blocks[2].hash,
-    snapshot_hash: data_metagraph_blocks[2].metagraph_snapshot_hash,
+    snapshot_hash: data_metagraph_snapshots[2].hash,
+    snapshot_ordinal: data_metagraph_snapshots[2].ordinal,
     transaction_original: {
       fee: 10,
       salt: 8729335446529965,

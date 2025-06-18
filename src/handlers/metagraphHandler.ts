@@ -15,14 +15,9 @@ import {
   respond,
   rewardsResponse,
   transactionResponse,
+  unsuportedRequest,
 } from "../response";
-import {
-  fromCreatedAtOrdinalCursor,
-  fromOrdinalCursor,
-  paginatedQuery,
-  toCreatedAtOrdinalCursor,
-  toOrdinalCursor,
-} from "../pagination";
+import { paginatedQuery } from "../pagination";
 import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
@@ -41,29 +36,6 @@ const latestMetagraphSnapshot = async (metagraph_id) => {
   });
 };
 
-const mgIdOrdinalToCursor = (row) => ({
-  metagraph_id_ordinal: {
-    ...toOrdinalCursor(row),
-    metagraph_id: row.metagraph_id,
-  },
-});
-
-const mgIdOrdinalFromCursor = (row) => ({
-  ...fromOrdinalCursor(row),
-  metagraph_id: row.metagraph_id,
-});
-
-const mgIdHashToCursor = (row) => ({
-  metagraph_id_hash: {
-    metagraph_id: row.metagraph_id,
-    hash: row.hash,
-  },
-});
-const mgIdHashFromCursor = (row) => ({
-  metagraph_id: row.metagraph_id,
-  hash: row.hash,
-});
-
 const includeGlobalSnapshotOrdinalFromMetagraph = {
   metagraph_snapshot: {
     select: {
@@ -76,6 +48,10 @@ const includeGlobalSnapshotOrdinalFromMetagraph = {
     },
   },
 };
+
+const cursor = (row) => ({
+  hash: row.hash,
+});
 
 const metagraphSnapshotWhere = async (metagraph_id, term) => {
   if (term == "latest") {
@@ -105,6 +81,14 @@ const metagraphSnapshotExists = async (metagraph_id, term) => {
   });
 };
 
+const paginationWithMetagraphId = (metagraph_id, event) => {
+  let pagination = extractPagination(event);
+  if ("searchSince" in pagination && pagination.searchSince) {
+    (pagination.searchSince as any).metagraph_id = metagraph_id;
+  }
+  return pagination;
+};
+
 export const currencySnapshots = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -116,9 +100,9 @@ export const currencySnapshots = async (
     }
 
     return await paginatedQuery(
-      extractPagination(event),
-      mgIdOrdinalToCursor,
-      mgIdOrdinalFromCursor,
+      paginationWithMetagraphId(metagraph_id, event),
+      cursor,
+      cursor,
       {
         where: { metagraph_id },
         include: { metagraph_blocks: true },
@@ -138,10 +122,17 @@ export const currencySnapshotsByOwnerAddress = async (
   try {
     const { address } = event.pathParameters || {};
 
+    if (
+      event.queryStringParameters?.search_before !== undefined ||
+      event.queryStringParameters?.search_after !== undefined
+    ) {
+      return unsuportedRequest("search_before or search_after not supported");
+    }
+
     return await paginatedQuery(
       extractPagination(event),
-      mgIdOrdinalToCursor,
-      mgIdOrdinalFromCursor,
+      cursor,
+      cursor,
       {
         where: { owner_address: address },
         include: { metagraph_blocks: true },
@@ -187,6 +178,13 @@ export const currencySnapshotRewards = async (
   try {
     const { identifier: metagraph_id, term } = event.pathParameters || {};
 
+    if (
+      event.queryStringParameters?.search_before !== undefined ||
+      event.queryStringParameters?.search_after !== undefined
+    ) {
+      return unsuportedRequest("search_before or search_after not supported");
+    }
+
     if (!(await metagraphIdExists(metagraph_id))) {
       return notFoundResponse("metagraph");
     }
@@ -213,8 +211,13 @@ export const currencySnapshotRewards = async (
       destination_addr: row.destination_addr,
     });
 
+    let pagination = extractPagination(event);
+    if ("searchSince" in pagination && pagination.searchSince) {
+      (pagination.searchSince as any).metagraph_id = metagraph_id;
+    }
+
     return await paginatedQuery(
-      extractPagination(event),
+      pagination,
       nextToCursor,
       cursorToNext,
       {
@@ -225,9 +228,9 @@ export const currencySnapshotRewards = async (
           },
         },
         orderBy: [
-          { metagraph_id: "asc" },
-          { metagraph_snapshot_hash: "asc" },
-          { destination_addr: "asc" },
+          { metagraph_id: "desc" },
+          { metagraph_snapshot_hash: "desc" },
+          { destination_addr: "desc" },
         ],
       },
       prisma.metagraph_reward_transactions.findMany,
@@ -239,6 +242,7 @@ export const currencySnapshotRewards = async (
 };
 
 const metagraphTransactionsQuery = async (
+  metagraph_id,
   baseQuery,
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -248,8 +252,6 @@ const metagraphTransactionsQuery = async (
       include: {
         metagraph_snapshot: {
           select: {
-            hash: true,
-            ordinal: true,
             global_snapshot: {
               select: {
                 hash: true,
@@ -260,16 +262,20 @@ const metagraphTransactionsQuery = async (
         },
       },
       orderBy: [
-        { metagraph_id: "desc" },
-        { hash: "desc" },
+        {
+          snapshot_ordinal: "desc",
+        },
         { created_at: "desc" },
+        { hash: "desc" },
       ],
     };
 
+    let pagination = paginationWithMetagraphId(metagraph_id, event);
+
     return await paginatedQuery(
-      extractPagination(event),
-      mgIdHashToCursor,
-      mgIdHashFromCursor,
+      pagination,
+      cursor,
+      cursor,
       query,
       prisma.metagraph_transactions.findMany,
       metagraphTransactionsResponse
@@ -306,7 +312,7 @@ export const currencySnapshotTransactions = async (
       },
     };
 
-    return metagraphTransactionsQuery(where, event);
+    return metagraphTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -349,7 +355,7 @@ export const currencyTransactions = async (
 
     const where = { where: { metagraph_id } };
 
-    return metagraphTransactionsQuery(where, event);
+    return metagraphTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -363,10 +369,8 @@ export const currencyTransaction = async (
 
     const transaction = await prisma.metagraph_transactions.findUnique({
       where: {
-        metagraph_id_hash: {
-          metagraph_id: metagraph_id!,
-          hash: hash!,
-        },
+        metagraph_id: metagraph_id!,
+        hash: hash!,
       },
       include: {
         metagraph_snapshot: { select: { hash: true, ordinal: true } },
@@ -396,7 +400,7 @@ export const currencyTransactionsByAddress = async (
       },
     };
 
-    return metagraphTransactionsQuery(where, event);
+    return metagraphTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -414,7 +418,7 @@ export const currencyTransactionsBySource = async (
 
     const where = { where: { metagraph_id, source_addr: address } };
 
-    return metagraphTransactionsQuery(where, event);
+    return metagraphTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -428,7 +432,7 @@ export const currencyTransactionsByDestination = async (
 
     const where = { where: { metagraph_id, destination_addr: address } };
 
-    return metagraphTransactionsQuery(where, event);
+    return metagraphTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -517,6 +521,7 @@ export const currencyFeeTransaction = async (
 };
 
 const metagraphFeeTransactionsQuery = async (
+  metagraph_id,
   baseQuery,
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -526,8 +531,6 @@ const metagraphFeeTransactionsQuery = async (
       include: {
         metagraph_snapshot: {
           select: {
-            hash: true,
-            ordinal: true,
             global_snapshot: {
               select: {
                 hash: true,
@@ -537,7 +540,13 @@ const metagraphFeeTransactionsQuery = async (
           },
         },
       },
-      orderBy: [{ metagraph_id: "asc" }, { hash: "asc" }],
+      orderBy: [
+        {
+          metagraph_snapshot_ordinal: "desc",
+        },
+        { created_at: "desc" },
+        { hash: "desc" },
+      ],
     };
 
     const cursor = (row) => ({
@@ -546,7 +555,7 @@ const metagraphFeeTransactionsQuery = async (
     });
 
     return await paginatedQuery(
-      extractPagination(event),
+      paginationWithMetagraphId(metagraph_id, event),
       cursor,
       cursor,
       query,
@@ -571,7 +580,7 @@ export const currencyFeeTransactions = async (
       include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
 
-    return metagraphFeeTransactionsQuery(where, event);
+    return metagraphFeeTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -597,7 +606,7 @@ export const currencySnapshotFeeTransactions = async (
       include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
 
-    return metagraphFeeTransactionsQuery(where, event);
+    return metagraphFeeTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -618,7 +627,7 @@ export const currencyFeeTransactionsByAddress = async (
       },
       include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
-    return metagraphFeeTransactionsQuery(where, event);
+    return metagraphFeeTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -639,7 +648,7 @@ export const currencyFeeTransactionsBySource = async (
       },
       include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
-    return metagraphFeeTransactionsQuery(where, event);
+    return metagraphFeeTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -660,7 +669,7 @@ export const currencyFeeTransactionsByDestination = async (
       },
       include: includeGlobalSnapshotOrdinalFromMetagraph,
     };
-    return metagraphFeeTransactionsQuery(where, event);
+    return metagraphFeeTransactionsQuery(metagraph_id, where, event);
   } catch (error) {
     return handleError(error);
   }
@@ -670,13 +679,20 @@ export const metagraphs = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    if (
+      event.queryStringParameters?.search_before !== undefined ||
+      event.queryStringParameters?.search_after !== undefined
+    ) {
+      return unsuportedRequest("search_before or search_after not supported");
+    }
+
     const cursor = (row) => ({ id: row.id });
 
     return await paginatedQuery(
       extractPagination(event),
       cursor,
       cursor,
-      { orderBy: { id: "asc" } },
+      { orderBy: { id: "desc" } },
       prisma.metagraphs.findMany,
       metagraphsResponse
     );

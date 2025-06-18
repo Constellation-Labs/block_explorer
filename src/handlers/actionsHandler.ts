@@ -91,7 +91,7 @@ export const globalSnapshotActions = async (
           global_snapshot: filter,
           transaction_type: { in: selectedTransactions },
         },
-        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
+        orderBy: [{ created_at: "desc" }, { hash: "desc" }],
       },
       prisma.dag_actions_view.findMany,
       actionsResponse
@@ -127,7 +127,7 @@ export const dagAddressActions = async (
           ],
           transaction_type: { in: selectedTransactions },
         },
-        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
+        orderBy: [{ created_at: "desc" }, { hash: "desc" }],
       },
       prisma.dag_actions_view.findMany,
       actionsResponse
@@ -154,7 +154,7 @@ export const currencyActions = async (
           metagraph_snapshot: { metagraph_id },
           transaction_type: { in: selectedTransactions },
         },
-        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
+        orderBy: [{ created_at: "desc" }, { hash: "desc" }],
       },
       prisma.metagraph_actions_view.findMany,
       actionsResponse
@@ -182,7 +182,7 @@ export const currencySnapshotActions = async (
           metagraph_snapshot: { metagraph_id, ...filter },
           transaction_type: { in: selectedTransactions },
         },
-        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
+        orderBy: [{ created_at: "desc" }, { hash: "desc" }],
       },
       prisma.metagraph_actions_view.findMany,
       actionsResponse
@@ -220,7 +220,7 @@ export const currencyAddressActions = async (
           ],
           transaction_type: { in: selectedTransactions },
         },
-        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
+        orderBy: [{ created_at: "desc" }, { hash: "desc" }],
       },
       prisma.metagraph_actions_view.findMany,
       actionsResponse

@@ -2,13 +2,14 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { handleError, respond } from "./response";
 import { Pagination } from "./request-params";
 import { toNumber, isFinite } from "lodash";
+import { Prisma } from "@prisma/client";
 
 export const maxSizeLimit = 10000;
 export const defaultPageSize = 100;
 
 export enum SortOrder {
   Desc = "desc",
-  Asc = "asc",
+  Asc = "desc",
 }
 
 export enum SearchDirection {
@@ -59,10 +60,12 @@ const buildPageQuery = <T>(pagination: Pagination, nextToCursor) => {
   ) {
     const page =
       pagination.searchDirection === SearchDirection.Before
-        ? -incrementedSize
-        : incrementedSize;
+        ? incrementedSize
+        : -incrementedSize;
+
     return {
       take: page,
+      skip: pagination.searchDirection === SearchDirection.Before ? 1 : 0,
       cursor: pagination.searchSince,
     };
   }
@@ -94,7 +97,9 @@ export const paginatedQuery = async (
       ...(pagination ? pageQueryParams : {}),
     };
 
-    const rawResults = await findMany(pagedQuery);
+    const withCursorQuery = withCursorSafeOrdering(pagedQuery);
+
+    const rawResults = await findMany(withCursorQuery);
     const pageSize = pageQueryParams.take
       ? pageQueryParams.take - 1
       : maxSizeLimit;
@@ -112,3 +117,20 @@ export const paginatedQuery = async (
     return handleError(error);
   }
 };
+
+function withCursorSafeOrdering(query, searchSince?: { hash: string }) {
+  if (!searchSince) return query;
+
+  const originalOrder = query.orderBy;
+
+  const extendedOrder = Array.isArray(originalOrder)
+    ? [...originalOrder, { hash: "desc" }]
+    : originalOrder
+    ? [originalOrder, { hash: "desc" }]
+    : [{ hash: "desc" }];
+
+  return {
+    ...query,
+    orderBy: extendedOrder,
+  };
+}
