@@ -46,3 +46,16 @@ AFTER INSERT
 ON dag_transactions
 FOR EACH STATEMENT
 EXECUTE FUNCTION batch_set_dag_tx_snapshot_ordinal();
+
+
+CREATE INDEX CONCURRENTLY idx_meta_txn_filter_order
+ON metagraph_transactions (
+  metagraph_id,
+  source_addr,
+  snapshot_ordinal DESC,
+  created_at DESC,
+  hash DESC
+);
+
+CREATE INDEX CONCURRENTLY idx_global_snapshots_created_ordinal
+ON global_snapshots (created_at DESC, ordinal DESC);
