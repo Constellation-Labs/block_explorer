@@ -1,5 +1,5 @@
 -- DAG Tables                                                                                            
-drop VIEW dag_actions_view;
+DROP VIEW IF EXISTS dag_actions_view;
 CREATE OR REPLACE VIEW dag_actions_view AS
     SELECT 
         das.hash, source_addr, amount, das.created_at, das.updated_at,
@@ -59,7 +59,7 @@ UNION ALL
 
 
 -- Metagraph Tables
-drop VIEW metagraph_actions_view;
+DROP VIEW IF EXISTS metagraph_actions_view;
 CREATE OR REPLACE VIEW metagraph_actions_view AS
 SELECT
     mas.metagraph_id, mas.hash, mas.source_addr, mas.amount, mas.created_at, mas.updated_at,
