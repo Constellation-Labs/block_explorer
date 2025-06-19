@@ -23,6 +23,10 @@ import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
 
+const cursor = (row) => ({
+  hash: row.hash,
+});
+
 const globalSnapshotExists = async (term) => {
   return prisma.global_snapshots.findUnique({
     where: extractHashOrdinal(term),
@@ -157,13 +161,13 @@ export const globalSnapshotTransactions = async (
       include: {
         global_snapshot: { select: { hash: true, ordinal: true } },
       },
-      orderBy: [{ created_at: "desc" }, { ordinal: "desc" }],
+      orderBy: [{ created_at: "desc" }, { ordinal: "desc" }, { hash: "desc" }],
     };
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      cursor,
+      cursor,
       query,
       prisma.dag_transactions.findMany,
       dagTransactionsResponse
@@ -212,18 +216,10 @@ const dagTransactionsQuery = async (
       ],
     };
 
-    const toCursor = (row) => ({
-      hash: row.hash,
-    });
-
-    const fromCursor = (row) => ({
-      hash: row.hash,
-    });
-
     return await paginatedQuery(
       extractPagination(event),
-      toCursor,
-      fromCursor,
+      cursor,
+      cursor,
       query,
       prisma.dag_transactions.findMany,
       dagTransactionsResponse
