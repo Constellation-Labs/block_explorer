@@ -178,12 +178,13 @@ model dag_reward_transactions {
   global_snapshot_hash String           @db.VarChar
   destination_addr     String           @db.VarChar
   amount               BigInt
+  idx                  Int
   created_at           DateTime         @default(now()) @db.Timestamp(6)
   updated_at           DateTime         @default(now()) @db.Timestamp(6)
   global_snapshot      global_snapshots @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_reward_transaction_global_snapshot_fk")
   addresses            addresses        @relation(fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_reward_transactions_destination_addr_fk")
 
-  @@id([global_snapshot_hash, destination_addr], map: "dag_reward_transaction_pk")
+  @@id([global_snapshot_hash, destination_addr, idx], map: "dag_reward_transaction_pk")
   @@index([global_snapshot_hash])
 }
 

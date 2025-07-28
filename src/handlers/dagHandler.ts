@@ -113,16 +113,17 @@ export const globalSnapshotRewards = async (
     const gsWhere = await globalSnapshotWhere(term);
 
     const toCursor = (row) => ({
-      global_snapshot_hash_destination_addr: {
+      global_snapshot_hash_destination_addr_idx: {
         global_snapshot_hash: row.global_snapshot_hash,
         destination_addr: row.destination_addr,
+        idx: row.idx,
       },
     });
     const fromCursor = (row) => ({
       global_snapshot_hash: row.global_snapshot_hash,
       destination_addr: row.destination_addr,
+      idx: row.idx,
     });
-
     return await paginatedQuery(
       extractPagination(event),
       toCursor,

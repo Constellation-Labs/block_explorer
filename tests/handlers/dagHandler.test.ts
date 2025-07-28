@@ -10,6 +10,7 @@ import {
   data_global_snapshots,
   prisma,
 } from "../../prisma/seed";
+import { rewardResponse } from "../../src/response";
 
 const data_dag_blocks = [
   {
@@ -115,6 +116,41 @@ const data_dag_transactions = [
   },
 ];
 
+const data_dag_reward_transactions = [
+  {
+    destination_addr: data_addresses[1].address,
+    amount: 1000n,
+    idx: -1,
+    global_snapshot_hash: data_global_snapshots[0].hash,
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+  {
+    destination_addr: data_addresses[1].address,
+    amount: 1000n,
+    idx: 1,
+    global_snapshot_hash: data_global_snapshots[0].hash,
+    created_at: new Date("2025-04-02T00:00:03Z"),
+    updated_at: new Date(),
+  },
+  {
+    destination_addr: data_addresses[1].address,
+    amount: 3000n,
+    idx: 2,
+    global_snapshot_hash: data_global_snapshots[0].hash,
+    created_at: new Date("2025-04-02T00:00:03Z"),
+    updated_at: new Date(),
+  },
+  {
+    destination_addr: data_addresses[0].address,
+    amount: 1000n,
+    idx: -1,
+    global_snapshot_hash: data_global_snapshots[0].hash,
+    created_at: new Date("2025-04-02T00:00:02Z"),
+    updated_at: new Date(),
+  },
+];
+
 const data_dag_balance_changes = [
   {
     snapshot_hash: data_global_snapshots[0].hash,
@@ -133,6 +169,10 @@ const seedData = async () => {
 
   await prisma.dag_transactions.createMany({
     data: data_dag_transactions,
+  });
+
+  await prisma.dag_reward_transactions.createMany({
+    data: data_dag_reward_transactions,
   });
 
   await prisma.dag_balance_changes.createMany({
@@ -323,6 +363,42 @@ describe("DAG Handler Integration Tests", () => {
       expect(tx.snapshotHash).toBe(requestedSnapshot.hash);
       expect(tx.snapshotOrdinal).toBe(Number(requestedSnapshot.ordinal));
       expect(+new Date(tx.timestamp)).toBe(+new Date(dbTxn.created_at));
+    });
+  });
+
+  const normalize = (arr: any[]) =>
+    arr.map(({ destination_addr, amount }) => ({
+      destination: destination_addr,
+      amount: Number(amount), // whether it’s bigint or number
+    }));
+
+  describe("globalSnapshotRewards", () => {
+    it("should return reward transactions for a global snapshot", async () => {
+      const requestedSnapshotHash =
+        data_dag_reward_transactions[0].global_snapshot_hash;
+
+      const event = createAPIGatewayEvent(
+        { term: requestedSnapshotHash },
+        { limit: "10" }
+      );
+
+      const response: APIGatewayProxyResult =
+        await dagHandler.globalSnapshotRewards(event);
+
+      const expected = normalize([
+        data_dag_reward_transactions[1],
+        data_dag_reward_transactions[2],
+        data_dag_reward_transactions[3],
+      ]);
+
+      expect(response.statusCode).toBe(200);
+      const body = validatePaginatedResponse(response);
+
+      expect(body.data.length).toBe(expected.length);
+
+      const txs = body.data;
+
+      expect(txs).toMatchObject(expected);
     });
   });
 
