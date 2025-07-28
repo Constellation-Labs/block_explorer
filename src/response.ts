@@ -36,7 +36,27 @@ export const globalSnapshotResponse = (snapshot) => ({
   metagraphSnapshotCount: snapshot.metagraph_snapshot_count,
 });
 
-export const rewardsResponse = (rs) => rs.map(rewardResponse);
+export const rewardsResponse = (rs) => {
+  // legacy: remove idx <0 if same address, amount exists with idx>=0
+  // Group elements by address
+  const grouped = rs.reduce((acc, item) => {
+    acc[item.destination_addr] = acc[item.destination_addr] || [];
+    acc[item.destination_addr].push(item);
+    return acc;
+  }, {} as Record<string, object>);
+
+  // Filter based on the group size and index
+
+  const filtered = Object.values(grouped).flatMap((items) => {
+    if (items.length === 1) {
+      return items;
+    } else {
+      return items.filter((item) => item.idx >= 0);
+    }
+  });
+
+  return filtered.map(rewardResponse);
+};
 
 export const rewardResponse = (reward) => ({
   destination: reward.destination_addr,
