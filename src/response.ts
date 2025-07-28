@@ -1,5 +1,6 @@
 import { APIGatewayProxyResult } from "aws-lambda";
 import { toNextString } from "./request-params";
+import { dag_reward_transactions } from "@prisma/client";
 
 const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
@@ -36,14 +37,14 @@ export const globalSnapshotResponse = (snapshot) => ({
   metagraphSnapshotCount: snapshot.metagraph_snapshot_count,
 });
 
-export const rewardsResponse = (rs) => {
+export const rewardsResponse = (rs: dag_reward_transactions[]) => {
   // legacy: remove idx <0 if same address, amount exists with idx>=0
   // Group elements by address
   const grouped = rs.reduce((acc, item) => {
     acc[item.destination_addr] = acc[item.destination_addr] || [];
     acc[item.destination_addr].push(item);
     return acc;
-  }, {} as Record<string, object>);
+  }, {} as Record<string, dag_reward_transactions[]>);
 
   // Filter based on the group size and index
 
