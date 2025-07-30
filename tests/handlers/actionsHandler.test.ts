@@ -4,6 +4,7 @@ import {
   createAPIGatewayEvent,
   validateResponseStructure,
   validatePaginatedResponse,
+  validatePaginationNext,
 } from "../testUtils";
 import {
   data_dag_token_locks,
@@ -87,8 +88,12 @@ describe("actionsHandler", () => {
     body.data.forEach(validateAction);
   });
 
+  it("dagActionsPagination", async () => {
+    await validatePaginationNext("1", {}, actionsHandler.dagActions);
+  });
+
   it("globalSnapshotActions", async () => {
-    const event = createAPIGatewayEvent({ term: "1000" }, {});
+    const event = createAPIGatewayEvent({ term: "2556535" }, {});
     const result = (await actionsHandler.globalSnapshotActions(
       event
     )) as APIGatewayProxyResult;
@@ -97,6 +102,14 @@ describe("actionsHandler", () => {
     expect(result.statusCode).toBe(200);
     const body = validatePaginatedResponse(result);
     body.data.forEach(validateAction);
+  });
+
+  it("globalSnapshotDagActionsPagination", async () => {
+    await validatePaginationNext(
+      "1",
+      { term: "2556535" },
+      actionsHandler.globalSnapshotActions
+    );
   });
 
   it("dagAddressActions", async () => {
@@ -113,6 +126,15 @@ describe("actionsHandler", () => {
     body.data.forEach(validateAction);
   });
 
+  it("dagAddressActionsPagination", async () => {
+    const address = data_dag_token_locks[0].source_addr;
+    await validatePaginationNext(
+      "1",
+      { address },
+      actionsHandler.dagAddressActions
+    );
+  });
+
   it("currencyActions", async () => {
     const metagraph_id = data_metagraph_token_locks[0].metagraph_id;
     const event = createAPIGatewayEvent({ metagraph_id }, {});
@@ -125,6 +147,15 @@ describe("actionsHandler", () => {
     const body = validatePaginatedResponse(result);
     expect(body.data.length).toBe(11);
     body.data.forEach(validateAction);
+  });
+
+  it("currencyActionsPagination", async () => {
+    const metagraph_id = data_metagraph_token_locks[0].metagraph_id;
+    await validatePaginationNext(
+      "1",
+      { metagraph_id },
+      actionsHandler.currencyActions
+    );
   });
 
   it("currencySnapshotActions", async () => {
@@ -145,9 +176,19 @@ describe("actionsHandler", () => {
     body.data.forEach(validateAction);
   });
 
-  it("currencyAddressActions", async () => {
+  it("currencySnapshotActionsPagination", async () => {
     const metagraph_id = data_metagraph_token_locks[0].metagraph_id;
-    const address = data_metagraph_token_locks[0].source_addr;
+    const snapshotHash = data_metagraph_snapshots[0].hash;
+    await validatePaginationNext(
+      "1",
+      { metagraph_id, term: snapshotHash },
+      actionsHandler.currencySnapshotActions
+    );
+  });
+
+  it("currencyAddressActions", async () => {
+    const metagraph_id = data_metagraph_allow_spends[0].metagraph_id;
+    const address = data_metagraph_allow_spends[0].source_addr;
     const event = createAPIGatewayEvent({ metagraph_id, address }, {});
     const result = (await actionsHandler.currencyAddressActions(
       event
@@ -158,5 +199,15 @@ describe("actionsHandler", () => {
     const body = validatePaginatedResponse(result);
     expect(body.data.length).toBe(9);
     body.data.forEach(validateAction);
+  });
+
+  it("currencyAddressActionsPagination", async () => {
+    const metagraph_id = data_metagraph_allow_spends[0].metagraph_id;
+    const address = data_metagraph_allow_spends[0].source_addr;
+    await validatePaginationNext(
+      "1",
+      { metagraph_id, address },
+      actionsHandler.currencyAddressActions
+    );
   });
 });
