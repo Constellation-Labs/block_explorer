@@ -197,7 +197,7 @@ model dag_spend_transactions {
   destination_addr String?           @db.VarChar
   allow_spend_ref  String?           @unique @db.VarChar
   snapshot_hash    String            @db.VarChar
-  currency_id                  String?  @db.VarChar
+  currency_id      String?           @db.VarChar
   dag_allow_spend  dag_allow_spends? @relation(fields: [allow_spend_ref], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_spend_transactions_dag_allow_spends_fk")
   addresses        addresses?        @relation(fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "dag_spend_transactions_destination_addr_fk")
 
@@ -234,7 +234,7 @@ model dag_token_unlocks {
   updated_at          DateTime           @default(now()) @db.Timestamp(6)
   lock_reference_hash String             @db.VarChar
   snapshot_hash       String             @db.VarChar
-  currency_id                  String?  @db.VarChar
+  currency_id         String?            @db.VarChar
   global_snapshot     global_snapshots   @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_unlock_global_snapshot_fk")
   dag_token_lock      dag_token_locks    @relation(fields: [lock_reference_hash], references: [hash], onDelete: Cascade, onUpdate: NoAction, map: "dag_token_unlocks_token_locks_fk")
   addresses           addresses          @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: NoAction, map: "ddag_token_unlocks_address_fk")

@@ -5,6 +5,9 @@ import {
   paginatedQuery,
   fromCreatedAtOrdinalCursor,
   toCreatedAtOrdinalCursor,
+  fromCreatedAtCursor,
+  toCreatedAtCursor,
+  hashCursor,
 } from "../pagination";
 import { respond, handleError } from "../response";
 import { includes } from "lodash";
@@ -219,9 +222,12 @@ export const spendTransactions = async (
   try {
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
-      { include: dagInclude, orderBy: { created_at: "desc" } },
+      hashCursor,
+      hashCursor,
+      {
+        include: dagInclude,
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
+      },
       prisma.dag_spend_transactions.findMany,
       spendTransactionResponses
     );
@@ -239,14 +245,14 @@ export const globalSnapshotSpendTransactions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           dag_allow_spend: { global_snapshot: filter },
         },
         include: dagInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.dag_spend_transactions.findMany,
       spendTransactionResponses
@@ -264,14 +270,14 @@ export const addressSpendTransactions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           OR: [{ source_addr: address }, { destination_addr: address }],
         },
         include: dagInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.dag_spend_transactions.findMany,
       spendTransactionResponses
@@ -287,9 +293,12 @@ export const allowSpendExpirations = async (
   try {
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
-      { include: dagInclude, orderBy: { created_at: "desc" } },
+      hashCursor,
+      hashCursor,
+      {
+        include: dagInclude,
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
+      },
       prisma.dag_expired_spend_transactions.findMany,
       spendExpiredResponses
     );
@@ -324,14 +333,14 @@ export const globalSnapshotAllowSpendExpirations = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           dag_allow_spend: { global_snapshot: filter },
         },
         include: dagInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.dag_expired_spend_transactions.findMany,
       spendExpiredResponses
@@ -349,8 +358,8 @@ export const addressAllowSpendExpirations = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           OR: [
@@ -359,7 +368,7 @@ export const addressAllowSpendExpirations = async (
           ],
         },
         include: dagInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.dag_expired_spend_transactions.findMany,
       spendExpiredResponses
@@ -472,12 +481,12 @@ export const currencySpendTransactions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: { metagraph_id },
         include: metagraphInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_spend_transactions.findMany,
       spendTransactionResponses
@@ -513,8 +522,8 @@ export const currencySnapshotSpendTransactions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           metagraph_id,
@@ -523,7 +532,7 @@ export const currencySnapshotSpendTransactions = async (
           },
         },
         include: metagraphInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_spend_transactions.findMany,
       spendTransactionResponses
@@ -541,14 +550,14 @@ export const currencyAddressSpendTransactions = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           OR: [{ source_addr: address }, { destination_addr: address }],
         },
         include: metagraphInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_spend_transactions.findMany,
       spendExpiredResponses
@@ -566,12 +575,12 @@ export const currencyAllowSpendExpirations = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: { metagraph_id },
         include: metagraphInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_expired_spend_transactions.findMany,
       spendExpiredResponses
@@ -608,8 +617,8 @@ export const currencySnapshotAllowSpendExpirations = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           metagraph_id,
@@ -618,7 +627,7 @@ export const currencySnapshotAllowSpendExpirations = async (
           },
         },
         include: metagraphInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_expired_spend_transactions.findMany,
       spendExpiredResponses
@@ -636,8 +645,8 @@ export const currencyAddressAllowSpendExpirations = async (
 
     return await paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           metagraph_id,
@@ -647,7 +656,7 @@ export const currencyAddressAllowSpendExpirations = async (
           ],
         },
         include: metagraphInclude,
-        orderBy: { created_at: "desc" },
+        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_expired_spend_transactions.findMany,
       spendExpiredResponses

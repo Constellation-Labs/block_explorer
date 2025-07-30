@@ -5,6 +5,7 @@ import {
   paginatedQuery,
   fromCreatedAtOrdinalCursor,
   toCreatedAtOrdinalCursor,
+  hashCursor,
 } from "../pagination";
 import { handleError, respond } from "../response";
 
@@ -227,13 +228,14 @@ export const tokenUnlocks = async (
 ): Promise<APIGatewayProxyResult> => {
   return paginatedQuery(
     extractPagination(event),
-    toCreatedAtOrdinalCursor,
-    fromCreatedAtOrdinalCursor,
+    hashCursor,
+    hashCursor,
     {
       include: includeDagGlobalSnapshotOrdinal,
       orderBy: [
         { global_snapshot: { ordinal: "desc" } },
         { created_at: "desc" },
+        { hash: "asc" },
       ],
     },
     prisma.dag_token_unlocks.findMany,
@@ -267,8 +269,8 @@ export const globalSnapshotTokenUnlocks = async (
 
     return paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           global_snapshot: filter,
@@ -277,6 +279,7 @@ export const globalSnapshotTokenUnlocks = async (
         orderBy: [
           { global_snapshot: { ordinal: "desc" } },
           { created_at: "desc" },
+          { hash: "asc" },
         ],
       },
       prisma.dag_token_unlocks.findMany,
@@ -295,14 +298,15 @@ export const addressTokenUnlocks = async (
 
     return paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: { source_addr: address },
         include: includeDagGlobalSnapshotOrdinal,
         orderBy: [
           { global_snapshot: { ordinal: "desc" } },
           { created_at: "desc" },
+          { hash: "asc" },
         ],
       },
       prisma.dag_token_unlocks.findMany,
@@ -416,8 +420,8 @@ export const metagraphTokenUnlocks = async (
   const { metagraph_id } = event.pathParameters || {};
   return paginatedQuery(
     extractPagination(event),
-    toCreatedAtOrdinalCursor,
-    fromCreatedAtOrdinalCursor,
+    hashCursor,
+    hashCursor,
     {
       where: { metagraph_id },
       include: {
@@ -427,6 +431,7 @@ export const metagraphTokenUnlocks = async (
       orderBy: [
         { metagraph_snapshot: { ordinal: "desc" } },
         { created_at: "desc" },
+        { hash: "asc" },
       ],
     },
     prisma.metagraph_token_unlocks.findMany,
@@ -463,8 +468,8 @@ export const metagraphSnapshotTokenUnlocks = async (
 
     return paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           metagraph_id,
@@ -477,6 +482,7 @@ export const metagraphSnapshotTokenUnlocks = async (
         orderBy: [
           { metagraph_snapshot: { ordinal: "desc" } },
           { created_at: "desc" },
+          { hash: "asc" },
         ],
       },
       prisma.metagraph_token_unlocks.findMany,
@@ -495,8 +501,8 @@ export const metagraphAddressTokenUnlocks = async (
 
     return paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: { metagraph_id, source_addr: address },
         include: {
@@ -506,6 +512,7 @@ export const metagraphAddressTokenUnlocks = async (
         orderBy: [
           { metagraph_snapshot: { ordinal: "desc" } },
           { created_at: "desc" },
+          { hash: "asc" },
         ],
       },
       prisma.metagraph_token_unlocks.findMany,

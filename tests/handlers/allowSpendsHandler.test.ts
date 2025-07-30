@@ -3,6 +3,7 @@ import * as allowSpendsHandler from "../../src/handlers/allowSpendsHandler";
 import {
   createAPIGatewayEvent,
   validatePaginatedResponse,
+  validatePaginationNext,
   validateResponseStructure,
 } from "../testUtils";
 import {
@@ -136,6 +137,12 @@ describe("AllowSpends Handler Integration Tests", () => {
     });
   });
 
+  it("allowSpendsPagination", async () => {
+    const metagraph_id = data_metagraph_allow_spends[0].metagraph_id;
+    const address = data_metagraph_allow_spends[0].source_addr;
+    await validatePaginationNext("1", {}, allowSpendsHandler.allowSpends);
+  });
+
   describe("allowSpend", () => {
     it("should return a specific allow spend by hash", async () => {
       const hash = data_dag_allow_spends[0].hash;
@@ -180,6 +187,14 @@ describe("AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(1);
       body.data.forEach(validateDagAllowSpend);
     });
+
+    it("globalSnapshotAllowSpendsPagination", async () => {
+      await validatePaginationNext(
+        "1",
+        {},
+        allowSpendsHandler.globalSnapshotAllowSpends
+      );
+    });
   });
 
   describe("addressAllowSpends", () => {
@@ -194,6 +209,7 @@ describe("AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(1);
       body.data.forEach(validateDagAllowSpend);
     });
+
     it("should return active only allow spends for a specific address", async () => {
       const address = data_addresses[3].address;
       const event = createAPIGatewayEvent({ address }, { active: "true" });
@@ -204,6 +220,15 @@ describe("AllowSpends Handler Integration Tests", () => {
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(1);
       body.data.forEach(validateDagAllowSpend);
+    });
+
+    it("addressAllowSpendsPagination", async () => {
+      const address = data_addresses[0].address;
+      await validatePaginationNext(
+        "1",
+        { address },
+        allowSpendsHandler.addressAllowSpends
+      );
     });
   });
 
@@ -217,6 +242,10 @@ describe("AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(data_dag_spend_transactions.length);
       validateDagSpendTransaction(body.data[0]);
     });
+
+    // it("spendTransactionsPagination", async () => {
+    //   await validatePaginationNext("1", {}, allowSpendsHandler.spendTransactions);
+    // });
   });
 
   describe("allowSpendExpirations", () => {
@@ -229,6 +258,10 @@ describe("AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(data_dag_expired_spend_transactions.length);
       validateDagExpiredSpend(body.data[0]);
     });
+
+    // it("spendTransactionsPagination", async () => {
+    //   await validatePaginationNext("1", {}, allowSpendsHandler.allowSpendExpirations);
+    // });
   });
 
   describe("addressSpendTransactions", () => {
@@ -243,6 +276,11 @@ describe("AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBeGreaterThan(0);
       body.data.forEach(validateDagSpendTransaction);
     });
+
+    // it("addressSpendTransactionsPagination", async () => {
+    //   const address = data_addresses[0].address;
+    //   await validatePaginationNext("1", {address}, allowSpendsHandler.addressSpendTransactions);
+    // });
   });
 
   describe("addressAllowSpendExpirations", () => {
@@ -259,6 +297,10 @@ describe("AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBeGreaterThan(0);
       body.data.forEach(validateDagExpiredSpend);
     });
+    // it("addressAllowSpendExpirationsPagination", async () => {
+    //   const address = data_addresses[0].address;
+    //   await validatePaginationNext("1", {address}, allowSpendsHandler.addressAllowSpendExpirations);
+    // });
   });
 });
 
@@ -290,6 +332,15 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
     });
   });
 
+  it("currencyAllowSpendsPagination", async () => {
+    const metagraph_id = data_metagraphs[0].id;
+    await validatePaginationNext(
+      "1",
+      { metagraph_id },
+      allowSpendsHandler.currencyAllowSpends
+    );
+  });
+
   describe("currencySpendTransactions", () => {
     it("should return spend transactions", async () => {
       const event = createAPIGatewayEvent({
@@ -304,6 +355,10 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(data_metagraph_spend_transactions.length);
       body.data.forEach(validateMgSpendTransaction);
     });
+    // it("currencySpendTransactionsPagination", async () => {
+    //   const metagraph_id= data_metagraphs[0].id
+    //   await validatePaginationNext("1", {metagraph_id}, allowSpendsHandler.currencySpendTransactions);
+    // });
   });
 
   describe("currencyAllowSpendExpirations", () => {
@@ -322,6 +377,10 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       );
       body.data.forEach(validateMgExpiredSpend);
     });
+    // it("currencyAllowSpendExpirationsPagination", async () => {
+    //   const metagraph_id= data_metagraphs[0].id
+    //   await validatePaginationNext("1", {metagraph_id}, allowSpendsHandler.currencyAllowSpendExpirations);
+    // });
   });
 
   describe("currencySnapshotAllowSpends", () => {
@@ -356,6 +415,12 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(1);
       body.data.forEach(validateMgAllowSpend);
     });
+
+    // it("currencySnapshotAllowSpendsPagination", async () => {
+    //   const metagraph_id= data_metagraphs[0].id
+    //   const hash_or_ordinal=  data_metagraph_snapshots[0].hash
+    //   await validatePaginationNext("1", {metagraph_id, hash_or_ordinal}, allowSpendsHandler.currencySnapshotAllowSpends);
+    // });
   });
 
   describe("currencySnapshotSpendTransactions", () => {
@@ -372,6 +437,11 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(1);
       body.data.forEach(validateMgSpendTransaction);
     });
+    // it("currencySnapshotSpendTransactionsPagination", async () => {
+    //   const metagraph_id= data_metagraphs[0].id
+    //   const hash_or_ordinal=  data_metagraph_snapshots[0].hash
+    //   await validatePaginationNext("1", {metagraph_id, hash_or_ordinal}, allowSpendsHandler.currencySnapshotSpendTransactions);
+    // });
   });
 
   describe("currencySnapshotAllowSpendExpirations", () => {
@@ -388,6 +458,11 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(1);
       body.data.forEach(validateMgExpiredSpend);
     });
+    // it("currencySnapshotAllowSpendExpirationsPagination", async () => {
+    //   const metagraph_id= data_metagraphs[0].id
+    //   const hash_or_ordinal=  data_metagraph_snapshots[0].hash
+    //   await validatePaginationNext("1", {metagraph_id, hash_or_ordinal}, allowSpendsHandler.currencySnapshotAllowSpendExpirations);
+    // });
   });
 
   describe("currencyAddressAllowSpends", () => {
@@ -420,6 +495,15 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(1);
     });
+    it("currencyAddressAllowSpendsPagination", async () => {
+      const metagraph_id = data_metagraphs[0].id;
+      const address = data_addresses[1].address;
+      await validatePaginationNext(
+        "1",
+        { metagraph_id, address },
+        allowSpendsHandler.currencyAddressAllowSpends
+      );
+    });
   });
 
   describe("currencyAddressSpendTransactions", () => {
@@ -435,6 +519,11 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(1);
     });
+    // it("currencyAddressSpendTransactionsPagination", async () => {
+    //   const metagraph_id= data_metagraphs[0].id
+    //   const address = data_addresses[1].address
+    //   await validatePaginationNext("1", {metagraph_id, address}, allowSpendsHandler.currencyAddressSpendTransactions);
+    // });
   });
 
   describe("currencyAddressAllowSpendExpirations", () => {
@@ -450,5 +539,10 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(1);
     });
+    // it("currencyAddressAllowSpendExpirationsPagination", async () => {
+    //   const metagraph_id= data_metagraphs[0].id
+    //   const address = data_addresses[0].address
+    //   await validatePaginationNext("1", {metagraph_id, address}, allowSpendsHandler.currencyAddressAllowSpendExpirations);
+    // });
   });
 });
