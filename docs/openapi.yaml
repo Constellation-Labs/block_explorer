@@ -1511,6 +1511,12 @@ paths:
           required: true
           schema:
             type: string
+        - name: allowSpendRef
+          in: query
+          description: Allow spend reference to filter for the spend transaction corresponding to it.
+          required: false
+          schema:
+            type: string
         - $ref: './schemas/params.yml#/components/parameters/limitParam'
         - $ref: './schemas/params.yml#/components/parameters/nextParam'
         - $ref: './schemas/params.yml#/components/parameters/searchAfterParam'
@@ -1760,6 +1766,12 @@ paths:
           in: path
           description: Identifier for the metagraph
           required: true
+          schema:
+            type: string
+        - name: allowSpendRef
+          in: query
+          description: Allow spend reference to filter for the spend transaction corresponding to it.
+          required: false
           schema:
             type: string
         - $ref: './schemas/params.yml#/components/parameters/limitParam'
