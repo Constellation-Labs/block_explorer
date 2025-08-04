@@ -241,11 +241,31 @@ describe("AllowSpends Handler Integration Tests", () => {
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(data_dag_spend_transactions.length);
       validateDagSpendTransaction(body.data[0]);
+      validateDagSpendTransaction(body.data[1]);
     });
 
-    // it("spendTransactionsPagination", async () => {
-    //   await validatePaginationNext("1", {}, allowSpendsHandler.spendTransactions);
-    // });
+    it("should return spend transaction for a allow spend ref", async () => {
+      const event = createAPIGatewayEvent(
+        {},
+        { allowSpendRef: data_dag_spend_transactions[1].allow_spend_ref }
+      );
+      const response = await allowSpendsHandler.spendTransactions(event);
+
+      expect(response.statusCode).toBe(200);
+      const body = validatePaginatedResponse(response);
+      expect(body.data.length).toBe(1);
+      expect(body.data[0].hash).toBe(data_dag_spend_transactions[1].hash);
+      validateDagSpendTransaction(body.data[0]);
+    });
+
+    it("should return empty for an invalid allow spend ref", async () => {
+      const event = createAPIGatewayEvent({}, { allowSpendRef: "some" });
+      const response = await allowSpendsHandler.spendTransactions(event);
+
+      expect(response.statusCode).toBe(200);
+      const body = validatePaginatedResponse(response);
+      expect(body.data.length).toBe(0);
+    });
   });
 
   describe("allowSpendExpirations", () => {
@@ -258,10 +278,6 @@ describe("AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(data_dag_expired_spend_transactions.length);
       validateDagExpiredSpend(body.data[0]);
     });
-
-    // it("spendTransactionsPagination", async () => {
-    //   await validatePaginationNext("1", {}, allowSpendsHandler.allowSpendExpirations);
-    // });
   });
 
   describe("addressSpendTransactions", () => {
@@ -314,7 +330,7 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
-      expect(body.data.length).toBe(3);
+      expect(body.data.length).toBe(4);
       body.data.forEach(validateMgAllowSpend);
     });
 
@@ -355,10 +371,33 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       expect(body.data.length).toBe(data_metagraph_spend_transactions.length);
       body.data.forEach(validateMgSpendTransaction);
     });
-    // it("currencySpendTransactionsPagination", async () => {
-    //   const metagraph_id= data_metagraphs[0].id
-    //   await validatePaginationNext("1", {metagraph_id}, allowSpendsHandler.currencySpendTransactions);
-    // });
+
+    it("should return spend transaction for a allow spend ref", async () => {
+      const event = createAPIGatewayEvent(
+        {},
+        { allowSpendRef: data_metagraph_spend_transactions[1].allow_spend_ref }
+      );
+      const response = await allowSpendsHandler.currencySpendTransactions(
+        event
+      );
+
+      expect(response.statusCode).toBe(200);
+      const body = validatePaginatedResponse(response);
+      expect(body.data.length).toBe(1);
+      expect(body.data[0].hash).toBe(data_metagraph_spend_transactions[1].hash);
+      validateMgSpendTransaction(body.data[0]);
+    });
+
+    it("should return empty for an invalid allow spend ref", async () => {
+      const event = createAPIGatewayEvent({}, { allowSpendRef: "some" });
+      const response = await allowSpendsHandler.currencySpendTransactions(
+        event
+      );
+
+      expect(response.statusCode).toBe(200);
+      const body = validatePaginatedResponse(response);
+      expect(body.data.length).toBe(0);
+    });
   });
 
   describe("currencyAllowSpendExpirations", () => {

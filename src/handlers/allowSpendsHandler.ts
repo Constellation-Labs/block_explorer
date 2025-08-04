@@ -10,7 +10,6 @@ import {
   hashCursor,
 } from "../pagination";
 import { respond, handleError } from "../response";
-import { includes } from "lodash";
 
 const prisma = new PrismaClient();
 
@@ -220,11 +219,18 @@ export const spendTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
+    const { allowSpendRef } = event.queryStringParameters || {};
+
+    const where = allowSpendRef
+      ? { allow_spend_ref: allowSpendRef }
+      : undefined;
+
     return await paginatedQuery(
       extractPagination(event),
       hashCursor,
       hashCursor,
       {
+        where,
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
@@ -479,12 +485,18 @@ export const currencySpendTransactions = async (
   try {
     const { metagraph_id } = event.pathParameters || {};
 
+    const { allowSpendRef } = event.queryStringParameters || {};
+
+    const allowSpendWhere = allowSpendRef
+      ? { allow_spend_ref: allowSpendRef }
+      : undefined;
+
     return await paginatedQuery(
       extractPagination(event),
       hashCursor,
       hashCursor,
       {
-        where: { metagraph_id },
+        where: { metagraph_id, ...allowSpendWhere },
         include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
