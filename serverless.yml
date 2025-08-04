@@ -13,191 +13,21 @@ provider:
   region: us-west-1
   stage: ${self:custom.stage}
   environment:
-    OPENSEARCH_NODE: ${self:custom.env.opensearch}
-    SLS_DEBUG: '*'
+    SLS_DEBUG: "*"
+    DATABASE_URL: ${self:custom.env.db_url}
   httpApi:
     cors: true
   vpc: ${self:custom.env.vpc}
   versionFunctions: false
-  timeout: 10
+  timeout: 60
 
 functions:
-  globalSnapshots:
-    handler: src/handler.globalSnapshots
-    events:
-      - httpApi:
-          path: /global-snapshots
-          method: GET
-  globalSnapshot:
-    handler: src/handler.globalSnapshot
-    events:
-      - httpApi:
-          path: /global-snapshots/{term}
-          method: GET
-  globalSnapshotRewards:
-    handler: src/handler.globalSnapshotRewards
-    events:
-      - httpApi:
-          path: /global-snapshots/{term}/rewards
-          method: GET
-  globalSnapshotTransactions:
-    handler: src/handler.globalSnapshotTransactions
-    events:
-      - httpApi:
-          path: /global-snapshots/{term}/transactions
-          method: GET
-  block:
-    handler: src/handler.block
-    events:
-      - httpApi:
-          path: /blocks/{hash}
-          method: GET
-  transactions:
-    handler: src/handler.transactions
-    events:
-      - httpApi:
-          path: /transactions
-          method: GET
-  transaction:
-    handler: src/handler.transaction
-    events:
-      - httpApi:
-          path: /transactions/{hash}
-          method: GET
-  transactionsByAddress:
-    handler: src/handler.transactionsByAddress
-    events:
-      - httpApi:
-          path: /addresses/{address}/transactions
-          method: GET
-  transactionsBySource:
-    handler: src/handler.transactionsBySource
-    events:
-      - httpApi:
-          path: /addresses/{address}/transactions/sent
-          method: GET
-  transactionsByDestination:
-    handler: src/handler.transactionsByDestination
-    events:
-      - httpApi:
-          path: /addresses/{address}/transactions/received
-          method: GET
-  balanceByAddress:
-    handler: src/handler.balanceByAddress
-    events:
-      - httpApi:
-          path: /addresses/{address}/balance
-          method: GET
-
-
-  currencySnapshots:
-    handler: src/handler.currencySnapshots
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots
-          method: GET
-  currencySnapshotsByOwnerAddress:
-    handler: src/handler.currencySnapshotsByOwnerAddress
-    events:
-      - httpApi:
-          path: /addresses/{address}/snapshots
-          method: GET
-  currencySnapshot:
-    handler: src/handler.currencySnapshot
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots/{term}
-          method: GET
-  currencySnapshotRewards:
-    handler: src/handler.currencySnapshotRewards
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots/{term}/rewards
-          method: GET
-  currencySnapshotTransactions:
-    handler: src/handler.currencySnapshotTransactions
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots/{term}/transactions
-          method: GET
-  currencyBlock:
-    handler: src/handler.currencyBlock
-    events:
-      - httpApi:
-          path: /currency/{identifier}/blocks/{hash}
-          method: GET
-  currencyTransactions:
-    handler: src/handler.currencyTransactions
-    events:
-      - httpApi:
-          path: /currency/{identifier}/transactions
-          method: GET
-  currencyTransaction:
-    handler: src/handler.currencyTransaction
-    events:
-      - httpApi:
-          path: /currency/{identifier}/transactions/{hash}
-          method: GET
-  currencyTransactionsByAddress:
-    handler: src/handler.currencyTransactionsByAddress
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/transactions
-          method: GET
-  currencyTransactionsBySource:
-    handler: src/handler.currencyTransactionsBySource
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/transactions/sent
-          method: GET
-  currencyTransactionsByDestination:
-    handler: src/handler.currencyTransactionsByDestination
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/transactions/received
-          method: GET
-  currencyBalanceByAddress:
-    handler: src/handler.currencyBalanceByAddress
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/balance
-          method: GET
-  currencyFeeTransaction:
-    handler: src/handler.currencyFeeTransaction
-    events:
-      - httpApi:
-          path: /currency/{identifier}/fee-transactions/{hash}
-          method: GET
-  currencySnapshotFeeTransactions:
-    handler: src/handler.currencySnapshotFeeTransactions
-    events:
-      - httpApi:
-          path: /currency/{identifier}/snapshots/{term}/fee-transactions
-          method: GET
-  currencyFeeTransactionsByAddress:
-    handler: src/handler.currencyFeeTransactionsByAddress
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/fee-transactions
-          method: GET
-  currencyFeeTransactionsBySource:
-    handler: src/handler.currencyFeeTransactionsBySource
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/fee-transactions/sent
-          method: GET
-  currencyFeeTransactionsByDestination:
-    handler: src/handler.currencyFeeTransactionsByDestination
-    events:
-      - httpApi:
-          path: /currency/{identifier}/addresses/{address}/fee-transactions/received
-          method: GET
-  metagraphs:
-    handler: src/handler.metagraphs
-    events:
-      - httpApi:
-          path: /currency
-          method: GET
+  - ${file(./routes/dag.yml)}
+  - ${file(./routes/metagraph.yml)}
+  - ${file(./routes/token-locks.yml)}
+  - ${file(./routes/allow-spends.yml)}
+  - ${file(./routes/actions.yml)}
+  - ${file(./routes/delegated-staking.yml)}
 
 plugins:
   - serverless-plugin-typescript

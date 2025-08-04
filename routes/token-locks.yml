@@ -1,0 +1,111 @@
+tokenLocks:
+  handler: src/handlers/tokenLocksHandler.tokenLocks
+  events:
+    - httpApi:
+        path: /token-locks
+        method: GET
+
+tokenLock:
+  handler: src/handlers/tokenLocksHandler.tokenLock
+  events:
+    - httpApi:
+        path: /token-locks/{hash}
+        method: GET
+
+gsTokenLocks:
+  handler: src/handlers/tokenLocksHandler.globalSnapshotTokenLocks
+  events:
+    - httpApi:
+        path: /global-snapshots/{hash_or_ordinal}/token-locks
+        method: GET
+
+addressTokenLocks:
+  handler: src/handlers/tokenLocksHandler.addressTokenLocks
+  events:
+    - httpApi:
+        path: /addresses/{address}/token-locks
+        method: GET
+
+tokenUnlocks:
+  handler: src/handlers/tokenLocksHandler.tokenUnlocks
+  events:
+    - httpApi:
+        path: /token-unlocks
+        method: GET
+
+tokenUnlock:
+  handler: src/handlers/tokenLocksHandler.tokenUnlock
+  events:
+    - httpApi:
+        path: /token-unlocks/{hash}
+        method: GET
+
+gsTokenUnlocks:
+  handler: src/handlers/tokenLocksHandler.globalSnapshotTokenUnlocks
+  events:
+    - httpApi:
+        path: /global-snapshots/{hash_or_ordinal}/token-unlocks
+        method: GET
+
+addressTokenUnlocks:
+  handler: src/handlers/tokenLocksHandler.addressTokenUnlocks
+  events:
+    - httpApi:
+        path: /addresses/{address}/token-unlocks
+        method: GET
+
+ccyTokenLocks:
+  handler: src/handlers/tokenLocksHandler.metagraphTokenLocks
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/token-locks
+        method: GET
+
+ccyTokenLock:
+  handler: src/handlers/tokenLocksHandler.metagraphTokenLock
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/token-locks/{hash}
+        method: GET
+
+ccySnapshotTokenLocks:
+  handler: src/handlers/tokenLocksHandler.metagraphSnapshotTokenLocks
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/token-locks
+        method: GET
+
+ccyAddressTokenLocks:
+  handler: src/handlers/tokenLocksHandler.metagraphAddressTokenLocks
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/addresses/{address}/token-locks
+        method: GET
+
+ccySnapshotTokenUnlocks:
+  handler: src/handlers/tokenLocksHandler.metagraphSnapshotTokenUnlocks
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/token-unlocks
+        method: GET
+
+ccyTokenUnlocks:
+  handler: src/handlers/tokenLocksHandler.metagraphTokenUnlocks
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/token-unlocks
+        method: GET
+
+ccyTokenUnlock:
+  handler: src/handlers/tokenLocksHandler.metagraphTokenUnlock
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/token-unlocks/{hash}
+        method: GET
+
+ccyAddressTokenUnlocks:
+  handler: src/handlers/tokenLocksHandler.metagraphAddressTokenUnlocks
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/addresses/{address}/token-unlocks
+        method: GET

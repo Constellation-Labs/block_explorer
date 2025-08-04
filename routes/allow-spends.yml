@@ -1,0 +1,167 @@
+allowSpend:
+  handler: src/handlers/allowSpendsHandler.allowSpend
+  events:
+    - httpApi:
+        path: /allow-spends/{hash}
+        method: GET
+
+allowSpends:
+  handler: src/handlers/allowSpendsHandler.allowSpends
+  events:
+    - httpApi:
+        path: /allow-spends
+        method: GET
+
+gsAllowSpends:
+  handler: src/handlers/allowSpendsHandler.globalSnapshotAllowSpends
+  events:
+    - httpApi:
+        path: /global-snapshots/{hash_or_ordinal}/allow-spends
+        method: GET
+
+addressAllowSpends:
+  handler: src/handlers/allowSpendsHandler.addressAllowSpends
+  events:
+    - httpApi:
+        path: /addresses/{address}/allow-spends
+        method: GET
+
+spendTransactions:
+  handler: src/handlers/allowSpendsHandler.spendTransactions
+  events:
+    - httpApi:
+        path: /spend-transactions
+        method: GET
+
+spendTransaction:
+  handler: src/handlers/allowSpendsHandler.spendTransaction
+  events:
+    - httpApi:
+        path: /spend-transactions/{hash}
+        method: GET
+
+gsSpendTransactions:
+  handler: src/handlers/allowSpendsHandler.globalSnapshotSpendTransactions
+  events:
+    - httpApi:
+        path: /global-snapshots/{hash_or_ordinal}/spend-transactions
+        method: GET
+
+addressSpendTransactions:
+  handler: src/handlers/allowSpendsHandler.addressSpendTransactions
+  events:
+    - httpApi:
+        path: /addresses/{address}/spend-transactions
+        method: GET
+
+allowSpendExpirations:
+  handler: src/handlers/allowSpendsHandler.allowSpendExpirations
+  events:
+    - httpApi:
+        path: /allow-spend-expirations
+        method: GET
+
+allowSpendExpiration:
+  handler: src/handlers/allowSpendsHandler.allowSpendExpiration
+  events:
+    - httpApi:
+        path: /allow-spend-expirations/{hash}
+        method: GET
+
+gsAllowSpendExpirations:
+  handler: src/handlers/allowSpendsHandler.globalSnapshotAllowSpendExpirations
+  events:
+    - httpApi:
+        path: /global-snapshots/{hash_or_ordinal}/allow-spend-expirations
+        method: GET
+
+addressAllowSpendExpirations:
+  handler: src/handlers/allowSpendsHandler.addressAllowSpendExpirations
+  events:
+    - httpApi:
+        path: /addresses/{address}/allow-spend-expirations
+        method: GET
+
+ccyAllowSpends:
+  handler: src/handlers/allowSpendsHandler.currencyAllowSpends
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/allow-spends
+        method: GET
+
+ccyAllowSpend:
+  handler: src/handlers/allowSpendsHandler.currencyAllowSpend
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/allow-spends/{hash}
+        method: GET
+
+ccySnapshotAllowSpends:
+  handler: src/handlers/allowSpendsHandler.currencySnapshotAllowSpends
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/allow-spends
+        method: GET
+
+ccyAddressAllowSpends:
+  handler: src/handlers/allowSpendsHandler.currencyAddressAllowSpends
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/addresses/{address}/allow-spends
+        method: GET
+
+ccySnapshotSpendTransactions:
+  handler: src/handlers/allowSpendsHandler.currencySnapshotSpendTransactions
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/spend-transactions
+        method: GET
+
+ccySpendTransactions:
+  handler: src/handlers/allowSpendsHandler.currencySpendTransactions
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/spend-transactions
+        method: GET
+
+ccySpendTransaction:
+  handler: src/handlers/allowSpendsHandler.currencySpendTransaction
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/spend-transactions/{hash}
+        method: GET
+
+ccyAddressSpendTransactions:
+  handler: src/handlers/allowSpendsHandler.currencyAddressSpendTransactions
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/addresses/{address}/spend-transactions
+        method: GET
+
+ccyAllowSpendExpirations:
+  handler: src/handlers/allowSpendsHandler.currencyAllowSpendExpirations
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/allow-spend-expirations
+        method: GET
+
+ccyAllowSpendExpiration:
+  handler: src/handlers/allowSpendsHandler.currencyAllowSpendExpiration
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/allow-spend-expirations/{hash}
+        method: GET
+
+ccySnapshotAllowSpendExpirations:
+  handler: src/handlers/allowSpendsHandler.currencySnapshotAllowSpendExpirations
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/allow-spend-expirations
+        method: GET
+
+ccyAddressAllowSpendExpirations:
+  handler: src/handlers/allowSpendsHandler.currencyAddressAllowSpendExpirations
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/addresses/{address}/allow-spend-expirations
+        method: GET

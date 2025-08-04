@@ -1,0 +1,41 @@
+actions:
+  handler: src/handlers/actionsHandler.dagActions
+  events:
+    - httpApi:
+        path: /actions
+        method: GET
+
+gsActions:
+  handler: src/handlers/actionsHandler.globalSnapshotActions
+  events:
+    - httpApi:
+        path: /global-snapshots/{term}/actions
+        method: GET
+
+addressActions:
+  handler: src/handlers/actionsHandler.dagAddressActions
+  events:
+    - httpApi:
+        path: /addresses/{address}/actions
+        method: GET
+
+ccyActions:
+  handler: src/handlers/actionsHandler.currencyActions
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/actions
+        method: GET
+
+ccySnapshotActions:
+  handler: src/handlers/actionsHandler.currencySnapshotActions
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/snapshots/{term}/actions
+        method: GET
+
+ccyAddressActions:
+  handler: src/handlers/actionsHandler.currencyAddressActions
+  events:
+    - httpApi:
+        path: /currency/{metagraph_id}/addresses/{address}/actions
+        method: GET

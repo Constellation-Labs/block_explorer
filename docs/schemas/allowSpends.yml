@@ -1,0 +1,160 @@
+components:
+  schemas:
+    AllowSpend:
+      type: object
+      properties:
+        currencyId:
+          type: string
+          description: The identifier of the currency
+        hash:
+          type: string
+          description: The hash of the allow spend transaction
+        ordinal:
+          type: string
+          description: The ordinal of the allow spend in the blockchain
+          format: bigint
+        amount:
+          type: string
+          description: The amount of tokens allowed to be spent
+          format: bigint
+        source:
+          type: string
+          description: The source address of the allow spend
+        destination:
+          type: string
+          description: The destination address of the allow spend
+        lastValidEpochProgress:
+          type: number
+          description: The last valid epoch progress for this allow spend
+        fee:
+          type: string
+          description: The fee associated with the allow spend transaction
+          format: bigint
+        snapshotHash:
+          type: string
+          description: The hash of the snapshot containing this allow spend
+        timestamp:
+          type: string
+          description: The timestamp when the allow spend was created
+          format: date-time
+    
+    AllowSpendResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AllowSpend'
+    
+    PaginatedAllowSpends:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllowSpend'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true
+    
+    SpendTransaction:
+      type: object
+      properties:
+        currencyId:
+          type: string
+          description: The identifier of the currency
+        hash:
+          type: string
+          description: The hash of the spend transaction
+        amount:
+          type: string
+          description: The amount of tokens spent
+          format: bigint
+        source:
+          type: string
+          description: The source address of the spend transaction
+        destination:
+          type: string
+          description: The destination address of the spend transaction
+        allowSpendRef:
+          type: string
+          description: Reference to the original allow spend transaction hash
+        snapshotHash:
+          type: string
+          description: The hash of the snapshot containing this spend transaction
+        timestamp:
+          type: string
+          description: The timestamp when the spend transaction was created
+          format: date-time
+    
+    SpendTransactionResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/SpendTransaction'
+    
+    PaginatedSpendTransactions:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpendTransaction'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true
+    
+    AllowSpendExpiration:
+      type: object
+      properties:
+        currencyId:
+          type: string
+          description: The identifier of the currency
+        hash:
+          type: string
+          description: The hash of the expired allow spend transaction
+        amount:
+          type: string
+          description: The amount of tokens that were allowed to be spent
+          format: bigint
+        source:
+          type: string
+          description: The source address of the allow spend
+        allowSpendRef:
+          type: string
+          description: Reference to the original allow spend transaction hash
+        snapshotHash:
+          type: string
+          description: The hash of the snapshot containing this expiration
+        timestamp:
+          type: string
+          description: The timestamp when the allow spend expired
+          format: date-time
+    
+    AllowSpendExpirationResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AllowSpendExpiration'
+    
+    PaginatedAllowSpendExpirations:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllowSpendExpiration'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true
+              

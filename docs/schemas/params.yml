@@ -1,0 +1,56 @@
+components:
+  parameters:
+    limitParam:
+      name: limit
+      in: query
+      description: Maximum number of records to return (1-100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    
+    nextParam:
+      name: next
+      in: query
+      description: Cursor for the next page of results (Base64 encoded)
+      schema:
+        type: string
+    
+    searchAfterParam:
+      name: search_after
+      in: query
+      description: Search after hash (exclusive with search_before and next)
+      schema:
+        type: string
+    
+    searchBeforeParam:
+      name: search_before
+      in: query
+      description: Search before hash (exclusive with search_after and next)
+      schema:
+        type: string
+        
+    hashOrOrdinalGlobalParam:
+      name: hash_or_ordinal
+      in: path
+      description: Hash, ordinal, or the keyword 'latest' of the global snapshot
+      required: true
+      schema:
+        oneOf:
+          - type: string
+            description: Hash of the global snapshot or 'latest'
+          - type: integer
+            description: Ordinal of the global snapshot
+            
+    hashOrOrdinalMetagraphParam:
+      name: hash_or_ordinal
+      in: path
+      description: Hash, ordinal, or the keyword 'latest' of the metagraph snapshot
+      required: true
+      schema:
+        oneOf:
+          - type: string
+            description: Hash of the metagraph snapshot or 'latest'
+          - type: integer
+            description: Ordinal of the metagraph snapshot

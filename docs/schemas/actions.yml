@@ -1,0 +1,79 @@
+components:
+  schemas:
+    Action:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The type of transaction (AllowSpend, TokenLock, TokenUnlock, SpendTransaction, FeeTransaction, ExpiredSpendTransaction)
+          enum: [AllowSpend, TokenLock, TokenUnlock, SpendTransaction, FeeTransaction, ExpiredSpendTransaction]
+        currencyId:
+          type: string
+          description: The identifier of the currency if it's a currency action
+          nullable: true
+        hash:
+          type: string
+          description: The hash of the transaction
+        amount:
+          type: string
+          description: The amount of tokens in the transaction
+          format: bigint
+        source:
+          type: string
+          description: The source address of the transaction
+        destination:
+          type: string
+          description: The destination address of the transaction
+          nullable: true
+        unlockEpoch:
+          type: number
+          description: The epoch when tokens can be unlocked or last valid epoch progress for allow spends
+          nullable: true
+        parentHash:
+          type: string
+          description: Reference to a parent transaction (e.g., token lock reference for token unlocks or allow spend reference for spend transactions)
+          nullable: true
+        oneOf:
+          globalSnapshotOrdinal:
+            type: integer
+            description: Global snapshot ordinal if it's a DAG action
+          metagraphSnapshotOrdinal:
+            type: integer
+            description: Metagraph snapshot ordinal if it's a currency action
+        timestamp:
+          type: string
+          description: The timestamp when the transaction was created
+          format: date-time
+      oneOf:
+      - required: [globalSnapshotOrdinal]
+        properties:
+          globalSnapshotOrdinal:
+            type: integer
+            description: Global snapshot ordinal if it's a DAG action
+      - required: [metagraphSnapshotOrdinal]
+        properties:
+          metagraphSnapshotOrdinal:
+            type: integer
+            description: Metagraph snapshot ordinal if it's a currency action
+
+    
+    ActionResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Action'
+    
+    PaginatedActions:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Action'
+        meta:
+          type: object
+          properties:
+            next:
+              type: string
+              description: Cursor for the next page of results
+              nullable: true

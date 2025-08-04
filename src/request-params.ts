@@ -1,21 +1,19 @@
 import { APIGatewayEvent } from "aws-lambda";
-import { ApplicationError, StatusCodes } from "./http";
-import { Lens, Optional } from "monocle-ts";
-import { pipe } from "fp-ts/lib/function";
-import * as O from "fp-ts/Option";
-import * as R from "fp-ts/Record";
-import * as TE from "fp-ts/TaskEither";
-import { TaskEither } from "fp-ts/TaskEither";
-import { maxSizeLimit, SearchDirection, SortOptions } from "./query";
+import { maxSizeLimit, SearchDirection } from "./pagination";
 
-export type Pagination<T> =
+export type Pagination =
   | {
       size?: number;
       searchDirection: SearchDirection;
-      searchSince: string;
+      searchSince:
+        | { hash: string }
+        | { metagraph_id: string; hash: string }
+        | { metagraph_id_hash: { metagraph_id: string; hash: string } }
+        | { id: string }
+        | undefined;
     }
   | { size?: number }
-  | { size?: number; next: string };
+  | { size?: number; next: any };
 
 type PaginationQueryParams = {
   search_after?: string;
@@ -24,32 +22,15 @@ type PaginationQueryParams = {
   next?: string;
 };
 
-const pathParams = Lens.fromNullableProp<APIGatewayEvent>()(
-  "pathParameters",
-  {}
-);
-type PathParams = NonNullable<
-  APIGatewayEvent["pathParameters"] & {
-    hash?: string;
-    term?: string;
-    address?: string;
+export const extractHashOrdinal = (term) => {
+  if (isNaN(Number(term))) {
+    return { hash: term };
+  } else {
+    return { ordinal: BigInt(term) };
   }
->;
+};
 
-const pathParamsIsNotNull = (event: APIGatewayEvent) =>
-  TE.fromPredicate(
-    () => Object.keys(pathParams.get(event)).length > 0,
-    () =>
-      new ApplicationError(
-        "Error parsing request path params",
-        ["Path params should not be empty"],
-        StatusCodes.BAD_REQUEST
-      )
-  )(event);
-
-export const extractPagination = <T>(
-  event: APIGatewayEvent
-): TaskEither<ApplicationError, Pagination<T>> => {
+export const extractPagination = (event: APIGatewayEvent): Pagination => {
   const params = event.queryStringParameters as PaginationQueryParams;
   const searchBefore = params?.search_before;
   const searchAfter = params?.search_after;
@@ -57,161 +38,62 @@ export const extractPagination = <T>(
   const next = params?.next;
 
   if (searchBefore && searchAfter) {
-    return TE.left(
-      new ApplicationError(
-        "search_after & search_before should be mutually exclusive",
-        [],
-        StatusCodes.BAD_REQUEST
-      )
+    throw new Error(
+      "search_after & search_before should be mutually exclusive"
     );
   }
 
   if (params?.limit !== undefined) {
     if (isNaN(limit)) {
-      return TE.left(
-        new ApplicationError(
-          "limit must be a number",
-          [],
-          StatusCodes.BAD_REQUEST
-        )
-      );
+      throw new Error("limit must be a number");
     }
 
     if (limit < 1) {
-      return TE.left(
-        new ApplicationError(
-          "limit must be a positive number",
-          [],
-          StatusCodes.BAD_REQUEST
-        )
-      );
+      throw new Error("limit must be a positive number");
     }
 
     if (limit > maxSizeLimit) {
-      return TE.left(
-        new ApplicationError(
-          `limit must be lower or equal ${maxSizeLimit}`,
-          [],
-          StatusCodes.BAD_REQUEST
-        )
-      );
+      throw new Error(`limit must be lower or equal ${maxSizeLimit}`);
     }
   }
 
   if (next && searchAfter && searchBefore) {
-    return TE.left(
-      new ApplicationError(
-        "next and search_after/search_before should be mutually exclusive",
-        [],
-        StatusCodes.BAD_REQUEST
-      )
+    throw new Error(
+      "next and search_after/search_before should be mutually exclusive"
     );
   }
 
   if (next) {
-    return TE.right({
-      next,
+    return {
+      next: fromNextString(next),
       size: params.limit !== undefined ? limit : undefined,
-    });
+    };
   }
 
-  return TE.right({
-    searchSince: searchAfter || searchBefore,
+  let searchSince;
+
+  if (searchAfter) {
+    searchSince = { hash: searchAfter };
+  } else if (searchBefore) {
+    searchSince = { hash: searchBefore };
+  }
+
+  return {
+    searchSince,
     searchDirection:
       (searchAfter && SearchDirection.After) ||
       (searchBefore && SearchDirection.Before) ||
       undefined,
     size: limit,
-  });
+  };
 };
 
-export const toNextString = <T>(options: SortOptions<T>): string => {
-  const buffer = Buffer.from(JSON.stringify(options));
+export const toNextString = (next): string => {
+  const buffer = Buffer.from(JSON.stringify(next));
   return buffer.toString("base64");
 };
 
-export const fromNextString = <T>(next: string): SortOptions<T> => {
+export const fromNextString = (next: string) => {
   const buffer = Buffer.from(next, "base64");
   return JSON.parse(buffer.toString("ascii"));
 };
-
-const pathParamExists =
-  (pathParam: keyof Partial<PathParams>) => (event: APIGatewayEvent) =>
-    pipe(
-      TE.of<ApplicationError, APIGatewayEvent>(event),
-      TE.chainFirst(pathParamsIsNotNull),
-      TE.chainFirst(() =>
-        pipe(
-          pathParams
-            .composeOptional(Optional.fromPath<PathParams>()([pathParam]))
-            .getOption(event),
-          TE.fromOption(
-            () =>
-              new ApplicationError(
-                "Error parsing request path params",
-                [`${pathParam} param should not be empty`],
-                StatusCodes.BAD_REQUEST
-              )
-          )
-        )
-      )
-    );
-
-export class RequestParamMissingError extends ApplicationError {
-  constructor(param: string) {
-    super(
-      "Error parsing request path params",
-      [`${param} param should not be empty`],
-      StatusCodes.BAD_REQUEST
-    );
-  }
-}
-
-export const getPathParam: <K extends string>(
-  param: K
-) => (event: APIGatewayEvent) => TE.TaskEither<ApplicationError, string> =
-  <K extends string>(param: K) =>
-  (event: APIGatewayEvent) =>
-    pipe(
-      O.fromNullable(event.pathParameters),
-      O.chain((params) =>
-        pipe(
-          params,
-          R.lookup(param),
-          O.chain(
-            O.fromPredicate(
-              (value): value is string => typeof value === "string"
-            )
-          )
-        )
-      ),
-      TE.fromOption(() => new RequestParamMissingError(param))
-    );
-
-/** @deprecated use extractCurrencyIdentifierParam  */
-export const validateCurrencyIdentifierParam = (event: APIGatewayEvent) =>
-  pipe(
-    TE.of<ApplicationError, APIGatewayEvent>(event),
-    TE.chain(pathParamExists("identifier"))
-  );
-
-/** @deprecated use extractTermParam  */
-export const validateTermParam = (event: APIGatewayEvent) =>
-  pipe(
-    TE.of<ApplicationError, APIGatewayEvent>(event),
-    TE.chain(pathParamExists("term"))
-  );
-
-/** @deprecated use extractHashParam  */
-export const validateHashParam = (event: APIGatewayEvent) =>
-  pipe(
-    TE.of<ApplicationError, APIGatewayEvent>(event),
-    TE.chain(pathParamExists("hash"))
-  );
-
-/** @deprecated use extractAddressParam  */
-export const validateAddressParam = (event: APIGatewayEvent) =>
-  pipe(
-    TE.of<ApplicationError, APIGatewayEvent>(event),
-    TE.chain(pathParamExists("address"))
-  );

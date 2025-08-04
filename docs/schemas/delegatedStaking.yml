@@ -1,0 +1,44 @@
+components:
+  schemas:
+    DelegatedStakeEvent:
+      type: object
+      properties:
+        hash: { type: string }
+        ordinal: { type: integer }
+        source: { type: string }
+        nodeId: { type: string }
+        amount: { type: string, description: "BigInt represented as a string" }
+        fee: { type: string, description: "BigInt represented as a string" }
+        tokenLockHash: { type: string }
+        parentHash: { type: string, nullable: true }
+        type: { type: string, enum: [create, transfer] }
+        status: { type: string, enum: [active, transferred, pendingWithdrawal, withdrawalComplete] }
+        timestamp: { type: string, format: date-time }
+
+    DelegatedStakeWithdrawal:
+      type: object
+      properties:
+        hash: { type: string }
+        source: { type: string }
+        stake: { $ref: '#/components/schemas/DelegatedStakeEvent' }
+        globalSnapshotHash: { type: string }
+        unlockEpoch: { type: integer }
+        status: { type: string, enum: [pendingWithdrawal, withdrawalComplete] }
+        timestamp: { type: string, format: date-time }
+
+    DelegatedStakePosition:
+      type: object
+      properties:
+        address: { type: string }
+        nodeId: { type: string }
+        status: { type: string, enum: [active, transferred, pendingWithdrawal, withdrawalComplete] }
+        stakeHash: { type: string }
+        lockAmount: { type: string, description: "BigInt represented as a string" }
+        rewardsAccrued: { type: string, description: "BigInt represented as a string" }
+        withdrawnAmount: { type: string, description: "BigInt represented as a string" }
+        transferredFromHash: { type: string, nullable: true }
+        transferredToHash: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        transferredAt: { type: string, format: date-time, nullable: true }
+        withdrawalStartedAt: { type: string, format: date-time, nullable: true }
+        withdrawalCompletedAt: { type: string, format: date-time, nullable: true }
