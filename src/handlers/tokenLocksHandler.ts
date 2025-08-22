@@ -132,15 +132,19 @@ export const tokenLocks = async (
 ): Promise<APIGatewayProxyResult> => {
   return paginatedQuery(
     extractPagination(event),
-    toCreatedAtOrdinalCursor,
-    fromCreatedAtOrdinalCursor,
+    hashCursor,
+    hashCursor,
     {
       where: ifActiveDagTokenLock(event),
       include: {
         ...includeDagUnlockOrdinal,
         ...includeDagGlobalSnapshotOrdinal,
       },
-      orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
+      orderBy: [
+        { global_snapshot: { ordinal: "desc" } },
+        { created_at: "desc" },
+        { hash: "asc" },
+      ],
     },
     prisma.dag_token_locks.findMany,
     dagTokenLockResponses
@@ -176,8 +180,8 @@ export const globalSnapshotTokenLocks = async (
 
     return paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           global_snapshot: filter,
@@ -187,7 +191,11 @@ export const globalSnapshotTokenLocks = async (
           ...includeDagUnlockOrdinal,
           ...includeDagGlobalSnapshotOrdinal,
         },
-        orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
+        orderBy: [
+          { global_snapshot: { ordinal: "desc" } },
+          { created_at: "desc" },
+          { hash: "asc" },
+        ],
       },
       prisma.dag_token_locks.findMany,
       dagTokenLockResponses
@@ -205,15 +213,19 @@ export const addressTokenLocks = async (
 
     return paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: { source_addr: address, ...ifActiveDagTokenLock(event) },
         include: {
           ...includeDagUnlockOrdinal,
           ...includeDagGlobalSnapshotOrdinal,
         },
-        orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
+        orderBy: [
+          { global_snapshot: { ordinal: "desc" } },
+          { created_at: "desc" },
+          { hash: "asc" },
+        ],
       },
       prisma.dag_token_locks.findMany,
       dagTokenLockResponses
@@ -324,15 +336,19 @@ export const metagraphTokenLocks = async (
 
   return paginatedQuery(
     extractPagination(event),
-    toCreatedAtOrdinalCursor,
-    fromCreatedAtOrdinalCursor,
+    hashCursor,
+    hashCursor,
     {
       where: { metagraph_id, ...ifActiveMetagraphTokenLock(event) },
       include: {
         ...includeMetagraphUnlockOrdinal,
         ...includeGlobalSnapshotOrdinalFromMetagraph,
       },
-      orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
+      orderBy: [
+        { metagraph_snapshot: { ordinal: "desc" } },
+        { created_at: "desc" },
+        { hash: "asc" },
+      ],
     },
     prisma.metagraph_token_locks.findMany,
     metagraphTokenLockResponses
@@ -367,8 +383,8 @@ export const metagraphSnapshotTokenLocks = async (
 
     return paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: {
           metagraph_id,
@@ -378,7 +394,11 @@ export const metagraphSnapshotTokenLocks = async (
           ...includeMetagraphUnlockOrdinal,
           ...includeGlobalSnapshotOrdinalFromMetagraph,
         },
-        orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
+        orderBy: [
+          { metagraph_snapshot: { ordinal: "desc" } },
+          { created_at: "desc" },
+          { hash: "asc" },
+        ],
       },
       prisma.metagraph_token_locks.findMany,
       metagraphTokenLockResponses
@@ -396,15 +416,19 @@ export const metagraphAddressTokenLocks = async (
 
     return paginatedQuery(
       extractPagination(event),
-      toCreatedAtOrdinalCursor,
-      fromCreatedAtOrdinalCursor,
+      hashCursor,
+      hashCursor,
       {
         where: { metagraph_id, source_addr: address },
         include: {
           ...includeMetagraphUnlockOrdinal,
           ...includeGlobalSnapshotOrdinalFromMetagraph,
         },
-        orderBy: [{ ordinal: "desc" }, { created_at: "desc" }],
+        orderBy: [
+          { metagraph_snapshot: { ordinal: "desc" } },
+          { created_at: "desc" },
+          { hash: "asc" },
+        ],
       },
       prisma.metagraph_token_locks.findMany,
       metagraphTokenLockResponses
