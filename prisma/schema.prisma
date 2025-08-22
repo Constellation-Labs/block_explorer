@@ -223,7 +223,6 @@ model dag_token_locks {
 
   dag_actions_view             dag_actions_view[]
 
-  @@unique([ordinal], map: "dag_token_locks_unique")
 }
 
 model dag_token_unlocks {
@@ -469,7 +468,7 @@ model metagraph_token_locks {
   updated_at    DateTime   @default(now()) @db.Timestamp(6)
   metagraph_id  String     @db.VarChar
   ordinal       BigInt
-  unlock_epoch  BigInt
+  unlock_epoch  BigInt?
   parent_hash   String?    @db.VarChar
   round_id      String     @db.VarChar
   snapshot_hash String     @db.VarChar
@@ -483,7 +482,6 @@ model metagraph_token_locks {
 
   @@id([metagraph_id, hash], map: "metagraph_token_locks_pk")
   @@unique([hash])
-  @@unique([metagraph_id, ordinal], map: "metagraph_token_locks_unique")
 }
 
 model metagraph_token_unlocks {

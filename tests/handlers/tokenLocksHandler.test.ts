@@ -181,8 +181,8 @@ describe("Token Locks Handler Integration Tests", () => {
       const body = validatePaginatedResponse(response);
 
       expect(body.data.length).toBe(2);
-      expect(body.data[1].hash).toBe(data_dag_token_locks[0].hash);
-      expect(body.data[0].hash).toBe(data_dag_token_locks[1].hash);
+      expect(body.data[1].hash).toBe(data_dag_token_locks[1].hash);
+      expect(body.data[0].hash).toBe(data_dag_token_locks[0].hash);
     });
 
     it("should return token locks for a specific global snapshot by ordinal", async () => {
@@ -196,8 +196,8 @@ describe("Token Locks Handler Integration Tests", () => {
       const body = validatePaginatedResponse(response);
 
       expect(body.data.length).toBe(2);
-      expect(body.data[1].hash).toBe(data_dag_token_locks[0].hash);
-      expect(body.data[0].hash).toBe(data_dag_token_locks[1].hash);
+      expect(body.data[1].hash).toBe(data_dag_token_locks[1].hash);
+      expect(body.data[0].hash).toBe(data_dag_token_locks[0].hash);
     });
   });
 

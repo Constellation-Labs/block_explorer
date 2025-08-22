@@ -702,8 +702,6 @@ async function runSqlFromFile(filename: string) {
     console.log(`Executed ${statements.length} statements from: ${filename}`);
   } catch (err) {
     console.error(`Error executing SQL from: ${filename}`, err);
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
