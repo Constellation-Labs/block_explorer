@@ -27,7 +27,7 @@ addressAllowSpends:
         method: GET
 
 spendTransactions:
-  handler: src/handlers/allowSpendsHandler.spendTransactions
+  handler: src/handlers/allowSpendsHandler.currencySpendTransactions
   events:
     - httpApi:
         path: /spend-transactions
@@ -48,7 +48,7 @@ gsSpendTransactions:
         method: GET
 
 addressSpendTransactions:
-  handler: src/handlers/allowSpendsHandler.addressSpendTransactions
+  handler: src/handlers/allowSpendsHandler.currencyAddressSpendTransactions
   events:
     - httpApi:
         path: /addresses/{address}/spend-transactions

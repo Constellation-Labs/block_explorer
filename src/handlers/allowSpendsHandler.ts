@@ -215,33 +215,6 @@ export const spendTransaction = async (
   }
 };
 
-export const spendTransactions = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
-  try {
-    const { allowSpendRef } = event.queryStringParameters || {};
-
-    const where = allowSpendRef
-      ? { allow_spend_ref: allowSpendRef }
-      : undefined;
-
-    return await paginatedQuery(
-      extractPagination(event),
-      hashCursor,
-      hashCursor,
-      {
-        where,
-        include: dagInclude,
-        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
-      },
-      prisma.dag_spend_transactions.findMany,
-      spendTransactionResponses
-    );
-  } catch (error) {
-    return handleError(error);
-  }
-};
-
 export const globalSnapshotSpendTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
@@ -256,31 +229,6 @@ export const globalSnapshotSpendTransactions = async (
       {
         where: {
           dag_allow_spend: { global_snapshot: filter },
-        },
-        include: dagInclude,
-        orderBy: [{ created_at: "desc" }, { hash: "asc" }],
-      },
-      prisma.dag_spend_transactions.findMany,
-      spendTransactionResponses
-    );
-  } catch (error) {
-    return handleError(error);
-  }
-};
-
-export const addressSpendTransactions = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
-  try {
-    const { address } = event.pathParameters || {};
-
-    return await paginatedQuery(
-      extractPagination(event),
-      hashCursor,
-      hashCursor,
-      {
-        where: {
-          OR: [{ source_addr: address }, { destination_addr: address }],
         },
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
@@ -496,7 +444,10 @@ export const currencySpendTransactions = async (
       hashCursor,
       hashCursor,
       {
-        where: { metagraph_id, ...allowSpendWhere },
+        where: {
+          currency_id: metagraph_id ? metagraph_id : null,
+          ...allowSpendWhere,
+        },
         include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
@@ -538,7 +489,7 @@ export const currencySnapshotSpendTransactions = async (
       hashCursor,
       {
         where: {
-          metagraph_id,
+          currency_id: metagraph_id ? metagraph_id : null,
           metagraph_allow_spend: {
             metagraph_snapshot: filter,
           },
@@ -558,7 +509,7 @@ export const currencyAddressSpendTransactions = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const { address } = event.pathParameters || {};
+    const { metagraph_id, address } = event.pathParameters || {};
 
     return await paginatedQuery(
       extractPagination(event),
@@ -567,12 +518,12 @@ export const currencyAddressSpendTransactions = async (
       {
         where: {
           OR: [{ source_addr: address }, { destination_addr: address }],
+          currency_id: metagraph_id ? metagraph_id : null,
         },
-        include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
       prisma.metagraph_spend_transactions.findMany,
-      spendExpiredResponses
+      spendTransactionResponses
     );
   } catch (error) {
     return handleError(error);
