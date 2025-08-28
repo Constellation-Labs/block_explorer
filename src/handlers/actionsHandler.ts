@@ -115,16 +115,7 @@ export const dagAddressActions = async (
       hashCursor,
       {
         where: {
-          OR: [
-            { source_addr: address },
-            { dag_allow_spend: { destination_addr: address } },
-            { dag_spend_transaction: { destination_addr: address } },
-            {
-              dag_expired_spend_transaction: {
-                dag_allow_spend: { destination_addr: address },
-              },
-            },
-          ],
+          OR: [{ source_addr: address }, { destination_addr: address }],
           transaction_type: { in: selectedTransactions },
         },
         orderBy: [{ created_at: "desc" }, { hash: "desc" }],
@@ -151,7 +142,7 @@ export const currencyActions = async (
       hashCursor,
       {
         where: {
-          metagraph_snapshot: { metagraph_id },
+          OR: [{ metagraph_id }, { currency_id: metagraph_id }],
           transaction_type: { in: selectedTransactions },
         },
         orderBy: [{ created_at: "desc" }, { hash: "desc" }],
@@ -179,7 +170,8 @@ export const currencySnapshotActions = async (
       hashCursor,
       {
         where: {
-          metagraph_snapshot: { metagraph_id, ...filter },
+          OR: [{ metagraph_id }, { currency_id: metagraph_id }],
+          metagraph_snapshot: { ...filter },
           transaction_type: { in: selectedTransactions },
         },
         orderBy: [{ created_at: "desc" }, { hash: "desc" }],
@@ -206,19 +198,11 @@ export const currencyAddressActions = async (
       hashCursor,
       {
         where: {
-          metagraph_snapshot: { metagraph_id },
-          OR: [
-            { source_addr: address },
-            { metagraph_allow_spend: { destination_addr: address } },
-            { metagraph_spend_transaction: { destination_addr: address } },
-            { metagraph_fee_transaction: { destination_addr: address } },
-            {
-              metagraph_expired_spend_transaction: {
-                metagraph_allow_spend: { destination_addr: address },
-              },
-            },
+          AND: [
+            { OR: [{ metagraph_id }, { currency_id: metagraph_id }] },
+            { OR: [{ source_addr: address }, { destination_addr: address }] },
+            { transaction_type: { in: selectedTransactions } },
           ],
-          transaction_type: { in: selectedTransactions },
         },
         orderBy: [{ created_at: "desc" }, { hash: "desc" }],
       },
