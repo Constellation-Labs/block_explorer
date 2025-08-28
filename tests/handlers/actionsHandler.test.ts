@@ -11,7 +11,6 @@ import {
   data_metagraph_token_locks,
   data_dag_token_unlocks,
   data_metagraph_token_unlocks,
-  data_dag_spend_transactions,
   data_metagraph_spend_transactions,
   data_dag_allow_spends,
   data_dag_expired_spend_transactions,
@@ -26,9 +25,7 @@ import {
 const datasets = [
   data_dag_token_locks,
   data_dag_token_unlocks,
-  data_dag_spend_transactions,
   data_dag_expired_spend_transactions,
-  data_dag_spend_transactions,
   data_dag_allow_spends,
   data_delegate_stake_create_events,
   data_delegate_stake_withdraw_events,

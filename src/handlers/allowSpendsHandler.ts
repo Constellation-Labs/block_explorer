@@ -204,7 +204,7 @@ export const spendTransaction = async (
   try {
     const { hash } = event.pathParameters || {};
 
-    const spend = await prisma.dag_spend_transactions.findUnique({
+    const spend = await prisma.dag_spend_transactions_view.findUnique({
       where: { hash },
       include: dagInclude,
     });
@@ -234,7 +234,7 @@ export const spendTransactions = async (
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.dag_spend_transactions.findMany,
+      prisma.dag_spend_transactions_view.findMany,
       spendTransactionResponses
     );
   } catch (error) {
@@ -260,7 +260,7 @@ export const globalSnapshotSpendTransactions = async (
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.dag_spend_transactions.findMany,
+      prisma.dag_spend_transactions_view.findMany,
       spendTransactionResponses
     );
   } catch (error) {
@@ -285,7 +285,7 @@ export const addressSpendTransactions = async (
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.dag_spend_transactions.findMany,
+      prisma.dag_spend_transactions_view.findMany,
       spendTransactionResponses
     );
   } catch (error) {
@@ -496,7 +496,7 @@ export const currencySpendTransactions = async (
       hashCursor,
       hashCursor,
       {
-        where: { metagraph_id, ...allowSpendWhere },
+        where: { metagraph_id, ...allowSpendWhere, currency_id: { not: null } },
         include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
@@ -515,7 +515,7 @@ export const currencySpendTransaction = async (
     const { metagraph_id, hash } = event.pathParameters || {};
 
     const spend = await prisma.metagraph_spend_transactions.findUnique({
-      where: { metagraph_id, hash },
+      where: { metagraph_id, hash, currency_id: { not: null } },
       include: metagraphInclude,
     });
 
@@ -542,6 +542,7 @@ export const currencySnapshotSpendTransactions = async (
           metagraph_allow_spend: {
             metagraph_snapshot: filter,
           },
+          currency_id: { not: null },
         },
         include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
@@ -567,6 +568,7 @@ export const currencyAddressSpendTransactions = async (
       {
         where: {
           OR: [{ source_addr: address }, { destination_addr: address }],
+          currency_id: { not: null },
         },
         include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
