@@ -10,7 +10,6 @@ import {
   data_addresses,
   data_dag_allow_spends,
   data_dag_expired_spend_transactions,
-  data_dag_spend_transactions,
   data_global_snapshots,
   data_metagraph_allow_spends,
   data_metagraph_expired_spend_transactions,
@@ -39,7 +38,9 @@ const validateDagAllowSpend = (entry) => {
 };
 
 const validateDagSpendTransaction = (entry) => {
-  const match = data_dag_spend_transactions.find((d) => d.hash === entry.hash);
+  const match = data_metagraph_spend_transactions.find(
+    (d) => d.hash === entry.hash && d.currency_id == null
+  );
   expect(match).toBeDefined();
   if (!match) return;
 
@@ -47,9 +48,9 @@ const validateDagSpendTransaction = (entry) => {
   expect(entry.source).toBe(match.source_addr);
   expect(entry.destination).toBe(match.destination_addr);
   expect(entry.allowSpendHash).toBe(match.allow_spend_ref);
-  expect(entry.snapshotHash).toBe(match.snapshot_hash);
-  expect(entry.timestamp).toBeDefined();
   expect(entry.globalSnapshotHash).toBeDefined();
+  expect(entry.snapshotHash).toBe(entry.globalSnapshotHash);
+  expect(entry.timestamp).toBeDefined();
   expect(entry.globalSnapshotOrdinal).toBeDefined();
 };
 
@@ -239,7 +240,7 @@ describe("AllowSpends Handler Integration Tests", () => {
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
-      expect(body.data.length).toBe(data_dag_spend_transactions.length);
+      expect(body.data.length).toBe(2);
       validateDagSpendTransaction(body.data[0]);
       validateDagSpendTransaction(body.data[1]);
     });
@@ -247,14 +248,14 @@ describe("AllowSpends Handler Integration Tests", () => {
     it("should return spend transaction for a allow spend ref", async () => {
       const event = createAPIGatewayEvent(
         {},
-        { allowSpendRef: data_dag_spend_transactions[1].allow_spend_ref }
+        { allowSpendRef: data_metagraph_spend_transactions[3].allow_spend_ref }
       );
       const response = await allowSpendsHandler.spendTransactions(event);
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(1);
-      expect(body.data[0].hash).toBe(data_dag_spend_transactions[1].hash);
+      expect(body.data[0].hash).toBe(data_metagraph_spend_transactions[3].hash);
       validateDagSpendTransaction(body.data[0]);
     });
 
@@ -368,7 +369,7 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
-      expect(body.data.length).toBe(data_metagraph_spend_transactions.length);
+      expect(body.data.length).toBe(2);
       body.data.forEach(validateMgSpendTransaction);
     });
 
