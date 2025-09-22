@@ -204,7 +204,7 @@ export const spendTransaction = async (
   try {
     const { hash } = event.pathParameters || {};
 
-    const spend = await prisma.dag_spend_transactions_view.findUnique({
+    const spend = await prisma.dag_spend_transactions.findUnique({
       where: { hash },
       include: dagInclude,
     });
@@ -234,7 +234,7 @@ export const spendTransactions = async (
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.dag_spend_transactions_view.findMany,
+      prisma.dag_spend_transactions.findMany,
       spendTransactionResponses
     );
   } catch (error) {
@@ -260,7 +260,7 @@ export const globalSnapshotSpendTransactions = async (
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.dag_spend_transactions_view.findMany,
+      prisma.dag_spend_transactions.findMany,
       spendTransactionResponses
     );
   } catch (error) {
@@ -285,7 +285,7 @@ export const addressSpendTransactions = async (
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
       },
-      prisma.dag_spend_transactions_view.findMany,
+      prisma.dag_spend_transactions.findMany,
       spendTransactionResponses
     );
   } catch (error) {

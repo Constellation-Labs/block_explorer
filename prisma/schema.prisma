@@ -38,7 +38,7 @@ model dag_actions_view {
   dag_token_lock                dag_token_locks?                @relation(fields: [hash], references: [hash], map: "dag_token_locks_ref")
   dag_token_unlock              dag_token_unlocks?              @relation(fields: [hash], references: [hash], map: "dag_token_unlocks_ref")
   dag_allow_spend               dag_allow_spends?               @relation(fields: [hash], references: [hash], map: "dag_allow_spend_ref")
-  dag_spend_transaction         dag_spend_transactions_view?         @relation(fields: [hash], references: [hash], map: "dag_spend_transaction_ref")
+  dag_spend_transaction         dag_spend_transactions?         @relation(fields: [hash], references: [hash], map: "dag_spend_transaction_ref")
   dag_expired_spend_transaction dag_expired_spend_transactions? @relation(fields: [hash], references: [hash], map: "dag_expired_spend_transaction_ref")
 
   global_snapshot global_snapshots @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: Restrict, map: "dag_actions_view_global_snapshot_ref")
@@ -80,7 +80,7 @@ model addresses {
   dag_allow_spends_dag_allow_spends_source_addrToaddresses                          dag_allow_spends[]                @relation("dag_allow_spends_source_addrToaddresses")
   dag_balance_changes                                                               dag_balance_changes[]
   dag_reward_transactions                                                           dag_reward_transactions[]
-  dag_spend_transactions                                                            dag_spend_transactions_view[]
+  dag_spend_transactions                                                            dag_spend_transactions[]
   dag_token_locks                                                                   dag_token_locks[]
   dag_token_unlocks                                                                 dag_token_unlocks[]
   dag_transactions_dag_transactions_destination_addrToaddresses                     dag_transactions[]                @relation("dag_transactions_destination_addrToaddresses")
@@ -142,7 +142,7 @@ model dag_allow_spends {
   addresses_dag_allow_spends_destination_addrToaddresses addresses                       @relation("dag_allow_spends_destination_addrToaddresses", fields: [destination_addr], references: [address], onDelete: Cascade, onUpdate: Restrict, map: "dag_allow_spends_destination_addr_fk")
   addresses_dag_allow_spends_source_addrToaddresses      addresses                       @relation("dag_allow_spends_source_addrToaddresses", fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: Restrict, map: "dag_allow_spends_source_addr_fk")
   dag_expired_spend_transaction                          dag_expired_spend_transactions?
-  dag_spend_transaction                                  dag_spend_transactions_view?
+  dag_spend_transaction                                  dag_spend_transactions?
   global_snapshot                                        global_snapshots                @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: Restrict, map: "dag_allow_spends_global_snapshot_fk")
   dag_actions_view                                       dag_actions_view[]
 
@@ -190,7 +190,7 @@ model dag_reward_transactions {
   @@index([global_snapshot_hash])
 }
 
-model dag_spend_transactions_view {
+model dag_spend_transactions {
   hash             String            @id(map: "dag_spend_transactions_pk") @db.VarChar
   source_addr      String            @db.VarChar
   amount           BigInt
@@ -300,7 +300,7 @@ model global_snapshots {
   dag_token_locks                dag_token_locks[]
   dag_token_unlocks              dag_token_unlocks[]
   dag_allow_spends               dag_allow_spends[]
-  dag_spend_transactions         dag_spend_transactions_view[]
+  dag_spend_transactions         dag_spend_transactions[]
   dag_expired_spend_transactions dag_expired_spend_transactions[]
   dag_actions_view               dag_actions_view[]
 }

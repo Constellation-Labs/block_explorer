@@ -331,6 +331,31 @@ export const data_dag_allow_spends = [
   },
 ];
 
+export const data_dag_spend_transactions = [
+  {
+    hash: "spendTxHash1",
+    currency_id: data_dag_allow_spends[0].currency_id,
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 1000n,
+    allow_spend_ref: data_dag_allow_spends[0].hash,
+    snapshot_hash: data_global_snapshots[2].hash,
+    created_at: new Date("2024-01-05T10:00:00Z"),
+    updated_at: new Date("2024-01-05T10:00:00Z"),
+  },
+  {
+    hash: "spendTxHash5",
+    currency_id: data_dag_allow_spends[4].currency_id,
+    source_addr: data_addresses[2].address,
+    destination_addr: data_addresses[1].address,
+    amount: 3000n,
+    allow_spend_ref: data_dag_allow_spends[4].hash,
+    snapshot_hash: data_global_snapshots[2].hash,
+    created_at: new Date("2024-01-05T10:00:00Z"),
+    updated_at: new Date("2024-01-05T10:00:00Z"),
+  },
+];
+
 export const data_dag_expired_spend_transactions = [
   {
     hash: "expiredSpendTxHash1",
@@ -649,6 +674,10 @@ export async function seed() {
     data: data_dag_allow_spends,
   });
 
+  await prisma.dag_spend_transactions.createMany({
+    data: data_dag_spend_transactions,
+  });
+
   await prisma.dag_expired_spend_transactions.createMany({
     data: data_dag_expired_spend_transactions,
   });
@@ -668,15 +697,13 @@ export async function seed() {
   //first drop the prisma generated tables
   await prisma.$executeRawUnsafe("DROP TABLE dag_actions_view");
   await prisma.$executeRawUnsafe("DROP TABLE metagraph_actions_view");
-  await prisma.$executeRawUnsafe("DROP TABLE dag_spend_transactions_view");
   await prisma.$executeRawUnsafe(
     "DROP TABLE delegate_stake_total_rewards_view"
   );
   await prisma.$executeRawUnsafe("DROP TABLE token_lock_total_rewards_view");
+  // runSqlFromFile("./migrations/20250609/02_add_staking_to_actions.sql"); // ?????????????????
   runSqlFromFile("./migrations/20250606/01_total_rewards_view.sql");
-  runSqlFromFile(
-    "./migrations/20250827/01_spend_transactions_by_currency_id.sql"
-  );
+  runSqlFromFile("./migrations/20250922/01_dag_spend_txs_in_actions_view.sql");
 }
 
 async function runSqlFromFile(filename: string) {
