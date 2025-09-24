@@ -80,6 +80,10 @@ export const globalSnapshotActions = async (
     const { term } = event.pathParameters || {};
     const filter = extractHashOrdinal(term);
 
+    const dbFilter = filter.hash
+      ? { global_snapshot_hash: filter.hash }
+      : { global_snapshot_ordinal: filter.ordinal };
+
     const selectedTransactions = transactionFilter(event);
 
     return await paginatedQuery(
@@ -88,7 +92,7 @@ export const globalSnapshotActions = async (
       hashCursor,
       {
         where: {
-          global_snapshot: filter,
+          ...dbFilter,
           transaction_type: { in: selectedTransactions },
         },
         orderBy: [{ created_at: "desc" }, { hash: "desc" }],
@@ -142,7 +146,7 @@ export const currencyActions = async (
       hashCursor,
       {
         where: {
-          OR: [{ metagraph_id }, { currency_id: metagraph_id }],
+          metagraph_id,
           transaction_type: { in: selectedTransactions },
         },
         orderBy: [{ created_at: "desc" }, { hash: "desc" }],
@@ -161,17 +165,19 @@ export const currencySnapshotActions = async (
   try {
     const { metagraph_id, term } = event.pathParameters || {};
     const filter = extractHashOrdinal(term);
+    const dbFilter = filter.hash
+      ? { metagraph_snapshot_hash: filter.hash }
+      : { metagraph_snapshot_ordinal: filter.ordinal };
 
     const selectedTransactions = transactionFilter(event);
-
     return await paginatedQuery(
       extractPagination(event),
       hashCursor,
       hashCursor,
       {
         where: {
-          OR: [{ metagraph_id }, { currency_id: metagraph_id }],
-          metagraph_snapshot: { ...filter },
+          metagraph_id,
+          ...dbFilter,
           transaction_type: { in: selectedTransactions },
         },
         orderBy: [{ created_at: "desc" }, { hash: "desc" }],
@@ -198,11 +204,9 @@ export const currencyAddressActions = async (
       hashCursor,
       {
         where: {
-          AND: [
-            { OR: [{ metagraph_id }, { currency_id: metagraph_id }] },
-            { OR: [{ source_addr: address }, { destination_addr: address }] },
-            { transaction_type: { in: selectedTransactions } },
-          ],
+          metagraph_id,
+          OR: [{ source_addr: address }, { destination_addr: address }],
+          transaction_type: { in: selectedTransactions },
         },
         orderBy: [{ created_at: "desc" }, { hash: "desc" }],
       },

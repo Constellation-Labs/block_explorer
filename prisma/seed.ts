@@ -317,7 +317,7 @@ export const data_dag_allow_spends = [
   },
   {
     hash: "allowSpendHash5",
-    currency_id: "currency-2",
+    currency_id: data_metagraphs[0].id,
     source_addr: data_addresses[1].address,
     destination_addr: data_addresses[2].address,
     amount: 3000n,
@@ -333,8 +333,8 @@ export const data_dag_allow_spends = [
 
 export const data_dag_spend_transactions = [
   {
-    hash: "spendTxHash1",
-    currency_id: data_dag_allow_spends[0].currency_id,
+    hash: "spendTxHash1a",
+    currency_id: null,
     source_addr: data_addresses[0].address,
     destination_addr: data_addresses[1].address,
     amount: 1000n,
@@ -344,12 +344,34 @@ export const data_dag_spend_transactions = [
     updated_at: new Date("2024-01-05T10:00:00Z"),
   },
   {
-    hash: "spendTxHash5",
+    hash: "spendTxHash1b",
     currency_id: data_dag_allow_spends[4].currency_id,
     source_addr: data_addresses[2].address,
     destination_addr: data_addresses[1].address,
     amount: 3000n,
+    allow_spend_ref: null,
+    snapshot_hash: data_global_snapshots[2].hash,
+    created_at: new Date("2024-01-05T10:00:00Z"),
+    updated_at: new Date("2024-01-05T10:00:00Z"),
+  },
+  {
+    hash: "spendTxHash5a",
+    currency_id: null,
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 1000n,
     allow_spend_ref: data_dag_allow_spends[4].hash,
+    snapshot_hash: data_global_snapshots[2].hash,
+    created_at: new Date("2024-01-05T10:00:00Z"),
+    updated_at: new Date("2024-01-05T10:00:00Z"),
+  },
+  {
+    hash: "spendTxHash5b",
+    currency_id: data_dag_allow_spends[4].currency_id,
+    source_addr: data_addresses[2].address,
+    destination_addr: data_addresses[0].address,
+    amount: 3000n,
+    allow_spend_ref: null,
     snapshot_hash: data_global_snapshots[2].hash,
     created_at: new Date("2024-01-05T10:00:00Z"),
     updated_at: new Date("2024-01-05T10:00:00Z"),
@@ -701,7 +723,6 @@ export async function seed() {
     "DROP TABLE delegate_stake_total_rewards_view"
   );
   await prisma.$executeRawUnsafe("DROP TABLE token_lock_total_rewards_view");
-  // runSqlFromFile("./migrations/20250609/02_add_staking_to_actions.sql"); // ?????????????????
   runSqlFromFile("./migrations/20250606/01_total_rewards_view.sql");
   runSqlFromFile("./migrations/20250922/01_dag_spend_txs_in_actions_view.sql");
 }

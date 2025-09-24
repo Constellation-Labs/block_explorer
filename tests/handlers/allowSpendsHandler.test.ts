@@ -247,14 +247,14 @@ describe("AllowSpends Handler Integration Tests", () => {
     it("should return spend transaction for a allow spend ref", async () => {
       const event = createAPIGatewayEvent(
         {},
-        { allowSpendRef: data_dag_spend_transactions[1].allow_spend_ref }
+        { allowSpendRef: data_dag_spend_transactions[2].allow_spend_ref }
       );
       const response = await allowSpendsHandler.spendTransactions(event);
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(1);
-      expect(body.data[0].hash).toBe(data_dag_spend_transactions[1].hash);
+      expect(body.data[0].hash).toBe(data_dag_spend_transactions[2].hash);
       validateDagSpendTransaction(body.data[0]);
     });
 
@@ -360,7 +360,7 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
   describe("currencySpendTransactions", () => {
     it("should return spend transactions", async () => {
       const event = createAPIGatewayEvent({
-        metagraph_id: data_metagraphs[0].id,
+        metagraph_id: data_dag_allow_spends[4].currency_id,
       });
       const response = await allowSpendsHandler.currencySpendTransactions(
         event
@@ -369,13 +369,13 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(2);
-      body.data.forEach(validateMgSpendTransaction);
+      body.data.forEach(validateDagSpendTransaction);
     });
 
     it("should return spend transaction for a allow spend ref", async () => {
       const event = createAPIGatewayEvent(
         {},
-        { allowSpendRef: data_metagraph_spend_transactions[1].allow_spend_ref }
+        { allowSpendRef: data_dag_spend_transactions[2].allow_spend_ref }
       );
       const response = await allowSpendsHandler.currencySpendTransactions(
         event
@@ -383,9 +383,10 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
+
       expect(body.data.length).toBe(1);
-      expect(body.data[0].hash).toBe(data_metagraph_spend_transactions[1].hash);
-      validateMgSpendTransaction(body.data[0]);
+      expect(body.data[0].hash).toBe(data_dag_spend_transactions[2].hash);
+      validateDagSpendTransaction(body.data[0]);
     });
 
     it("should return empty for an invalid allow spend ref", async () => {
@@ -470,7 +471,9 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       });
 
       const response =
-        await allowSpendsHandler.currencySnapshotSpendTransactions(event);
+        await allowSpendsHandler.currencySnapshotUnconfirmedSpendTransactions(
+          event
+        );
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
       expect(body.data.length).toBe(1);
@@ -548,7 +551,7 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
   describe("currencyAddressSpendTransactions", () => {
     it("should return spend transactions for an address", async () => {
       const event = createAPIGatewayEvent({
-        metagraph_id: data_metagraphs[0].id,
+        metagraph_id: data_dag_spend_transactions[1].currency_id,
         address: data_addresses[1].address,
       });
 

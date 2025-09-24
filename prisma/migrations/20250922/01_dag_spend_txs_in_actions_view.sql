@@ -14,7 +14,7 @@ UNION ALL
         'SpendTransaction', dst.snapshot_hash, gs.ordinal,
         dst.destination_addr, null, dst.allow_spend_ref, null, currency_id
     FROM dag_spend_transactions dst
-    JOIN global_snapshots gs ON dst.snapshot_hash = gs.hash
+    JOIN global_snapshots gs ON dst.snapshot_hash = gs.hash and currency_id is null
 
 UNION ALL
     SELECT
@@ -74,15 +74,12 @@ JOIN global_snapshots gs
     ON ms.global_snapshot_hash = gs.hash
 UNION ALL
 SELECT
-    mst.metagraph_id, mst.hash, mst.source_addr, mst.amount, mst.created_at, mst.updated_at,
-    'SpendTransaction', mst.snapshot_hash as metagraph_snapshot_hash, ms.ordinal  as metagraph_snapshot_ordinal,
-    mst.destination_addr, NULL, mst.allow_spend_ref, NULL, currency_id,
-    gs.hash AS global_snapshot_hash, gs.ordinal AS global_snapshot_ordinal
-FROM metagraph_spend_transactions mst
-JOIN metagraph_snapshots ms
-    ON mst.metagraph_id = ms.metagraph_id AND mst.snapshot_hash = ms.hash AND mst.currency_id is not null
-JOIN global_snapshots gs
-    ON ms.global_snapshot_hash = gs.hash
+        currency_id, dst.hash, dst.source_addr, dst.amount, dst.created_at, dst.updated_at,
+        'SpendTransaction', null, null,
+        dst.destination_addr, null, dst.allow_spend_ref, null,
+        currency_id, dst.snapshot_hash, gs.ordinal
+    FROM dag_spend_transactions dst
+    JOIN global_snapshots gs ON dst.snapshot_hash = gs.hash and currency_id is not null
 UNION ALL
 SELECT
     mest.metagraph_id, mest.hash, mest.source_addr, mest.amount, mest.created_at, mest.updated_at,
