@@ -51,8 +51,8 @@ model metagraph_actions_view {
   created_at                 DateTime @default(now()) @db.Timestamp(6)
   updated_at                 DateTime @default(now()) @db.Timestamp(6)
   transaction_type           String
-  metagraph_snapshot_hash    String   @db.VarChar
-  metagraph_snapshot_ordinal BigInt
+  metagraph_snapshot_hash    String?   @db.VarChar
+  metagraph_snapshot_ordinal BigInt?
   global_snapshot_hash       String   @db.VarChar
   global_snapshot_ordinal    BigInt
   destination_addr           String?  @db.VarChar
@@ -68,7 +68,7 @@ model metagraph_actions_view {
   metagraph_spend_transaction         metagraph_spend_transactions?         @relation(fields: [hash], references: [hash], map: "metagraph_spend_transaction_ref")
   metagraph_expired_spend_transaction metagraph_expired_spend_transactions? @relation(fields: [hash], references: [hash], map: "metagraph_expired_spend_transaction_ref")
   metagraph_fee_transaction           metagraph_fee_transactions?           @relation(fields: [hash], references: [hash], map: "metagraph_fee_transaction_ref")
-  metagraph_snapshot                  metagraph_snapshots                   @relation(fields: [metagraph_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: Restrict, map: "metagraph_actions_view_metagraph_snapshot_ref")
+  
 }
 
 model addresses {
@@ -437,7 +437,6 @@ model metagraph_snapshots {
   metagraph_token_lock_blocks          metagraph_token_lock_blocks[]
   metagraph_spend_transactions         metagraph_spend_transactions[]
   metagraph_expired_spend_transactions metagraph_expired_spend_transactions[]
-  metagraph_actions_view               metagraph_actions_view[]
 
   @@id([metagraph_id, hash], map: "metagraph_snapshot_pk")
   @@unique([metagraph_id, ordinal], map: "metagraph_snapshot_unique")

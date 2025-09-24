@@ -122,7 +122,7 @@ describe("actionsHandler", () => {
 
     expect(result.statusCode).toBe(200);
     const body = validatePaginatedResponse(result);
-    expect(body.data.length).toBe(11);
+    expect(body.data.length).toBe(12);
     body.data.forEach(validateAction);
   });
 
@@ -145,6 +145,7 @@ describe("actionsHandler", () => {
 
     expect(result.statusCode).toBe(200);
     const body = validatePaginatedResponse(result);
+
     expect(body.data.length).toBe(13);
     body.data.forEach(validateAction);
   });
@@ -172,7 +173,7 @@ describe("actionsHandler", () => {
 
     expect(result.statusCode).toBe(200);
     const body = validatePaginatedResponse(result);
-    expect(body.data.length).toBe(4);
+    expect(body.data.length).toBe(3);
     body.data.forEach(validateAction);
   });
 
@@ -197,6 +198,7 @@ describe("actionsHandler", () => {
 
     expect(result.statusCode).toBe(200);
     const body = validatePaginatedResponse(result);
+
     expect(body.data.length).toBe(9);
     body.data.forEach(validateAction);
   });

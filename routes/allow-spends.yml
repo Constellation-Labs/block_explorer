@@ -111,7 +111,7 @@ ccyAddressAllowSpends:
         method: GET
 
 ccySnapshotSpendTransactions:
-  handler: src/handlers/allowSpendsHandler.currencySnapshotSpendTransactions
+  handler: src/handlers/allowSpendsHandler.currencySnapshotUnconfirmedSpendTransactions
   events:
     - httpApi:
         path: /currency/{metagraph_id}/snapshots/{hash_or_ordinal}/spend-transactions
@@ -125,7 +125,7 @@ ccySpendTransactions:
         method: GET
 
 ccySpendTransaction:
-  handler: src/handlers/allowSpendsHandler.currencySpendTransaction
+  handler: src/handlers/allowSpendsHandler.currencyUnconfirmedSpendTransaction
   events:
     - httpApi:
         path: /currency/{metagraph_id}/spend-transactions/{hash}
