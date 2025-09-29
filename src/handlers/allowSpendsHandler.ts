@@ -184,7 +184,7 @@ export const addressAllowSpends = async (
       fromCreatedAtOrdinalCursor,
       {
         where: {
-          OR: [{ source_addr: address }, { destination_addr: address }],
+          source_addr: address,
           ...ifActiveAllowSpend(event),
         },
         include: dagInclude,
@@ -390,10 +390,7 @@ export const addressAllowSpendExpirations = async (
       hashCursor,
       {
         where: {
-          OR: [
-            { source_addr: address },
-            { dag_allow_spend: { destination_addr: address } },
-          ],
+          source_addr: address,
         },
         include: dagInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],
@@ -487,7 +484,7 @@ export const currencyAddressAllowSpends = async (
       {
         where: {
           metagraph_id,
-          OR: [{ source_addr: address }, { destination_addr: address }],
+          source_addr: address,
           ...ifActiveMetagraphAllowSpend(event),
         },
         include: metagraphInclude,
@@ -650,10 +647,7 @@ export const currencyAddressAllowSpendExpirations = async (
       {
         where: {
           metagraph_id,
-          OR: [
-            { source_addr: address },
-            { metagraph_allow_spend: { destination_addr: address } },
-          ],
+          source_addr: address,
         },
         include: metagraphInclude,
         orderBy: [{ created_at: "desc" }, { hash: "asc" }],

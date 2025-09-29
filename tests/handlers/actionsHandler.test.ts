@@ -84,7 +84,7 @@ describe("actionsHandler", () => {
 
     expect(result.statusCode).toBe(200);
     const body = validatePaginatedResponse(result);
-    expect(body.data.length).toBe(18);
+    expect(body.data.length).toBe(19);
     body.data.forEach(validateAction);
   });
 
@@ -122,7 +122,7 @@ describe("actionsHandler", () => {
 
     expect(result.statusCode).toBe(200);
     const body = validatePaginatedResponse(result);
-    expect(body.data.length).toBe(12);
+    expect(body.data.length).toBe(13);
     body.data.forEach(validateAction);
   });
 
