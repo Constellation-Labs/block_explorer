@@ -329,6 +329,20 @@ export const data_dag_allow_spends = [
     created_at: new Date("2024-01-03T10:00:00Z"),
     updated_at: new Date("2024-01-03T10:00:00Z"),
   },
+  {
+    hash: "allowSpendHash6",
+    currency_id: "currency-3",
+    source_addr: data_addresses[0].address,
+    destination_addr: data_addresses[1].address,
+    amount: 1500n,
+    fee: 8n,
+    last_valid_epoch_progress: 800n,
+    ordinal: 6n,
+    snapshot_hash: data_global_snapshots[1].hash,
+    round_id: "44444444-4444-4444-4444-444444444444",
+    created_at: new Date("2024-01-04T10:00:00Z"),
+    updated_at: new Date("2024-01-04T10:00:00Z"),
+  },
 ];
 
 export const data_dag_spend_transactions = [

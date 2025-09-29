@@ -132,7 +132,7 @@ describe("AllowSpends Handler Integration Tests", () => {
 
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
-      expect(body.data.length).toBe(2);
+      expect(body.data.length).toBe(3);
       body.data.forEach(validateDagAllowSpend);
     });
   });
@@ -199,19 +199,19 @@ describe("AllowSpends Handler Integration Tests", () => {
 
   describe("addressAllowSpends", () => {
     it("should return allow spends for a specific address", async () => {
-      const address = data_addresses[3].address;
+      const address = data_addresses[0].address;
       const event = createAPIGatewayEvent({ address });
 
       const response = await allowSpendsHandler.addressAllowSpends(event);
       expect(response.statusCode).toBe(200);
 
       const body = validatePaginatedResponse(response);
-      expect(body.data.length).toBe(1);
+      expect(body.data.length).toBe(3);
       body.data.forEach(validateDagAllowSpend);
     });
 
     it("should return active only allow spends for a specific address", async () => {
-      const address = data_addresses[3].address;
+      const address = data_addresses[0].address;
       const event = createAPIGatewayEvent({ address }, { active: "true" });
 
       const response = await allowSpendsHandler.addressAllowSpends(event);
@@ -511,7 +511,7 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
     it("should return allow spends for an address", async () => {
       const event = createAPIGatewayEvent({
         metagraph_id: data_metagraphs[0].id,
-        address: data_addresses[1].address,
+        address: data_addresses[0].address,
       });
 
       const response = await allowSpendsHandler.currencyAddressAllowSpends(
@@ -525,7 +525,7 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
       const event = createAPIGatewayEvent(
         {
           metagraph_id: data_metagraphs[0].id,
-          address: data_addresses[1].address,
+          address: data_addresses[0].address,
         },
         { active: "true" }
       );
@@ -539,7 +539,7 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
     });
     it("currencyAddressAllowSpendsPagination", async () => {
       const metagraph_id = data_metagraphs[0].id;
-      const address = data_addresses[1].address;
+      const address = data_addresses[0].address;
       await validatePaginationNext(
         "1",
         { metagraph_id, address },
@@ -552,7 +552,7 @@ describe("Metagraph AllowSpends Handler Integration Tests", () => {
     it("should return spend transactions for an address", async () => {
       const event = createAPIGatewayEvent({
         metagraph_id: data_dag_spend_transactions[1].currency_id,
-        address: data_addresses[1].address,
+        address: data_addresses[0].address,
       });
 
       const response =
