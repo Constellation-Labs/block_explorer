@@ -28,6 +28,7 @@ const dagTokenLockResponse = (transaction) => ({
     transaction.dag_token_unlock?.global_snapshot.ordinal ?? null,
   globalSnapshotHash: transaction.snapshot_hash,
   globalSnapshotOrdinal: transaction.global_snapshot.ordinal,
+  replacementHash: transaction.replacement_hash,
 });
 
 const dagTokenLockResponses = (txs) => txs.map(dagTokenLockResponse);
