@@ -41,7 +41,9 @@ const validateCreateStake = (tx) => {
   );
   expect(tx.source).toBe(match.source_addr);
   expect(tx.nodeId).toBe(match.node_id);
-  expect(tx.amount).toBeBigInt(match.amount);
+  // Use effective amount (current_amount if set, otherwise original amount)
+  const effectiveAmount = match.current_amount ?? match.amount;
+  expect(tx.amount).toBeBigInt(effectiveAmount);
   expect(tx.fee).toBeBigInt(match.fee);
   expect(tx.timestamp).toBeDefined();
   expect(tx.type).toBe(match.transfer_from_hash ? "transfer" : "create");
@@ -70,7 +72,9 @@ const validateStakingPosition = (tx) => {
   );
   expect(tx.address).toBe(match.source_addr);
   expect(tx.nodeId).toBe(match.node_id);
-  expect(tx.lockAmount).toBeBigInt(match.amount);
+  // Use effective amount (current_amount if set, otherwise original amount)
+  const effectiveLockAmount = match.current_amount ?? match.amount;
+  expect(tx.lockAmount).toBeBigInt(effectiveLockAmount);
   //rewards for this staking event
   expect(tx.rewardsAccrued).toBeBigInt(
     data_delegate_stake_rewards
