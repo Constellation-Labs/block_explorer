@@ -7,9 +7,9 @@ components:
         ordinal: { type: integer }
         source: { type: string }
         nodeId: { type: string }
-        amount: { type: string, description: "BigInt represented as a string" }
+        amount: { type: string, description: "Effective stake amount (current amount if increased, otherwise original). BigInt represented as a string" }
         fee: { type: string, description: "BigInt represented as a string" }
-        tokenLockHash: { type: string }
+        tokenLockHash: { type: string, description: "Effective token lock hash (current if stake increased, otherwise original)" }
         parentHash: { type: string, nullable: true }
         type: { type: string, enum: [create, transfer] }
         status: { type: string, enum: [active, transferred, pendingWithdrawal, withdrawalComplete] }
@@ -33,7 +33,7 @@ components:
         nodeId: { type: string }
         status: { type: string, enum: [active, transferred, pendingWithdrawal, withdrawalComplete] }
         stakeHash: { type: string }
-        lockAmount: { type: string, description: "BigInt represented as a string" }
+        lockAmount: { type: string, description: "Effective locked stake amount (current amount if increased, otherwise original). BigInt represented as a string" }
         rewardsAccrued: { type: string, description: "BigInt represented as a string" }
         withdrawnAmount: { type: string, description: "BigInt represented as a string" }
         transferredFromHash: { type: string, nullable: true }
