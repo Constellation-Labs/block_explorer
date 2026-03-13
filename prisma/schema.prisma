@@ -218,7 +218,8 @@ model dag_token_locks {
   round_id                     String                         @db.Uuid
   snapshot_hash                String                         @db.VarChar
   parent_hash                  String?                        @db.VarChar
-  currency_id                  String?  @db.VarChar
+  currency_id                  String?                        @db.VarChar
+  replacement_hash             String?                        @db.VarChar
   addresses                    addresses                      @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: Restrict, map: "dag_token_locks_source_addr_fk")
   global_snapshot              global_snapshots               @relation(fields: [snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: Restrict, map: "dag_token_lock_global_snapshot_fk")
   dag_token_unlock             dag_token_unlocks?
@@ -600,9 +601,12 @@ model delegate_stake_create_events {
   lock_reference_hash  String   @db.VarChar
   parent_hash          String   @db.VarChar
   global_snapshot_hash String   @db.VarChar
-  transfer_from_hash   String?  @unique @db.VarChar
-  created_at           DateTime @default(now()) @db.Timestamp(6)
-  updated_at           DateTime @default(now()) @db.Timestamp(6)
+  transfer_from_hash       String?  @unique @db.VarChar
+  current_token_lock_hash  String?  @db.VarChar
+  current_amount           BigInt?
+  created_at_epoch         BigInt?
+  created_at               DateTime @default(now()) @db.Timestamp(6)
+  updated_at               DateTime @default(now()) @db.Timestamp(6)
 
   global_snapshot                global_snapshots                 @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: Restrict)
   addresses                                          addresses                         @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: Restrict)
@@ -624,10 +628,13 @@ model delegate_stake_withdraw_events {
   source_addr          String   @db.VarChar
   stake_create_hash    String   @unique @db.VarChar
   global_snapshot_hash String   @db.VarChar
-  unlock_epoch         BigInt
-  is_completed         Boolean
-  created_at           DateTime @default(now()) @db.Timestamp(6)
-  updated_at           DateTime @default(now()) @db.Timestamp(6)
+  created_at_epoch         BigInt
+  unlock_epoch             BigInt
+  is_completed             Boolean
+  current_token_lock_hash  String?  @db.VarChar
+  current_amount           BigInt?
+  created_at               DateTime @default(now()) @db.Timestamp(6)
+  updated_at               DateTime @default(now()) @db.Timestamp(6)
 
   global_snapshot             global_snapshots             @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: Restrict)
   addresses                   addresses                    @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: Restrict)
