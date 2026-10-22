@@ -9,7 +9,7 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs22.x
   region: us-west-1
   stage: ${self:custom.stage}
   environment:
