@@ -3,3 +3,9 @@ node_modules
 .serverless
 .build
 coverage/
+# Terraform
+.terraform/
+*.tfplan
+*_override.tf
+*.tfstate
+*.tfstate.*
