@@ -17,7 +17,11 @@ import {
   transactionResponse,
   unsuportedRequest,
 } from "../response";
-import { paginatedQuery } from "../pagination";
+import {
+  defaultPageSize,
+  paginatedQuery,
+  SearchDirection,
+} from "../pagination";
 import { toNumber, isFinite } from "lodash";
 
 const prisma = new PrismaClient();
@@ -99,12 +103,57 @@ export const currencySnapshots = async (
       return notFoundResponse("metagraph");
     }
 
+    // A Prisma cursor on hash compiles to an OR of subqueries that Postgres
+    // cannot answer from metagraph_snapshot_unique (metagraph_id, ordinal), so
+    // every page scanned all snapshots newer than the cursor. Resolve the
+    // cursor to its ordinal once and page on the ordinal instead.
+    const pagination = extractPagination(event);
+    const cursorHash =
+      "next" in pagination
+        ? pagination.next?.hash
+        : "searchSince" in pagination
+        ? (pagination.searchSince as { hash: string } | undefined)?.hash
+        : undefined;
+    const searchDirection =
+      "searchDirection" in pagination ? pagination.searchDirection : undefined;
+
+    let ordinal = {};
+    if (cursorHash) {
+      const cursorSnapshot = await prisma.metagraph_snapshots.findUnique({
+        where: metagraphSnapshotQuery(metagraph_id, { hash: cursorHash }),
+        select: { ordinal: true },
+      });
+      if (!cursorSnapshot) {
+        return respond([], metagraphSnapshotsResponse);
+      }
+      if (searchDirection === SearchDirection.After) {
+        // Same response as the Prisma cursor gave: the snapshots just above
+        // the cursor, newest first, with the cursor itself as next.
+        const newer = await prisma.metagraph_snapshots.findMany({
+          where: { metagraph_id, ordinal: { gt: cursorSnapshot.ordinal } },
+          include: { metagraph_blocks: true },
+          orderBy: [{ metagraph_id: "asc" }, { ordinal: "asc" }],
+          take: pagination.size ?? defaultPageSize,
+        });
+        return respond(
+          newer.reverse(),
+          metagraphSnapshotsResponse,
+          cursor({ hash: cursorHash })
+        );
+      }
+      // next includes the cursor row, search_before skips it.
+      ordinal =
+        searchDirection === SearchDirection.Before
+          ? { lt: cursorSnapshot.ordinal }
+          : { lte: cursorSnapshot.ordinal };
+    }
+
     return await paginatedQuery(
-      paginationWithMetagraphId(metagraph_id, event),
+      { size: pagination.size },
       cursor,
       cursor,
       {
-        where: { metagraph_id },
+        where: { metagraph_id, ordinal },
         include: { metagraph_blocks: true },
         orderBy: [{ metagraph_id: "desc" }, { ordinal: "desc" }],
       },
