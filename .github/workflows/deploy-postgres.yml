@@ -8,6 +8,10 @@ on:
 
 name: Deploy postgress app
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy:
     name: Deploy ${{ github.ref_name }} to ${{ inputs.environment }}
@@ -34,10 +38,22 @@ jobs:
           ${{ secrets.API_ENV_POSTGRES }}
           EOF
 
-      - name: Serverless deploy
-        uses: serverless/github-action@v3
+      # The role comes from terraform/ and trusts only jobs in this environment.
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          args: deploy --stage ${{ inputs.environment }} --region us-west-1
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-west-1
+
+      - name: Serverless deploy
+        run: npx --yes serverless@3.40.0 deploy --stage ${{ inputs.environment }} --region us-west-1
+
+      # Serverless 3 cannot declare Lambda log levels, and a deploy can reset
+      # them. Keep every function at JSON logs, WARN level.
+      - name: Keep Lambda logs at WARN
+        run: |
+          for f in $(aws lambda list-functions --query "Functions[?starts_with(FunctionName, 'api-${{ inputs.environment }}-')].FunctionName" --output text); do
+            aws lambda update-function-configuration --function-name "$f" \
+              --logging-config LogFormat=JSON,ApplicationLogLevel=WARN,SystemLogLevel=WARN > /dev/null
+            aws lambda wait function-updated-v2 --function-name "$f"
+          done
