@@ -46,7 +46,7 @@ jobs:
           aws-region: us-west-1
 
       - name: Serverless deploy
-        run: npx --yes serverless@3.40.0 deploy --stage ${{ inputs.environment }} --region us-west-1
+        run: npx serverless deploy --stage ${{ inputs.environment }} --region us-west-1
 
       # Serverless 3 cannot declare Lambda log levels, and a deploy can reset
       # them. Keep every function at JSON logs, WARN level.
