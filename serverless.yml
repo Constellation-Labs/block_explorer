@@ -21,6 +21,14 @@ provider:
   versionFunctions: false
   timeout: 60
 
+# npm 7+ installs @prisma/client's optional peer, the Prisma CLI, as a runtime
+# dependency. The functions only need the generated client in .prisma/client.
+package:
+  patterns:
+    - "!node_modules/prisma/**"
+    - "!node_modules/@prisma/engines/**"
+    - "!node_modules/.bin/**"
+
 functions:
   - ${file(./routes/dag.yml)}
   - ${file(./routes/metagraph.yml)}
