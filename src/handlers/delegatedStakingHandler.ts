@@ -56,6 +56,8 @@ const delegateStakeCreateResponse = (event) => ({
   timestamp: event.created_at,
   globalSnapshotHash: event.global_snapshot_hash,
   globalSnapshotOrdinal: event.global_snapshot?.ordinal,
+  currentTokenLockHash: event.lock_reference_hash,
+  currentAmount: event.current_amount,
 });
 
 const delegateStakeCreateResponses = (txs) =>
@@ -70,6 +72,8 @@ const delegateStakeWithdrawResponse = (event) => ({
   timestamp: event.created_at,
   globalSnapshotHash: event.global_snapshot_hash,
   globalSnapshotOrdinal: event.global_snapshot?.ordinal,
+  currentTokenLockHash: event.lock_reference_hash,
+  currentAmount: event.current_amount,
 });
 
 const delegateStakeWithdrawResponses = (txs) =>
