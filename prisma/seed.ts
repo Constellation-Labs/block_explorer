@@ -185,6 +185,16 @@ export const data_dag_token_locks = [
     round_id: randomUUID(),
     snapshot_hash: data_global_snapshots[1].hash,
   },
+  {
+    hash: `token-lock-hash-004`,
+    currency_id: "currency-2",
+    source_addr: data_addresses[1].address,
+    amount: 5000000000000n,
+    ordinal: 4n,
+    unlock_epoch: 10n,
+    round_id: randomUUID(),
+    snapshot_hash: data_global_snapshots[2].hash,
+  },
 ];
 
 // Test data for DAG token unlocks
@@ -555,6 +565,8 @@ export const data_delegate_stake_create_events = [
     lock_reference_hash: data_dag_token_locks[1].hash,
     parent_hash: "stake-event-hash-001",
     global_snapshot_hash: data_global_snapshots[1].hash,
+    current_token_lock_hash: data_dag_token_locks[3].hash,
+    current_amount: 5000000000000n,
   },
   {
     hash: "stake-event-hash-003",

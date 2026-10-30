@@ -84,7 +84,7 @@ describe("actionsHandler", () => {
 
     expect(result.statusCode).toBe(200);
     const body = validatePaginatedResponse(result);
-    expect(body.data.length).toBe(19);
+    expect(body.data.length).toBe(20);
     body.data.forEach(validateAction);
   });
 

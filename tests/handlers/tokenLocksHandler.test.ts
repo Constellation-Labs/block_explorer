@@ -134,10 +134,11 @@ describe("Token Locks Handler Integration Tests", () => {
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
 
-      // Only the second and third token lock should be active (not unlocked)
-      expect(body.data.length).toBe(2);
-      expect(body.data[1].hash).toBe(data_dag_token_locks[1].hash);
-      expect(body.data[0].hash).toBe(data_dag_token_locks[2].hash);
+      // Token locks 2, 3, and 4 should be active (not unlocked)
+      expect(body.data.length).toBe(3);
+      expect(body.data[2].hash).toBe(data_dag_token_locks[1].hash);
+      expect(body.data[1].hash).toBe(data_dag_token_locks[2].hash);
+      expect(body.data[0].hash).toBe(data_dag_token_locks[3].hash);
     });
   });
 
@@ -212,7 +213,8 @@ describe("Token Locks Handler Integration Tests", () => {
       expect(response.statusCode).toBe(200);
       const body = validatePaginatedResponse(response);
 
-      expect(body.data.length).toBe(data_dag_token_locks.length);
+      // Token locks 1, 2, and 3 belong to address[0]; token lock 4 belongs to address[1]
+      expect(body.data.length).toBe(3);
       body.data.forEach(validateDagTokenLock);
     });
 

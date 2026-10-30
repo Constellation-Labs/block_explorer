@@ -601,8 +601,10 @@ model delegate_stake_create_events {
   parent_hash          String   @db.VarChar
   global_snapshot_hash String   @db.VarChar
   transfer_from_hash   String?  @unique @db.VarChar
-  created_at           DateTime @default(now()) @db.Timestamp(6)
-  updated_at           DateTime @default(now()) @db.Timestamp(6)
+  created_at               DateTime @default(now()) @db.Timestamp(6)
+  updated_at               DateTime @default(now()) @db.Timestamp(6)
+  current_token_lock_hash  String?  @db.VarChar
+  current_amount           BigInt?
 
   global_snapshot                global_snapshots                 @relation(fields: [global_snapshot_hash], references: [hash], onDelete: Cascade, onUpdate: Restrict)
   addresses                                          addresses                         @relation(fields: [source_addr], references: [address], onDelete: Cascade, onUpdate: Restrict)
@@ -617,6 +619,7 @@ model delegate_stake_create_events {
   @@index([global_snapshot_hash])
   @@index([source_addr])
   @@index([lock_reference_hash])
+  @@index([current_token_lock_hash])
 }
 
 model delegate_stake_withdraw_events {
